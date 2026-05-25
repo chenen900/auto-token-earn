@@ -130,12 +130,23 @@ app.post("/api/v1/compliance-check", async (req, res) => {
     console.log("COMPLIANCE-INPUT:", JSON.stringify({ text: reviewText.substring(0,50), type, platform }));
     if (!reviewText) return res.status(400).json({ error: "Missing 'content' or 'text' field" });
 
+    const { AD_LAW_CHECKS } = require("./compliance-engine");
+    // 直接测关键词
+    const testKw = AD_LAW_CHECKS[1]?.keywords?.[0] || "N/A";
+    const directMatch = reviewText.includes(testKw);
+
     const result = reviewContent({
       type: type || "script",
       text: reviewText,
       platform: platform || "douyin",
     });
 
+    result.debug = {
+      textLen: reviewText.length,
+      keyword: testKw,
+      directMatch,
+      engineVersion: "v2.1.0-unicode-fix",
+    };
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: e.message });
