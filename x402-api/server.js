@@ -116,6 +116,7 @@ app.post("/api/v1/compliance-check", async (req, res) => {
   try {
     const { content, text, type, platform } = req.body || {};
     const reviewText = content || text || "";
+    console.log("COMPLIANCE-INPUT:", JSON.stringify({ text: reviewText.substring(0,50), type, platform }));
     if (!reviewText) return res.status(400).json({ error: "Missing 'content' or 'text' field" });
 
     const result = reviewContent({
