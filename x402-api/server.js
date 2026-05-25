@@ -58,10 +58,19 @@ app.get("/", (_, res) => {
 app.get("/api/v1/paid-test", (req, res) => {
   const paymentRequired = {
     x402Version: 2,
-    network: "solana",
-    payTo: PAY_TO_SOL,
-    accepts: [{ scheme: "exact", price: "$0.01", asset: "USDC", network: "solana" }],
-    resource: `${req.protocol}://${req.get("host")}/api/v1/paid-test`,
+    network: "base",
+    payTo: "0x0000000000000000000000000000000000000000", // 占位，后面替换为 Base 钱包地址
+    accepts: [{
+      scheme: "exact",
+      price: { amount: "10000", currency: "USDC", asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
+      network: "eip155:8453",
+    }],
+    resource: {
+      url: `https://${req.get("host")}/api/v1/paid-test`,
+      description: "MediaCraft AI compliance check — Chinese advertising law review for short-video content",
+      mimeType: "application/json",
+    },
+    maxTimeoutSeconds: 60,
   };
   res.setHeader("PAYMENT-REQUIRED", Buffer.from(JSON.stringify(paymentRequired)).toString("base64"));
   res.status(402).json(paymentRequired);
