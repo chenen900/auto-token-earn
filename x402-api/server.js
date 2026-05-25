@@ -47,7 +47,15 @@ app.get("/", (_, res) => {
 });
 
 // 健康检查
-app.get("/health", (_, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));
+app.get("/health", (_, res) => {
+  const { AD_LAW_CHECKS } = require("./compliance-engine");
+  res.json({
+    status: "ok",
+    version: "2.0.0",
+    timestamp: new Date().toISOString(),
+    engine: { adLawChecks: AD_LAW_CHECKS.length, sampleCheck: AD_LAW_CHECKS[1]?.rule || "N/A" },
+  });
+});
 
 // ============ x402 支付中间层 ============
 
