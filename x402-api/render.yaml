@@ -1,0 +1,10 @@
+# Render deployment config
+services:
+  - type: web
+    name: mediacraft-x402-api
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 3000
