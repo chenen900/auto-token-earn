@@ -46,14 +46,25 @@ app.get("/", (_, res) => {
   });
 });
 
-// 健康检查
+// 健康检查 + 调试
 app.get("/health", (_, res) => {
   const { AD_LAW_CHECKS } = require("./compliance-engine");
+  const testText = "国家级最好的产品，100%有效！加微信私聊购买。";
+  const check = AD_LAW_CHECKS[1]; // 绝对化用语
+  const debug = {
+    text: testText,
+    textHex: Buffer.from(testText, "utf8").toString("hex").substring(0, 40),
+    keyword: check?.keywords?.[0],
+    kwHex: Buffer.from(check?.keywords?.[0] || "", "utf8").toString("hex").substring(0, 20),
+    includes: testText.includes(check?.keywords?.[0] || "N/A"),
+    normalized: testText.normalize("NFC").includes((check?.keywords?.[0] || "").normalize("NFC")),
+  };
   res.json({
     status: "ok",
-    version: "2.0.0",
+    version: "2.1.0",
     timestamp: new Date().toISOString(),
-    engine: { adLawChecks: AD_LAW_CHECKS.length, sampleCheck: AD_LAW_CHECKS[1]?.rule || "N/A" },
+    engine: { adLawChecks: AD_LAW_CHECKS.length },
+    debug,
   });
 });
 
