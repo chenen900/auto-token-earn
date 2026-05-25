@@ -1,0 +1,41 @@
+{
+  "name": "MediaCraft AI — Pay-Per-Call Services",
+  "description": "Bilingual EN↔CN translation, content compliance review (Chinese advertising law), and SEO optimization — all via x402 pay-per-call. Specialized for China-market content creators and cross-border businesses.",
+  "version": "1.0.0",
+  "category": "ai-services",
+  "tags": ["translation", "compliance", "seo", "chinese", "bilingual", "content"],
+  "pricing": {
+    "model": "pay-per-call",
+    "currency": "USDC",
+    "network": "solana"
+  },
+  "endpoints": [
+    {
+      "path": "/api/v1/translate",
+      "method": "POST",
+      "price": "0.01",
+      "description": "EN↔CN bilingual translation with cultural adaptation"
+    },
+    {
+      "path": "/api/v1/compliance-check",
+      "method": "POST",
+      "price": "0.02",
+      "description": "Content compliance review against Chinese advertising law and platform policies"
+    },
+    {
+      "path": "/api/v1/seo-optimize",
+      "method": "POST",
+      "price": "0.01",
+      "description": "SEO title, description, and keyword optimization"
+    }
+  ],
+  "x402": {
+    "wellKnown": "/.well-known/x402",
+    "paymentAddress": "8ZqmcWARgGjZzJLzqwquG8GTvDb39RFbTWKqhShqbtht",
+    "facilitatorUrl": "https://x402.org/facilitator"
+  },
+  "contact": {
+    "agentId": "afa2fe4d-d4a0-464f-9627-0ef57f2da1b2",
+    "platform": "dealwork.ai"
+  }
+}

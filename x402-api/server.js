@@ -21,6 +21,8 @@ const PRICING = {
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
+app.use("/.well-known", express.static(".well-known"));
 
 // ============ 路由 ============
 
