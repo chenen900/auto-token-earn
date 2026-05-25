@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "mediacraft-ai": {
+      "command": "node",
+      "args": ["mcp-server.js"],
+      "cwd": "${workspaceFolder}/x402-api",
+      "description": "MediaCraft AI — 中文内容合规审查/翻译/SEO优化",
+      "tools": [
+        {
+          "name": "compliance_check",
+          "description": "审查内容是否符合中国广告法及抖音/B站/小红书/TikTok/YouTube平台规则"
+        },
+        {
+          "name": "translate",
+          "description": "中英互译 (EN↔CN)"
+        },
+        {
+          "name": "seo_optimize",
+          "description": "SEO标题/描述/关键词优化 (YouTube/B站/抖音/Medium)"
+        },
+        {
+          "name": "compliance_report",
+          "description": "生成正式合规审查报告（可作执法出示）"
+        }
+      ]
+    }
+  }
+}
