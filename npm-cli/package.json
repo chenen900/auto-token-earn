@@ -1,0 +1,9 @@
+{
+  "name": "mediacraft-check",
+  "version": "1.0.0",
+  "description": "AI content compliance checker — Chinese Advertising Law + platform rules",
+  "bin": { "mediacraft-check": "./cli.js" },
+  "keywords": ["compliance","chinese-law","advertising","douyin","tiktok","content-review"],
+  "author": "MediaCraft AI",
+  "license": "MIT"
+}

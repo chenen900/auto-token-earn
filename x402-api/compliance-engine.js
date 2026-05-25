@@ -70,79 +70,22 @@ const AD_LAW_CHECKS = [
   },
 ];
 
-// ============ 平台特定规则 ============
-const PLATFORM_RULES = {
-  douyin: {
-    name: "抖音",
-    maxTitleLength: 55,
-    maxDescriptionLength: 200,
-    bannedKeywords: [
-      "政治", "时政", "国家领导人", "taiwan", "香港", "法轮功", "falun gong",
-      "代购", "加微信", "私聊", "转账", "红包",
-      "色情", "低俗", "擦边", "裸露", "性感",
-      "暴力", "血腥", "自残", "自杀",
-      "赌博", "彩票", "时时彩",
-      "假货", "高仿", "A货", "原单",
-    ],
-    specialRules: [
-      { rule: "不得使用'抖音最火''全网第一'等平台比较性用语", pattern: /抖音最|全网第一|平台第一|全站最/ },
-      { rule: "禁止诱导点赞/关注/转发", pattern: /点赞[一-龥]*[送给发抽]/ },
-      { rule: "医疗健康内容需资质认证", pattern: /医[疗生].*[建议议推荐]|治[疗愈].*方[法案]/ },
-    ],
-  },
-  bilibili: {
-    name: "B站",
-    maxTitleLength: 80,
-    maxDescriptionLength: 2000,
-    bannedKeywords: [
-      "政治敏感", "六四", "tiananmen",
-      "代刷", "刷播放量", "刷弹幕",
-      "盗版", "破解", "外挂",
-    ],
-    specialRules: [
-      { rule: "转载内容需标注原作者及来源", pattern: null, appliesTo: "repost" },
-      { rule: "不得在非恰饭视频中隐瞒商业推广", pattern: /感谢.*赞助|感谢.*品牌|[合联]作推广/ },
-    ],
-  },
-  xiaohongshu: {
-    name: "小红书",
-    maxTitleLength: 20,
-    maxDescriptionLength: 1000,
-    bannedKeywords: [
-      "代购", "加微信", "私信我", "私聊",
-      "假货", "高仿", "原单",
-      "医疗", "治疗", "处方药",
-      "算命", "风水", "转运",
-    ],
-    specialRules: [
-      { rule: "种草笔记需注明是否商业合作", pattern: null, appliesTo: "commercial" },
-      { rule: "不得虚构使用体验", keywords: ["亲测", "实测", "自用", "空瓶"] },
-      { rule: "图片不得过度修图导致误导", pattern: null, appliesTo: "image" },
-    ],
-  },
-  tiktok: {
-    name: "TikTok",
-    maxTitleLength: 150,
-    bannedKeywords: [
-      "hate speech", "harassment", "bullying",
-      "nudity", "sexual content", "child safety",
-      "violent extremism", "dangerous acts",
-      "self-harm", "suicide",
-      "illegal goods", "weapons",
-      "misinformation", "fake news",
-    ],
-  },
-  youtube: {
-    name: "YouTube",
-    maxTitleLength: 100,
-    bannedKeywords: [
-      "hate speech", "harassment", "cyberbullying",
-      "violent extremism", "dangerous content",
-      "spam", "scam", "misleading",
-      "copyright infringement",
-    ],
-  },
-};
+// ============ 平台特定规则（从 JSON 数据库加载）============
+const path = require("path");
+const fs = require("fs");
+const PLATFORM_RULES = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "platform-rules.json"), "utf-8")
+).platforms;
+
+// 将 JSON 中字符串 pattern 转为 RegExp
+for (const key of Object.keys(PLATFORM_RULES)) {
+  const pt = PLATFORM_RULES[key];
+  if (pt.specialRules) {
+    pt.specialRules.forEach((r) => {
+      if (typeof r.pattern === "string" && r.pattern) r.pattern = new RegExp(r.pattern);
+    });
+  }
+}
 
 // ============ 通用内容安全检查 ============
 const GENERAL_SAFETY_CHECKS = [
