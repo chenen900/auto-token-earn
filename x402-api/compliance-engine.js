@@ -177,6 +177,8 @@ const SHORT_VIDEO_CHECKS = {
 // ============ 主审查函数 ============
 
 function reviewContent({ type = "script", text = "", platform = "douyin", options = {} }) {
+  // Unicode 标准化，确保中文字符在不同环境下一致匹配
+  const normalizedText = (text || "").normalize("NFC");
   const results = {
     passed: true,
     platform,
@@ -189,10 +191,10 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
 
   // 1. 通用安全审查
   for (const check of GENERAL_SAFETY_CHECKS) {
-    if (check.pattern && check.pattern.test(text)) {
+    if (check.pattern && check.pattern.test(normalizedText)) {
       results.checks.push({
         ...check,
-        found: text.match(check.pattern)?.[0],
+        found: normalizedText.match(check.pattern)?.[0],
       });
       results.summary[check.severity]++;
       results.passed = false;
@@ -205,12 +207,12 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
     let match = null;
 
     if (check.pattern) {
-      match = text.match(check.pattern);
+      match = normalizedText.match(check.pattern);
       found = !!match;
     }
     if (!found && check.keywords) {
       for (const kw of check.keywords) {
-        if (text.includes(kw)) {
+        if (normalizedText.includes(kw.normalize("NFC"))) {
           found = true;
           match = [kw];
           break;
@@ -235,12 +237,12 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
   const pt = PLATFORM_RULES[platform];
   if (pt) {
     // 长度检查
-    if (type === "title" && pt.maxTitleLength && text.length > pt.maxTitleLength) {
+    if (type === "title" && pt.maxTitleLength && normalizedText.length > pt.maxTitleLength) {
       results.checks.push({
         id: "platform_length_title",
         rule: `${pt.name}标题不超过${pt.maxTitleLength}字符`,
         severity: "medium",
-        found: `当前${text.length}字符`,
+        found: `当前${normalizedText.length}字符`,
         suggestion: `建议精简到${pt.maxTitleLength}字符以内`,
       });
       results.summary.medium++;
@@ -249,7 +251,7 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
     // 禁词检查
     if (pt.bannedKeywords) {
       for (const kw of pt.bannedKeywords) {
-        if (text.toLowerCase().includes(kw.toLowerCase())) {
+        if (normalizedText.toLowerCase().includes(kw.toLowerCase())) {
           results.checks.push({
             id: "platform_banned_word",
             rule: `${pt.name}平台禁用词: ${kw}`,
@@ -271,13 +273,13 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
             id: "platform_special",
             rule: rule.rule,
             severity: "medium",
-            found: text.match(rule.pattern)?.[0],
+            found: normalizedText.match(rule.pattern)?.[0],
           });
           results.summary.medium++;
         }
         if (rule.keywords && rule.appliesTo === type) {
           for (const kw of rule.keywords) {
-            if (text.includes(kw)) {
+            if (normalizedText.includes(kw)) {
               results.checks.push({
                 id: "platform_content_review",
                 rule: rule.rule,
@@ -297,7 +299,7 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
   if (type === "hook" || type === "script") {
     for (const check of SHORT_VIDEO_CHECKS.hook) {
       if (check.pattern && check.pattern.test(text)) {
-        results.checks.push({ ...check, found: text.match(check.pattern)?.[0] });
+        results.checks.push({ ...check, found: normalizedText.match(check.pattern)?.[0] });
         results.summary[check.severity]++;
       }
     }
@@ -306,14 +308,14 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
   if (type === "script" || type === "caption") {
     for (const check of SHORT_VIDEO_CHECKS.caption) {
       if (check.maxEmoji) {
-        const emojiCount = (text.match(/[\uD800-\uDFFF]|[☀-⟿]|\ud83c[퀀-\udfff]|\ud83d[퀀-\udfff]|\ud83e[퀀-\udfff]/g) || []).length;
+        const emojiCount = (normalizedText.match(/[\uD800-\uDFFF]|[☀-⟿]|\ud83c[퀀-\udfff]|\ud83d[퀀-\udfff]|\ud83e[퀀-\udfff]/g) || []).length;
         if (emojiCount > check.maxEmoji) {
           results.checks.push({ ...check, found: `${emojiCount}个表情符号`, suggestion: `建议不超过${check.maxEmoji}个表情` });
           results.summary.low++;
         }
       }
       if (check.maxHashtags) {
-        const hashtagCount = (text.match(/#/g) || []).length;
+        const hashtagCount = (normalizedText.match(/#/g) || []).length;
         if (hashtagCount > check.maxHashtags) {
           results.checks.push({ ...check, found: `${hashtagCount}个标签`, suggestion: `建议不超过${check.maxHashtags}个标签` });
           results.summary.low++;
@@ -326,7 +328,7 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
     for (const check of SHORT_VIDEO_CHECKS.voiceover) {
       if (check.keywords) {
         for (const kw of check.keywords) {
-          if (text.includes(kw)) {
+          if (normalizedText.includes(kw)) {
             results.checks.push({ ...check, found: kw });
             results.summary[check.severity]++;
             results.passed = false;
