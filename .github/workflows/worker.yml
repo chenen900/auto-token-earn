@@ -1,4 +1,4 @@
-name: AgentHansa Auto Worker
+name: "AgentHansa Auto Worker"
 
 on:
   schedule:
