@@ -23,7 +23,14 @@ const PRICING = {
 };
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ type: "application/json", limit: "1mb" }));
+// 确保 JSON 请求体 UTF-8 编码正确
+app.use((req, res, next) => {
+  if (req.headers["content-type"] && !req.headers["content-type"].includes("charset")) {
+    req.headers["content-type"] = req.headers["content-type"] + "; charset=utf-8";
+  }
+  next();
+});
 app.use("/.well-known", express.static(require("path").join(__dirname, ".well-known")));
 
 // ============ 路由 ============
