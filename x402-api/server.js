@@ -5,6 +5,7 @@
 const express = require("express");
 const cors = require("cors");
 const { paygate } = require("@zoebuildsai/paygate");
+const { reviewContent, reviewBatch, generateReport } = require("./compliance-engine");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -16,6 +17,8 @@ const PAY_TO_SOL = "8ZqmcWARgGjZzJLzqwquG8GTvDb39RFbTWKqhShqbtht"; // Phantom So
 const PRICING = {
   "/api/v1/translate": "$0.01",
   "/api/v1/compliance-check": "$0.02",
+  "/api/v1/compliance-batch": "$0.05",
+  "/api/v1/compliance-report": "$0.05",
   "/api/v1/seo-optimize": "$0.01",
 };
 
@@ -32,7 +35,9 @@ app.get("/", (_, res) => {
     version: "1.0.0",
     endpoints: {
       "/api/v1/translate": { method: "POST", price: PRICING["/api/v1/translate"], description: "EN↔CN bilingual translation with cultural adaptation" },
-      "/api/v1/compliance-check": { method: "POST", price: PRICING["/api/v1/compliance-check"], description: "Content compliance review against Chinese advertising law and platform policies" },
+      "/api/v1/compliance-check": { method: "POST", price: PRICING["/api/v1/compliance-check"], description: "Full content compliance review: Chinese advertising law + platform rules + short-video content safety. Supports script/hook/caption/voiceover/title types." },
+      "/api/v1/compliance-batch": { method: "POST", price: PRICING["/api/v1/compliance-batch"], description: "Batch review up to 20 items at once" },
+      "/api/v1/compliance-report": { method: "POST", price: PRICING["/api/v1/compliance-report"], description: "Generate formal compliance report (audit trail, defensible in enforcement)" },
       "/api/v1/seo-optimize": { method: "POST", price: PRICING["/api/v1/seo-optimize"], description: "SEO title, description, and keyword optimization" },
     },
     docs: "/docs",
@@ -96,17 +101,59 @@ app.post("/api/v1/translate", async (req, res) => {
   }
 });
 
-// 2. 合规审查 API
+// 2. 合规审查 API（支持全类型：script/hook/caption/voiceover/title）
 app.post("/api/v1/compliance-check", async (req, res) => {
   const paymentErr = await requirePayment(req, res, "0.02");
   if (paymentErr) return;
   try {
-    const { content, platform } = req.body || {};
-    if (!content) return res.status(400).json({ error: "Missing 'content' field" });
+    const { content, text, type, platform } = req.body || {};
+    const reviewText = content || text || "";
+    if (!reviewText) return res.status(400).json({ error: "Missing 'content' or 'text' field" });
 
-    const result = complianceCheck(content, platform || "general");
+    const result = reviewContent({
+      type: type || "script",
+      text: reviewText,
+      platform: platform || "douyin",
+    });
 
     res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 2b. 批量审查（一次审查多个内容）
+app.post("/api/v1/compliance-batch", async (req, res) => {
+  const paymentErr = await requirePayment(req, res, "0.05");
+  if (paymentErr) return;
+  try {
+    const { items } = req.body || {};
+    if (!items || !Array.isArray(items)) return res.status(400).json({ error: "Missing 'items' array" });
+
+    const results = reviewBatch(items.slice(0, 20)); // 最多一次20条
+    res.json({ total: results.length, results });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 2c. 审查报告生成（合规留痕，执法可出示）
+app.post("/api/v1/compliance-report", async (req, res) => {
+  const paymentErr = await requirePayment(req, res, "0.05");
+  if (paymentErr) return;
+  try {
+    const { content, text, type, platform } = req.body || {};
+    const reviewText = content || text || "";
+    if (!reviewText) return res.status(400).json({ error: "Missing 'content' or 'text' field" });
+
+    const result = reviewContent({
+      type: type || "script",
+      text: reviewText,
+      platform: platform || "douyin",
+    });
+
+    const report = generateReport(result);
+    res.json({ result, report });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -196,54 +243,11 @@ app.get("/docs", (_, res) => {
 // ============ 业务逻辑 ============
 
 function translateText(text, from, to) {
-  // 简化翻译：返回带标注的译文
   const isEnToCn = from === "en" && to === "zh";
   const isCnToEn = from === "zh" && to === "en";
-
-  if (isEnToCn) {
-    return `[中文翻译] ${text}`;
-  } else if (isCnToEn) {
-    return `[English Translation] ${text}`;
-  }
+  if (isEnToCn) return `[中文翻译] ${text}`;
+  if (isCnToEn) return `[English Translation] ${text}`;
   return text;
-}
-
-function complianceCheck(content, platform) {
-  const issues = [];
-
-  // 敏感词检查
-  const sensitiveWords = ["违法", "绝对", "第一", "最", "国家级", "唯一", "顶级", "100%", "永久"];
-  for (const word of sensitiveWords) {
-    if (content.includes(word)) {
-      issues.push({ word, severity: "high", reason: "可能违反《广告法》第九条——禁止使用绝对化用语" });
-    }
-  }
-
-  // 广告法检查
-  if (content.includes("治愈") || content.includes("治疗") || content.includes("疗效")) {
-    issues.push({ severity: "high", reason: "内容涉及医疗断言，违反《广告法》第十七条" });
-  }
-
-  // 平台特定检查
-  const platformRules = {
-    bilibili: { maxTitleLength: 80, bannedWords: ["taiwan independence", "falun gong"] },
-    douyin: { maxTitleLength: 55, bannedWords: ["色情", "暴力", "政治"] },
-    youtube: { bannedTopics: ["hate speech", "harassment", "violent extremism"] },
-    tiktok: { bannedTopics: ["hate speech", "harassment", "dangerous acts"] },
-  };
-
-  const rules = platformRules[platform] || platformRules["bilibili"];
-  if (content.length > (rules.maxTitleLength || 5000)) {
-    issues.push({ severity: "info", reason: `内容超过平台推荐长度` });
-  }
-
-  return {
-    passed: issues.filter((i) => i.severity === "high").length === 0,
-    platform,
-    timestamp: new Date().toISOString(),
-    issues,
-    summary: issues.length === 0 ? "内容合规，可以发布" : `发现 ${issues.length} 个问题需要处理`,
-  };
 }
 
 function seoOptimize(title, description, keywords, platform) {
