@@ -6,6 +6,7 @@ const express = require("express");
 const cors = require("cors");
 const { paygate } = require("@zoebuildsai/paygate");
 const { reviewContent, reviewBatch, generateReport } = require("./compliance-engine");
+const { trackFromRequest, getStats } = require("./usage-tracker");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -75,6 +76,19 @@ app.get("/health", (_, res) => {
   });
 });
 
+// 收益仪表板
+app.get("/dashboard", (_, res) => {
+  const stats = getStats();
+  res.json({
+    title: "MediaCraft AI — 收益仪表板",
+    ...stats,
+    summary: {
+      总调用: Object.values(stats.calls).reduce((a, b) => a + b, 0),
+      预估收益: "$" + stats.earnings.total.toFixed(2),
+    },
+  });
+});
+
 // ============ x402 支付中间层 ============
 
 const PAYMENT_CONFIG = {
@@ -115,6 +129,7 @@ app.post("/api/v1/translate", async (req, res) => {
     // 翻译逻辑
     const result = translateText(text, sourceLang, targetLang);
 
+    trackFromRequest(req, "/api/v1/translate", "$0.01");
     res.json({
       original: text,
       translated: result,
@@ -154,6 +169,7 @@ app.post("/api/v1/compliance-check", async (req, res) => {
       directMatch,
       engineVersion: "v2.1.0-unicode-fix",
     };
+    trackFromRequest(req, "/api/v1/compliance-check", "$0.02");
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -169,6 +185,7 @@ app.post("/api/v1/compliance-batch", async (req, res) => {
     if (!items || !Array.isArray(items)) return res.status(400).json({ error: "Missing 'items' array" });
 
     const results = reviewBatch(items.slice(0, 20)); // 最多一次20条
+    trackFromRequest(req, "/api/v1/compliance-batch", "$0.05");
     res.json({ total: results.length, results });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -191,6 +208,7 @@ app.post("/api/v1/compliance-report", async (req, res) => {
     });
 
     const report = generateReport(result);
+    trackFromRequest(req, "/api/v1/compliance-report", "$0.05");
     res.json({ result, report });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -207,6 +225,7 @@ app.post("/api/v1/seo-optimize", async (req, res) => {
 
     const result = seoOptimize(title, description || "", keywords || [], platform || "youtube");
 
+    trackFromRequest(req, "/api/v1/seo-optimize", "$0.01");
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: e.message });
