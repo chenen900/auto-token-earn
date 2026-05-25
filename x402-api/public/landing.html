@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediaCraft AI — 内容合规审查 API</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(135deg,#0f172a,#1e293b);color:#e2e8f0;min-height:100vh}
+.container{max-width:900px;margin:0 auto;padding:60px 20px}
+h1{font-size:3em;background:linear-gradient(135deg,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px}
+.sub{color:#94a3b8;font-size:1.2em;margin-bottom:40px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:32px;margin-bottom:24px}
+.card h2{color:#60a5fa;margin-bottom:12px}
+.card p{color:#cbd5e1;line-height:1.8}
+.endpoint{background:#0f172a;border-radius:8px;padding:16px;margin:10px 0;display:flex;align-items:center;gap:12px}
+.endpoint .method{background:#34d399;color:#0f172a;padding:4px 10px;border-radius:6px;font-weight:700;font-size:0.9em}
+.endpoint .path{color:#e2e8f0;font-family:monospace;flex:1}
+.endpoint .price{color:#fbbf24;font-weight:700}
+.btn{display:inline-block;background:linear-gradient(135deg,#60a5fa,#34d399);color:#0f172a;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;margin-top:16px}
+code{background:#0f172a;padding:2px 8px;border-radius:4px;color:#34d399}
+.footer{margin-top:40px;text-align:center;color:#64748b;font-size:0.9em}
+.price-box{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
+.price-item{background:#0f172a;border-radius:8px;padding:20px;text-align:center}
+.price-item .num{font-size:2em;color:#34d399;font-weight:700}
+.price-item .label{color:#94a3b8;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>MediaCraft AI</h1>
+<p class="sub">AI-Powered Content Compliance & Translation for Cross-Border Creators</p>
+
+<div class="price-box">
+<div class="price-item"><div class="num">$0.01</div><div class="label">Translation / call</div></div>
+<div class="price-item"><div class="num">$0.02</div><div class="label">Compliance / call</div></div>
+<div class="price-item"><div class="num">$0.01</div><div class="label">SEO / call</div></div>
+</div>
+
+<div class="card">
+<h2>Available Endpoints</h2>
+<div class="endpoint"><span class="method">POST</span><span class="path">/api/v1/translate</span><span class="price">$0.01</span></div>
+<p>EN↔CN bilingual translation with cultural adaptation.</p>
+
+<div class="endpoint"><span class="method">POST</span><span class="path">/api/v1/compliance-check</span><span class="price">$0.02</span></div>
+<p>Full content compliance review against Chinese Advertising Law + Douyin/Bilibili/Xiaohongshu/TikTok/YouTube rules. Supports script, hook, caption, voiceover, and title checks.</p>
+
+<div class="endpoint"><span class="method">POST</span><span class="path">/api/v1/compliance-batch</span><span class="price">$0.05</span></div>
+<p>Batch review up to 20 items at once.</p>
+
+<div class="endpoint"><span class="method">POST</span><span class="path">/api/v1/compliance-report</span><span class="price">$0.05</span></div>
+<p>Generate formal compliance audit report — defensible if enforcement hits.</p>
+
+<div class="endpoint"><span class="method">POST</span><span class="path">/api/v1/seo-optimize</span><span class="price">$0.01</span></div>
+<p>SEO title, description, and keyword optimization for YouTube/Bilibili/Douyin/Medium.</p>
+</div>
+
+<div class="card">
+<h2>Quick Test</h2>
+<p>Send a POST request with your content:</p>
+<p><code>curl -X POST https://mediacraft-x402-api.onrender.com/api/v1/compliance-check -H 'Content-Type: application/json' -d '{"text":"Your script here","platform":"douyin","type":"script"}'</code></p>
+<a class="btn" href="/.well-known/x402">View x402 Discovery →</a>
+</div>
+
+<p class="footer">Powered by x402 Protocol | USDC on Solana & Base | mediacraft-x402-api.onrender.com</p>
+</div>
+</body>
+</html>

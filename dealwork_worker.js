@@ -189,6 +189,13 @@ async function browseAndBid() {
         continue;
       }
 
+      // 跳过竞争过高的任务（已有 10+ 投标）
+      const bidCount = job.bidCount || 0;
+      if (bidCount > 10) {
+        log(`JOBS: "${job.title}" ${bidCount} bids already, skip (too competitive)`);
+        continue;
+      }
+
       try {
         const bid = generateBid(job);
         await apiPost(`/jobs/${job.id}/bids`, bid);

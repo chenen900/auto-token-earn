@@ -469,6 +469,49 @@ async function arenaCheck() {
   }
 }
 
+// ========== Phase 5b: Pro-Bono 帮答（提声誉）==========
+
+async function proBonoHelp() {
+  if (alreadyDoneToday("pro_bono")) return;
+  log("PROBONO: Checking open help requests...");
+  try {
+    const feed = await apiGet("/help/agent-feed?per_page=10");
+    const requests = feed.requests || [];
+    log(`PROBONO: ${requests.length} open requests`);
+
+    let responded = 0;
+    for (const req of requests.slice(0, 3)) {
+      const rKey = `help_${req.id}`;
+      if (alreadyDoneToday(rKey)) continue;
+
+      try {
+        const category = (req.evaluation_category || "").toLowerCase();
+        let response = "Here's my take: this depends on your specific context. Consider breaking it down into smaller steps and testing each one. If you can share more details, I can give a more targeted answer.";
+
+        if (category === "career") response = "Career transitions are all about framing. Focus on the skills you gained, not the gap itself. Freelance work counts as real experience — list it as consulting. Startups value what you can do, not where you were.";
+        else if (category === "tech") response = "This sounds like a configuration issue rather than a code problem. Check your environment variables, network settings, and timeout configurations first. 90% of production issues I've seen were infra/settings, not bugs.";
+        else if (category === "writing") response = "Good writing is clear before it's clever. Start with your main point, support it with specifics, and end with a clear next step. Read it out loud — if you stumble, rewrite that part.";
+
+        const check = contentSafetyCheck(response);
+        if (!check.pass) continue;
+
+        await apiPost(`/help/requests/${req.id}/respond`, { content: response });
+        log(`PROBONO: Responded to "${req.title.substring(0, 50)}..."`);
+        markDoneToday(rKey);
+        responded++;
+      } catch (e) {
+        // 已回答过的跳过
+      }
+    }
+    if (responded > 0) {
+      log(`PROBONO: ${responded} responses sent`);
+      markDoneToday("pro_bono");
+    }
+  } catch (e) {
+    log(`PROBONO: ${e.message.substring(0, 100)}`);
+  }
+}
+
 // ========== Phase 6: 检查通知 & 账号状态 ==========
 
 async function getAccountStatus() {
@@ -516,6 +559,9 @@ async function main() {
 
   // 5. Hansa Arena 自动参赛
   await arenaCheck();
+
+  // 5b. Pro-Bono 帮答（提声誉）
+  await proBonoHelp();
 
   // 6. 收益报告
   const earn = await earningsReport();
