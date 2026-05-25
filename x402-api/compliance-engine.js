@@ -2,89 +2,34 @@
 // 覆盖：广告法 + 平台规则 + 内容安全
 // 用法: const result = reviewContent({ type: "script", text: "...", platform: "douyin" })
 
-// ============ 广告法检查（9条核心禁令）============
-const AD_LAW_CHECKS = [
-  {
-    id: "ad_law_9_1",
-    rule: "禁止使用国家/国家机关名义",
-    pattern: /国家(?:机关|部门|领导人|主席|总理|部委)|国务院|中央军委/,
-    severity: "critical",
-    suggestion: "删除涉及国家机关的表述",
-  },
-  {
-    id: "ad_law_9_2",
-    rule: "禁止使用绝对化用语",
-    keywords: ["国家级", "世界级", "最高级", "最佳", "最好", "第一品牌", "顶级", "极品", "至尊", "独一无二", "绝无仅有", "万能", "100%有效", "零风险", "永久解决", "彻底根除"],
-    severity: "high",
-    suggestion: "将绝对化用语改为具体数据或事实描述",
-  },
-  {
-    id: "ad_law_9_3",
-    rule: "禁止妨碍社会安定、损害社会公共利益",
-    pattern: /颠覆|推翻|暴乱|骚乱|动乱|社会不稳|制造恐慌/,
-    severity: "critical",
-    suggestion: "删除可能引发社会不安的表述",
-  },
-  {
-    id: "ad_law_9_4",
-    rule: "禁止淫秽、色情、赌博、迷信、恐怖、暴力内容",
-    keywords: ["色情", "淫秽", "赌博", "博彩", "六合彩", "算命", "风水转运", "恐怖袭击", "暴力美学", "血腥"],
-    pattern: /裸[体露]|性[交爱行为]|[赌博]博|风水改运/,
-    severity: "critical",
-    suggestion: "删除违规内容",
-  },
-  {
-    id: "ad_law_17",
-    rule: "禁止涉及疾病治疗功能（非药品/医疗器械/医疗服务广告）",
-    pattern: /治疗|治愈|根除|康复|疗效|疗程|药效|主治|防治|防癌|抗癌|降[血压糖脂]|增强免疫力|排毒/,
-    severity: "high",
-    suggestion: "普通商品不得宣称疾病治疗功能，删除医疗相关表述",
-  },
-  {
-    id: "ad_law_18",
-    rule: "保健食品广告禁止含有表示功效的断言或保证",
-    pattern: /保健|滋补|养生.*保证|肯定有效|吃了就|一[吃用]就|见效快|立竿见影|迅速见效/,
-    severity: "high",
-    suggestion: "保健品广告需标明'本品不能代替药物'，删除功效保证",
-  },
-  {
-    id: "ad_law_20",
-    rule: "禁止欺骗、误导消费者",
-    keywords: ["虚假", "虚构", "捏造", "造假", "刷单", "刷量", "水军", "假评论", "假排名"],
-    severity: "high",
-    suggestion: "删除虚假/误导性内容，确保信息真实可验证",
-  },
-  {
-    id: "ad_law_28",
-    rule: "禁止使用不真实数据/统计/调查结果作为引证",
-    pattern: /据[研究调查]|数据显示|统计表明|%的用户|%的人/,
-    severity: "medium",
-    suggestion: "引用数据需标注来源和有效期",
-  },
-  {
-    id: "ad_law_38",
-    rule: "禁止利用未成年人进行广告代言（特定品类）",
-    pattern: /小朋友[说介绍]|学生[说介绍]|孩子[说介绍推荐]|宝宝[说用]|[0-9]+岁.*推荐/,
-    severity: "high",
-    suggestion: "不得使用未满10周岁未成年人作为广告代言人",
-  },
-];
+// 广告法规则从 platform-rules.json 的 advertisingLaw.articles 加载
+// 中国短视频/内容合规审查引擎
+// 覆盖：广告法 + 平台规则 + 内容安全
+// 用法: const result = reviewContent({ type: "script", text: "...", platform: "douyin" })
 
-// ============ 平台特定规则（从 JSON 数据库加载）============
+// 广告法规则从 platform-rules.json 的 advertisingLaw.articles 加载
+// 平台规则从 platform-rules.json 的 platforms 加载
+
+// ============ 统一规则数据库加载 ============
 const path = require("path");
 const fs = require("fs");
-const PLATFORM_RULES = JSON.parse(
+const RULES_DB = JSON.parse(
   fs.readFileSync(path.join(__dirname, "platform-rules.json"), "utf-8")
-).platforms;
+);
+const PLATFORM_RULES = RULES_DB.platforms;
+const AD_LAW_CHECKS = RULES_DB.advertisingLaw.articles;
 
 // 将 JSON 中字符串 pattern 转为 RegExp
 for (const key of Object.keys(PLATFORM_RULES)) {
   const pt = PLATFORM_RULES[key];
   if (pt.specialRules) {
     pt.specialRules.forEach((r) => {
-      if (typeof r.pattern === "string" && r.pattern) r.pattern = new RegExp(r.pattern);
+      if (typeof r.pattern === "string" && r.pattern) r.pattern = new RegExp(r.pattern, "i");
     });
   }
+}
+for (const check of AD_LAW_CHECKS) {
+  if (typeof check.pattern === "string" && check.pattern) check.pattern = new RegExp(check.pattern, "i");
 }
 
 // ============ 通用内容安全检查 ============
