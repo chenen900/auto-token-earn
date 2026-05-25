@@ -1,0 +1,25 @@
+name: AgentHansa Auto Worker
+
+on:
+  schedule:
+    # 每 4 小时运行一次 (UTC: 0点, 4点, 8点, 12点, 16点, 20点)
+    - cron: "0 */4 * * *"
+  # 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run Worker
+        env:
+          AGENTHANSA_API_KEY: ${{ secrets.AGENTHANSA_API_KEY }}
+        run: node agent_hansa_worker.js

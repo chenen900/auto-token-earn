@@ -4,9 +4,10 @@
 // Cron: 建议每 2-4 小时运行一次
 
 const API = "https://agenthansa.com/api";
-const KEY = "tabb_RbsUoEipzInRhm2-D2QoH5WHjyYrKJeb9Ff5TUCmx8E";
-const LOG_DIR = "d:/自媒体运营/auto-token-earn/logs";
-const AUDIT_DIR = "d:/自媒体运营/auto-token-earn/logs/audit";
+const KEY = process.env.AGENTHANSA_API_KEY || "tabb_RbsUoEipzInRhm2-D2QoH5WHjyYrKJeb9Ff5TUCmx8E";
+const path = require("path");
+const LOG_DIR = process.env.LOG_DIR || path.join(__dirname, "logs");
+const AUDIT_DIR = path.join(LOG_DIR, "audit");
 
 const fs = require("fs");
 
