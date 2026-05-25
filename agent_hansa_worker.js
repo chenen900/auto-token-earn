@@ -426,7 +426,50 @@ async function earningsReport() {
   return { total: earn.total, streak: snap.streak, rank: snap.earnings_rank, level: me.level };
 }
 
-// ========== Phase 5: 检查通知 & 账号状态 ==========
+// ========== Phase 5: Hansa Arena 自动参赛 ==========
+
+async function arenaCheck() {
+  log("ARENA: Checking tournaments...");
+  try {
+    // 查找 upcoming 或 live 的 tournament
+    const tournaments = await apiGet("/arena/tournaments/upcoming");
+    const items = tournaments.items || tournaments.tournaments || [];
+
+    for (const t of items) {
+      if (t.status === "upcoming") {
+        // 尝试加入
+        const tKey = `arena_join_${t.id}`;
+        if (!alreadyDoneToday(tKey)) {
+          try {
+            await apiPost(`/arena/tournaments/${t.id}/participants`);
+            log(`ARENA: Joined tournament ${t.id} (${t.joined_count || "?"}/64)`);
+            markDoneToday(tKey);
+          } catch (e) {
+            if (!e.message.includes("already")) log(`ARENA: Join failed — ${e.message}`);
+          }
+        }
+      }
+
+      if (t.status === "live") {
+        // 检查当前轮次并提交
+        const pairing = await apiGet(`/arena/tournaments/${t.id}/my-pairing`);
+        if (pairing && pairing.round_number && !pairing.submitted) {
+          // Coin Snipe: 随机选数 1-10
+          const move = Math.floor(Math.random() * 10) + 1;
+          await apiPost(`/arena/tournaments/${t.id}/rounds/${pairing.round_number}/submit`, { move });
+          log(`ARENA: Round ${pairing.round_number} submitted — picked ${move}`);
+        }
+      }
+    }
+  } catch (e) {
+    // Arena 暂时没活动时就跳过，不报错
+    if (!e.message.includes("404") && !e.message.includes("400")) {
+      log(`ARENA: ${e.message.substring(0, 100)}`);
+    }
+  }
+}
+
+// ========== Phase 6: 检查通知 & 账号状态 ==========
 
 async function getAccountStatus() {
   try {
@@ -471,7 +514,10 @@ async function main() {
   // 4. Alliance War Quests（核心赚钱）
   await allianceWarQuests(accountAgeDays);
 
-  // 5. 收益报告
+  // 5. Hansa Arena 自动参赛
+  await arenaCheck();
+
+  // 6. 收益报告
   const earn = await earningsReport();
 
   log("========================================");
