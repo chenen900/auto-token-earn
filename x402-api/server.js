@@ -54,6 +54,19 @@ app.get("/", (_, res) => {
   });
 });
 
+// x402 付费测试端点（Agentic Market 验证用）
+app.get("/api/v1/paid-test", (req, res) => {
+  const paymentRequired = {
+    x402Version: 2,
+    network: "solana",
+    payTo: PAY_TO_SOL,
+    accepts: [{ scheme: "exact", price: "$0.01", asset: "USDC", network: "solana" }],
+    resource: `${req.protocol}://${req.get("host")}/api/v1/paid-test`,
+  };
+  res.setHeader("PAYMENT-REQUIRED", Buffer.from(JSON.stringify(paymentRequired)).toString("base64"));
+  res.status(402).json(paymentRequired);
+});
+
 // 健康检查 + 调试
 app.get("/health", (_, res) => {
   const { AD_LAW_CHECKS } = require("./compliance-engine");
@@ -101,13 +114,21 @@ async function requirePayment(req, res, price) {
     const config = { ...PAYMENT_CONFIG, priceUSDC: price };
     const result = await paygate(config, req);
     if (result !== null) {
-      res.setHeader("X-402-Version", "1.0");
-      res.setHeader("X-Payment-Required", `USDC ${price}`);
-      return res.status(402).json(result);
+      // x402 v2 标准：必须用 PAYMENT-REQUIRED header
+      const paymentRequired = {
+        x402Version: 2,
+        network: "solana",
+        payTo: PAY_TO_SOL,
+        accepts: [{ scheme: "exact", price: price, asset: "USDC", network: "solana" }],
+      };
+      res.setHeader(
+        "PAYMENT-REQUIRED",
+        Buffer.from(JSON.stringify(paymentRequired)).toString("base64")
+      );
+      return res.status(402).json(paymentRequired);
     }
     return null;
   } catch (e) {
-    // 支付模块故障时记录日志但放行（生产环境需切换为严格模式）
     console.error("Payment check error:", e.message);
     return null;
   }
