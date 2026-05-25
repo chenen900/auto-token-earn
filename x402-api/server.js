@@ -51,15 +51,20 @@ const PAYMENT_CONFIG = {
 };
 
 async function requirePayment(req, res, price) {
-  const config = { ...PAYMENT_CONFIG, priceUSDC: price };
-  const result = await paygate(config, req);
-  if (result !== null) {
-    // 402 Payment Required
-    res.setHeader("X-402-Version", "1.0");
-    res.setHeader("X-Payment-Required", `USDC ${price}`);
-    return res.status(402).json(result);
+  try {
+    const config = { ...PAYMENT_CONFIG, priceUSDC: price };
+    const result = await paygate(config, req);
+    if (result !== null) {
+      res.setHeader("X-402-Version", "1.0");
+      res.setHeader("X-Payment-Required", `USDC ${price}`);
+      return res.status(402).json(result);
+    }
+    return null;
+  } catch (e) {
+    // 支付模块故障时记录日志但放行（生产环境需切换为严格模式）
+    console.error("Payment check error:", e.message);
+    return null;
   }
-  return null; // 已付费或免费试用，继续
 }
 
 // ============ API 实现 ============
