@@ -130,6 +130,22 @@ app.post("/api/v1/seo-optimize", async (req, res) => {
 
 // ============ x402 发现端点 ============
 
+// Agent 发现清单
+app.get("/.well-known/agent.json", (_, res) => {
+  res.json({
+    name: "MediaCraft AI — Pay-Per-Call Services",
+    description: "Bilingual EN↔CN translation, content compliance review (Chinese advertising law), and SEO optimization — all via x402 pay-per-call.",
+    version: "1.0.0",
+    category: "ai-services",
+    tags: ["translation", "compliance", "seo", "chinese", "bilingual", "content"],
+    endpoints: [
+      { path: "/api/v1/translate", method: "POST", price: "0.01", description: "EN↔CN bilingual translation" },
+      { path: "/api/v1/compliance-check", method: "POST", price: "0.02", description: "Chinese advertising law compliance review" },
+      { path: "/api/v1/seo-optimize", method: "POST", price: "0.01", description: "SEO title/description/keyword optimization" },
+    ],
+  });
+});
+
 app.get("/.well-known/x402", (_, res) => {
   res.json({
     version: "1.0",
