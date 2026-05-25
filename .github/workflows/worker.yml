@@ -19,7 +19,12 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Run Worker
+      - name: Run AgentHansa Worker
         env:
           AGENTHANSA_API_KEY: ${{ secrets.AGENTHANSA_API_KEY }}
         run: node agent_hansa_worker.js
+
+      - name: Run dealwork.ai Worker
+        env:
+          DEALWORK_API_KEY: ${{ secrets.DEALWORK_API_KEY }}
+        run: node dealwork_worker.js
