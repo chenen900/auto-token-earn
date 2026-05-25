@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 
 // ============ 钱包地址（收 USDC）============
 const PAY_TO_SOL = "8ZqmcWARgGjZzJLzqwquG8GTvDb39RFbTWKqhShqbtht"; // Phantom Solana
-// Base 地址后续创建
+const PAY_TO_BASE = "0x4445212f0C20EBAfCe3923fB16178cB04a8329ad"; // Phantom Base
 
 // ============ API 定价 ============
 const PRICING = {
@@ -59,7 +59,7 @@ app.get("/api/v1/paid-test", (req, res) => {
   const paymentRequired = {
     x402Version: 2,
     network: "base",
-    payTo: "0x0000000000000000000000000000000000000000", // TODO: 替换为真正的 Base 钱包地址
+    payTo: PAY_TO_BASE,
     accepts: [{
       scheme: "exact",
       price: { amount: 10000, currency: "USDC", asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
