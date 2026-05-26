@@ -32,6 +32,8 @@ app.use((req, res, next) => {
   }
   next();
 });
+app.get("/toolbox", (_, res) => res.sendFile(require("path").join(__dirname, "public", "toolbox.html")));
+
 app.use("/.well-known", express.static(require("path").join(__dirname, ".well-known")));
 
 // API 黄页查询（免费，无需认证）
