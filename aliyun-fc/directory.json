@@ -1,0 +1,446 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-05-26",
+  "description": "AI Agent API Directory — curated, structured, agent-first. Updated daily.",
+  "stats": { "total": 42, "categories": 7 },
+  "categories": {
+    "ai-services": { "label": "AI 服务", "priority": 1 },
+    "data": { "label": "数据", "priority": 2 },
+    "dev-tools": { "label": "开发工具", "priority": 4 },
+    "ecommerce": { "label": "电商", "priority": 5 },
+    "social-media": { "label": "社交媒体", "priority": 6 },
+    "finance": { "label": "金融", "priority": 3 },
+    "utility": { "label": "通用工具", "priority": 7 }
+  },
+  "apis": [
+    {
+      "name": "MediaCraft AI — Compliance Check",
+      "url": "https://mediacraft-x402-api.onrender.com/api/v1/compliance-check",
+      "method": "POST",
+      "category": "ai-services",
+      "tags": ["compliance","chinese-law","advertising","douyin","tiktok","content-review"],
+      "description": "AI content compliance review. Chinese Advertising Law + 17 platform rules (Douyin/TikTok/YouTube/Amazon/etc).",
+      "price": "$0.02/call",
+      "freeTrial": 100,
+      "x402": true,
+      "auth": "payment",
+      "featured": true
+    },
+    {
+      "name": "MediaCraft AI — Translation",
+      "url": "https://mediacraft-x402-api.onrender.com/api/v1/translate",
+      "method": "POST",
+      "category": "ai-services",
+      "tags": ["translation","chinese","english","bilingual"],
+      "description": "EN↔CN bilingual translation with cultural adaptation.",
+      "price": "$0.01/call",
+      "freeTrial": 100,
+      "x402": true,
+      "auth": "payment",
+      "featured": true
+    },
+    {
+      "name": "MediaCraft AI — SEO Optimize",
+      "url": "https://mediacraft-x402-api.onrender.com/api/v1/seo-optimize",
+      "method": "POST",
+      "category": "ai-services",
+      "tags": ["seo","title","description","keywords","youtube","bilibili"],
+      "description": "SEO title, description, and keyword optimization for content platforms.",
+      "price": "$0.01/call",
+      "freeTrial": 100,
+      "x402": true,
+      "auth": "payment",
+      "featured": true
+    },
+    {
+      "name": "Open-Meteo Weather",
+      "url": "https://api.open-meteo.com/v1/forecast",
+      "method": "GET",
+      "category": "data",
+      "tags": ["weather","forecast","free","no-auth"],
+      "description": "Free weather forecast API. No API key required. Global coverage.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Exchange Rate API",
+      "url": "https://open.er-api.com/v6/latest/USD",
+      "method": "GET",
+      "category": "finance",
+      "tags": ["exchange-rate","currency","free","no-auth"],
+      "description": "Free currency exchange rates. Updated daily. No API key.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "GitHub REST API",
+      "url": "https://api.github.com",
+      "method": "GET",
+      "category": "dev-tools",
+      "tags": ["github","git","repos","issues","code"],
+      "description": "GitHub's official REST API. Repos, issues, PRs, users.",
+      "price": "free (rate limited)",
+      "auth": "token"
+    },
+    {
+      "name": "REST Countries",
+      "url": "https://restcountries.com/v3.1/all",
+      "method": "GET",
+      "category": "data",
+      "tags": ["countries","geography","free","no-auth"],
+      "description": "Information about countries: name, capital, population, currency, languages.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "JSONPlaceholder",
+      "url": "https://jsonplaceholder.typicode.com",
+      "method": "GET",
+      "category": "dev-tools",
+      "tags": ["mock","testing","fake-data","free"],
+      "description": "Free fake API for testing and prototyping. Posts, users, comments, etc.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "The Dog API",
+      "url": "https://api.thedogapi.com/v1/images/search",
+      "method": "GET",
+      "category": "data",
+      "tags": ["images","animals","free"],
+      "description": "Random dog images. Free tier available.",
+      "price": "free (with key)",
+      "auth": "api-key"
+    },
+    {
+      "name": "PokéAPI",
+      "url": "https://pokeapi.co/api/v2/pokemon/ditto",
+      "method": "GET",
+      "category": "data",
+      "tags": ["pokemon","gaming","free","no-auth"],
+      "description": "All Pokémon data you'll ever need. Free, no auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Open Trivia Database",
+      "url": "https://opentdb.com/api.php?amount=10",
+      "method": "GET",
+      "category": "data",
+      "tags": ["trivia","quiz","questions","free"],
+      "description": "Free trivia questions API. Multiple categories and difficulties.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Dictionary API",
+      "url": "https://api.dictionaryapi.dev/api/v2/entries/en/hello",
+      "method": "GET",
+      "category": "data",
+      "tags": ["dictionary","words","english","free","no-auth"],
+      "description": "Free English dictionary with definitions, phonetics, examples.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Quotable",
+      "url": "https://api.quotable.io/random",
+      "method": "GET",
+      "category": "data",
+      "tags": ["quotes","inspiration","free","no-auth"],
+      "description": "Free random quotes API. Filter by author, tag, length.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Bored API",
+      "url": "https://www.boredapi.com/api/activity",
+      "method": "GET",
+      "category": "data",
+      "tags": ["activities","random","fun","free"],
+      "description": "Random activity suggestions when you're bored.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "IP-API",
+      "url": "http://ip-api.com/json/24.48.0.1",
+      "method": "GET",
+      "category": "utility",
+      "tags": ["ip","geolocation","free"],
+      "description": "IP geolocation API. Free for non-commercial use (45 req/min).",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Universities List",
+      "url": "http://universities.hipolabs.com/search?country=United+States",
+      "method": "GET",
+      "category": "data",
+      "tags": ["education","universities","free","no-auth"],
+      "description": "Search universities by country. Free, no auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "CoinGecko API",
+      "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      "method": "GET",
+      "category": "finance",
+      "tags": ["crypto","bitcoin","prices","free"],
+      "description": "Crypto price and market data. Free tier available.",
+      "price": "free (with key)",
+      "auth": "api-key"
+    },
+    {
+      "name": "NewsAPI",
+      "url": "https://newsapi.org/v2/top-headlines?country=us",
+      "method": "GET",
+      "category": "data",
+      "tags": ["news","headlines","articles"],
+      "description": "Worldwide news headlines. Free tier: 100 req/day.",
+      "price": "free (limited)",
+      "auth": "api-key"
+    },
+    {
+      "name": "JokeAPI",
+      "url": "https://v2.jokeapi.dev/joke/Any?safe-mode",
+      "method": "GET",
+      "category": "data",
+      "tags": ["jokes","fun","free","no-auth"],
+      "description": "Free jokes API. Programming, dark, pun, etc. Safe mode available.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Nager.Date",
+      "url": "https://date.nager.at/api/v3/PublicHolidays/2026/CN",
+      "method": "GET",
+      "category": "data",
+      "tags": ["holidays","calendar","free","no-auth"],
+      "description": "Free public holidays API for 100+ countries.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Numbers API",
+      "url": "http://numbersapi.com/42/math",
+      "method": "GET",
+      "category": "data",
+      "tags": ["numbers","trivia","math","free"],
+      "description": "Interesting facts about numbers. Free.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Random User Generator",
+      "url": "https://randomuser.me/api/",
+      "method": "GET",
+      "category": "dev-tools",
+      "tags": ["random","users","testing","mock-data"],
+      "description": "Generate random user data for testing. Free, no auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "HTTP Cat",
+      "url": "https://http.cat/404",
+      "method": "GET",
+      "category": "dev-tools",
+      "tags": ["http","status-codes","cats","fun"],
+      "description": "HTTP status codes illustrated with cat photos.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Genderize.io",
+      "url": "https://api.genderize.io?name=john",
+      "method": "GET",
+      "category": "data",
+      "tags": ["name","gender","prediction","free"],
+      "description": "Predict gender from a first name. Free up to 1000 names/day.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Open Library API",
+      "url": "https://openlibrary.org/api/books?bibkeys=ISBN:0201558025&format=json",
+      "method": "GET",
+      "category": "data",
+      "tags": ["books","library","isbn","free"],
+      "description": "Free book data from Open Library. No auth required.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "TinyURL API",
+      "url": "https://tinyurl.com/api-create.php?url=https://example.com",
+      "method": "GET",
+      "category": "utility",
+      "tags": ["url","shorten","free"],
+      "description": "Free URL shortener. No auth required.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Memegen.link",
+      "url": "https://api.memegen.link/images/buzz/memes/memes_everywhere.jpg",
+      "method": "GET",
+      "category": "utility",
+      "tags": ["meme","image","fun","free"],
+      "description": "Generate meme images via URL. Free, no auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Agify.io",
+      "url": "https://api.agify.io?name=michael",
+      "method": "GET",
+      "category": "data",
+      "tags": ["name","age","prediction","free"],
+      "description": "Predict age from a first name. Free, no auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Deck of Cards API",
+      "url": "https://deckofcardsapi.com/api/deck/new/shuffle/",
+      "method": "GET",
+      "category": "utility",
+      "tags": ["cards","games","free"],
+      "description": "Simulate a deck of cards. Shuffle, draw, reshuffle. Free.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "NASA APOD",
+      "url": "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY",
+      "method": "GET",
+      "category": "data",
+      "tags": ["nasa","space","astronomy","images","free"],
+      "description": "NASA Astronomy Picture of the Day. Free with DEMO_KEY.",
+      "price": "free (rate limited)",
+      "auth": "api-key"
+    },
+    {
+      "name": "ZipCodeAPI",
+      "url": "https://api.zippopotam.us/us/90210",
+      "method": "GET",
+      "category": "data",
+      "tags": ["zipcode","postal","location","free"],
+      "description": "Free postal/zip code lookup. 60+ countries. No auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Gutendex",
+      "url": "https://gutendex.com/books/",
+      "method": "GET",
+      "category": "data",
+      "tags": ["books","project-gutenberg","free","literature"],
+      "description": "Free JSON API for Project Gutenberg ebooks. No auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Excuser",
+      "url": "https://excuser-three.vercel.app/v1/excuse/office/",
+      "method": "GET",
+      "category": "data",
+      "tags": ["excuses","fun","free"],
+      "description": "Generate random excuses. Office, school, etc. Free.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Disify",
+      "url": "https://www.disify.com/api/verify/email/test@example.com",
+      "method": "GET",
+      "category": "utility",
+      "tags": ["email","validation","free"],
+      "description": "Validate email addresses (format + disposable check). Free.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "QR Code API",
+      "url": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=HelloWorld",
+      "method": "GET",
+      "category": "utility",
+      "tags": ["qr-code","image","free"],
+      "description": "Generate QR code images via URL. Free, no auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Binance Public API",
+      "url": "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
+      "method": "GET",
+      "category": "finance",
+      "tags": ["crypto","trading","price","binance","free"],
+      "description": "Binance public market data. Free, no auth for public endpoints.",
+      "price": "free (public endpoints)",
+      "auth": "none"
+    },
+    {
+      "name": "CoinDesk Bitcoin Price",
+      "url": "https://api.coindesk.com/v1/bpi/currentprice.json",
+      "method": "GET",
+      "category": "finance",
+      "tags": ["bitcoin","price","free","no-auth"],
+      "description": "Bitcoin Price Index. Free, no auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "wttr.in",
+      "url": "https://wttr.in/London?format=j1",
+      "method": "GET",
+      "category": "utility",
+      "tags": ["weather","terminal","free"],
+      "description": "Weather in your terminal or as JSON. Free, no auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Hacker News API",
+      "url": "https://hacker-news.firebaseio.com/v0/topstories.json",
+      "method": "GET",
+      "category": "data",
+      "tags": ["hackernews","tech","news","free"],
+      "description": "Hacker News stories, comments, jobs. Free Firebase API.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Colors API",
+      "url": "https://www.thecolorapi.com/id?hex=0047AB",
+      "method": "GET",
+      "category": "utility",
+      "tags": ["color","design","hex","rgb","free"],
+      "description": "Color conversion and information. Free, no auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Imgflip API",
+      "url": "https://api.imgflip.com/get_memes",
+      "method": "GET",
+      "category": "utility",
+      "tags": ["memes","images","templates","fun"],
+      "description": "Popular meme templates. Free, no auth.",
+      "price": "free",
+      "auth": "none"
+    },
+    {
+      "name": "Postman Echo",
+      "url": "https://postman-echo.com/get?foo=bar",
+      "method": "GET",
+      "category": "dev-tools",
+      "tags": ["echo","testing","http","free"],
+      "description": "Echo service for testing HTTP requests. Free, no auth.",
+      "price": "free",
+      "auth": "none"
+    }
+  ]
+}

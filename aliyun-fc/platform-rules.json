@@ -1,0 +1,199 @@
+{
+  "version": "2.0.0",
+  "lastUpdated": "2026-05-25",
+  "description": "MediaCraft AI 平台规则数据库 — 更新规则只需改此文件，无需动代码。支持 PR 贡献。",
+  "platforms": {
+    "douyin": {
+      "name": "抖音",
+      "region": "cn",
+      "maxTitleLength": 55,
+      "maxDescriptionLength": 200,
+      "bannedKeywords": ["政治","时政","国家领导人","taiwan","香港","法轮功","代购","加微信","私聊","转账","红包","色情","低俗","擦边","裸露","性感","暴力","血腥","自残","自杀","赌博","彩票","时时彩","假货","高仿","A货","原单"],
+      "specialRules": [
+        {"rule":"不得使用平台比较性用语","pattern":"抖音最|全网第一|平台第一|全站最"},
+        {"rule":"禁止诱导点赞/关注/转发","pattern":"点赞[一-龥]*[送给发抽]"},
+        {"rule":"医疗健康内容需资质认证","pattern":"医[疗生].*[建议议推荐]|治[疗愈].*方[法案]"}
+      ]
+    },
+    "kuaishou": {
+      "name": "快手",
+      "region": "cn",
+      "maxTitleLength": 50,
+      "maxDescriptionLength": 150,
+      "bannedKeywords": ["政治","时政","领导人","代购","加微信","私聊","红包","色情","低俗","暴力","血腥","赌博","彩票","假货","高仿","刷单","刷量"],
+      "specialRules": [
+        {"rule":"禁止虚假宣传农产品功效","pattern":"[治减增].*[肥压胖]|[抗防].*[癌老]|排毒|祛湿"},
+        {"rule":"禁止直播间夸大宣传","pattern":"亏本|清仓.*最后|仅此一天|全网独家"}
+      ]
+    },
+    "bilibili": {
+      "name": "B站",
+      "region": "cn",
+      "maxTitleLength": 80,
+      "maxDescriptionLength": 2000,
+      "bannedKeywords": ["政治敏感","六四","tiananmen","代刷","刷播放量","刷弹幕","盗版","破解","外挂"],
+      "specialRules": [
+        {"rule":"转载内容需标注原作者及来源","appliesTo":"repost"},
+        {"rule":"商业推广需明确标注","pattern":"感谢.*赞助|感谢.*品牌|[合联]作推广"}
+      ]
+    },
+    "xiaohongshu": {
+      "name": "小红书",
+      "region": "cn",
+      "maxTitleLength": 20,
+      "maxDescriptionLength": 1000,
+      "bannedKeywords": ["代购","加微信","私信我","私聊","假货","高仿","原单","医疗","治疗","处方药","算命","风水","转运"],
+      "specialRules": [
+        {"rule":"种草笔记需注明商业合作","appliesTo":"commercial"},
+        {"rule":"不得虚构使用体验","keywords":["亲测","实测","自用","空瓶"]},
+        {"rule":"图片不得过度修图误导","appliesTo":"image"}
+      ]
+    },
+    "weibo": {
+      "name": "微博",
+      "region": "cn",
+      "maxTitleLength": 140,
+      "maxDescriptionLength": 2000,
+      "bannedKeywords": ["政治敏感","造谣","传谣","人肉","网络暴力","代购","假货"],
+      "specialRules": [
+        {"rule":"不得发布未核实的社会热点评论","pattern":"据[网传悉闻].*事件|爆料.*真相|内幕.*曝光"},
+        {"rule":"不得煽动群体对立","pattern":"男[女权拳]|[女拳]师|性别对立|地域[歧视黑]"}
+      ]
+    },
+    "wechat_channels": {
+      "name": "微信视频号",
+      "region": "cn",
+      "maxTitleLength": 50,
+      "maxDescriptionLength": 500,
+      "bannedKeywords": ["政治","领导人","法轮功","代购","加微信","引流","刷量","刷粉","色情","暴力","赌博"],
+      "specialRules": [
+        {"rule":"禁止诱导分享到朋友圈/群","pattern":"转发.*[给到]|分享.*[给到]|扩散.*群"},
+        {"rule":"禁止AI生成内容未标注","pattern":null,"appliesTo":"ai-generated"}
+      ]
+    },
+    "taobao_live": {
+      "name": "淘宝直播",
+      "region": "cn",
+      "maxTitleLength": 32,
+      "maxDescriptionLength": 200,
+      "bannedKeywords": ["微信","加微信","私聊","线下交易","转账","假货","A货","高仿","原单","违禁品","枪支","弹药","毒品"],
+      "specialRules": [
+        {"rule":"禁止使用绝对化描述产品","pattern":"最[好高强]|第一|唯一|顶级|绝对"},
+        {"rule":"禁止医疗效果承诺","pattern":"[治根保].*[愈疗好]|永不复发|彻底解决"},
+        {"rule":"价格需真实，禁止虚假原价","pattern":"原价.*[0-9]{4,}|专柜价|吊牌价"}
+      ]
+    },
+    "pinduoduo": {
+      "name": "拼多多",
+      "region": "cn",
+      "maxTitleLength": 50,
+      "maxDescriptionLength": 300,
+      "bannedKeywords": ["微信","加微信","私聊","刷单","刷量","假货","高仿","A货","违禁"],
+      "specialRules": [
+        {"rule":"禁止虚假低价","pattern":"亏本|血亏|不要钱|白送|免费领"},
+        {"rule":"禁止虚假库存告急","pattern":"最后.*[件个单]|仅剩|马上.*[没无下]|即将.*[下架涨]"}
+      ]
+    },
+    "tiktok": {
+      "name": "TikTok",
+      "region": "global",
+      "maxTitleLength": 150,
+      "maxDescriptionLength": 2200,
+      "bannedKeywords": ["hate speech","harassment","bullying","nudity","sexual content","child safety","violent extremism","dangerous acts","self-harm","suicide","illegal goods","weapons","misinformation","fake news","spam","scam"],
+      "specialRules": [
+        {"rule":"FTC disclosure required for paid partnerships","appliesTo":"commercial"},
+        {"rule":"TikTok Shop products must follow commerce policies","appliesTo":"ecommerce"}
+      ]
+    },
+    "youtube": {
+      "name": "YouTube",
+      "region": "global",
+      "maxTitleLength": 100,
+      "maxDescriptionLength": 5000,
+      "bannedKeywords": ["hate speech","harassment","cyberbullying","violent extremism","dangerous content","spam","scam","misleading","copyright infringement","impersonation"],
+      "specialRules": [
+        {"rule":"FTC disclosure for paid promotions","pattern":"paid.*promo|sponsored|#ad|#sponsored"},
+        {"rule":"Copyright: no unlicensed music/footage","appliesTo":"video"},
+        {"rule":"No misleading titles/thumbnails (spam policy)","appliesTo":"metadata"}
+      ]
+    },
+    "amazon": {
+      "name": "Amazon",
+      "region": "global",
+      "maxTitleLength": 200,
+      "maxDescriptionLength": 2000,
+      "bannedKeywords": ["warranty void","fake","counterfeit","illegal","drugs","weapons","recalled","hazardous"],
+      "specialRules": [
+        {"rule":"No price/availability claims in title","pattern":"\\$[0-9]+|best price|cheapest|lowest price|on sale|discount"},
+        {"rule":"No promotional language in title","pattern":"best selling|top rated|#1|number one|premium|exclusive"},
+        {"rule":"No health claims without FDA approval","pattern":"treats|cures|prevents|heals|diagnoses|[抗防].*[癌病]"},
+        {"rule":"FCC/FDA compliance required for electronic/medical products","appliesTo":"regulated"},
+        {"rule":"No competitor comparisons","pattern":"better than|vs\\.|compared to"}
+      ]
+    },
+    "instagram": {
+      "name": "Instagram",
+      "region": "global",
+      "maxTitleLength": 2200,
+      "maxDescriptionLength": 2200,
+      "bannedKeywords": ["hate speech","harassment","bullying","nudity","sexual content","self-harm","violence","illegal goods","weapons","drugs"],
+      "specialRules": [
+        {"rule":"FTC: tag paid partnerships with Paid Partnership label","appliesTo":"commercial"},
+        {"rule":"No misleading health claims","pattern":"miracle.*cure|magic.*weight|instant.*results"},
+        {"rule":"Giveaway rules: no tagging requirements","pattern":"tag.*[0-9]+.*friends|tag.*to.*win"}
+      ]
+    },
+    "facebook": {
+      "name": "Facebook",
+      "region": "global",
+      "maxTitleLength": 63206,
+      "maxDescriptionLength": 5000,
+      "bannedKeywords": ["hate speech","harassment","bullying","violence","nudity","sexual content","spam","misinformation","fake news","illegal","weapons","drugs"],
+      "specialRules": [
+        {"rule":"Ad policy: no discriminatory targeting","appliesTo":"advertising"},
+        {"rule":"No engagement bait","pattern":"like.*if|share.*if|tag.*someone|comment.*below|vote.*in.*comments"},
+        {"rule":"FTC: clear disclosure for branded content","appliesTo":"commercial"}
+      ]
+    },
+    "linkedin": {
+      "name": "LinkedIn",
+      "region": "global",
+      "maxTitleLength": 200,
+      "maxDescriptionLength": 3000,
+      "bannedKeywords": ["harassment","hate speech","spam","scam","fake profile","impersonation"],
+      "specialRules": [
+        {"rule":"Professional context required: no personal rants","appliesTo":"content"},
+        {"rule":"No fake job postings","pattern":"work from home.*\\$[0-9]{4,}|earn.*daily.*\\$|no experience.*high pay"},
+        {"rule":"No automated/spam connection requests","appliesTo":"outreach"}
+      ]
+    },
+    "twitter_x": {
+      "name": "X (Twitter)",
+      "region": "global",
+      "maxTitleLength": 280,
+      "maxDescriptionLength": 25000,
+      "bannedKeywords": ["hate speech","harassment","violence","child safety","illegal","weapons","spam","impersonation"],
+      "specialRules": [
+        {"rule":"No manipulated media without context label","appliesTo":"media"},
+        {"rule":"No platform manipulation/spam","pattern":"buy.*followers|buy.*retweets|auto.*follow|bot.*follow"},
+        {"rule":"FTC: #ad or similar disclosure for paid content","appliesTo":"commercial"}
+      ]
+    }
+  },
+  "advertisingLaw": {
+    "version": "1.0.0",
+    "jurisdiction": "cn",
+    "lastUpdated": "2026-05-25",
+    "articles": [
+      {"id":"ad_law_9_1","rule":"禁止使用国家/国家机关名义","pattern":"国家(?:机关|部门|领导人|主席|总理|部委)|国务院|中央军委","severity":"critical"},
+      {"id":"ad_law_9_2","rule":"禁止使用绝对化用语","keywords":["国家级","世界级","最高级","最佳","最好","第一品牌","顶级","极品","至尊","独一无二","绝无仅有","万能","100%有效","零风险","永久解决","彻底根除"],"severity":"high"},
+      {"id":"ad_law_9_3","rule":"禁止妨碍社会安定","pattern":"颠覆|推翻|暴乱|骚乱|动乱|社会不稳|制造恐慌","severity":"critical"},
+      {"id":"ad_law_9_4","rule":"禁止淫秽、色情、赌博、迷信、暴力","keywords":["色情","淫秽","赌博","博彩","六合彩","算命","风水转运","恐怖袭击","暴力美学","血腥"],"severity":"critical"},
+      {"id":"ad_law_17","rule":"非药品禁止宣称疾病治疗","pattern":"治疗|治愈|根除|康复|疗效|疗程|药效|主治|防治|防癌|抗癌|降[血压糖脂]|增强免疫力|排毒","severity":"high"},
+      {"id":"ad_law_18","rule":"保健食品禁止功效断言","pattern":"保健|滋补|养生.*保证|肯定有效|一[吃用]就|见效快|立竿见影|迅速见效","severity":"high"},
+      {"id":"ad_law_20","rule":"禁止欺骗、误导消费者","keywords":["虚假","虚构","捏造","造假","刷单","刷量","水军","假评论","假排名"],"severity":"high"},
+      {"id":"ad_law_28","rule":"引用数据需标注来源","pattern":"据[研究调查]|数据显示|统计表明|%的用户","severity":"medium"},
+      {"id":"ad_law_38","rule":"禁止利用未成年人代言","pattern":"小朋友[说介绍]|学生[说介绍]|孩子[说介绍推荐]|宝宝[说用]|[0-9]+岁.*推荐","severity":"high"}
+    ]
+  }
+}
