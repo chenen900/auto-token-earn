@@ -79,8 +79,14 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div class="card" onclick="openTool('premium')" style="border-color:#fbbf24">
   <div class="icon">解锁</div>
   <h2>升级专业版</h2>
-  <p>批量审查 · 报告下载 · 销量数据 · 竞品分析 · 广告策略</p>
+  <p>免费/会员/专业 三档套餐 — ¥0起，按需选择</p>
   <div class="badge" style="background:#fbbf24">¥9.9起</div>
+</div>
+
+<div class="card" onclick="openTool('premiumTools')">
+  <div class="icon">工具箱</div>
+  <h2>专业功能</h2>
+  <p>批量审查 · 市场数据 · 竞品分析 — 登录后解锁</p>
 </div>
 
 </div>
@@ -169,19 +175,77 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <!-- ===== 会员升级 ===== -->
 <div id="premium" class="tool-panel">
 <div class="back-link" onclick="goHome()">首页</div>
-<h3> 升级专业版</h3>
-<div class="tip-box"><b>免费版</b> 单条审查 · <b>会员 (¥9.9/月)</b> 批量100条+报告 · <b>专业版 (¥29.9/月)</b> 全部+市场数据+竞品</div>
+<h3> 选择你的套餐</h3>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">
+
+<div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:24px;text-align:center">
+  <div style="font-size:1.5em;margin-bottom:8px">免费版</div>
+  <div style="font-size:2.5em;font-weight:700;color:#34d399;margin-bottom:4px">¥0</div>
+  <div style="color:#94a3b8;font-size:0.85em;margin-bottom:16px">永久免费</div>
+  <div style="text-align:left;color:#cbd5e1;font-size:0.85em;line-height:2">
+    <div> 单条合规审查</div>
+    <div> Listing 格式化</div>
+    <div> 利润计算器</div>
+    <div style="color:#64748b"> 批量审查</div>
+    <div style="color:#64748b"> 市场数据</div>
+    <div style="color:#64748b"> 竞品分析</div>
+  </div>
+  <div style="margin-top:16px;color:#60a5fa;font-size:0.85em">当前套餐</div>
+</div>
+
+<div style="background:#0f172a;border:2px solid #60a5fa;border-radius:12px;padding:24px;text-align:center">
+  <div style="font-size:1.5em;margin-bottom:8px">会员</div>
+  <div style="font-size:2.5em;font-weight:700;color:#60a5fa;margin-bottom:4px">¥9.9</div>
+  <div style="color:#94a3b8;font-size:0.85em;margin-bottom:16px">/月</div>
+  <div style="text-align:left;color:#cbd5e1;font-size:0.85em;line-height:2">
+    <div> 免费版全部功能</div>
+    <div> 批量审查(100条)</div>
+    <div> 审查报告下载</div>
+    <div> 审查历史记录</div>
+    <div style="color:#64748b"> 市场数据</div>
+    <div style="color:#64748b"> 竞品分析</div>
+  </div>
+  <button class="btn" style="margin-top:16px;width:100%" onclick="showLogin()">立即开通</button>
+</div>
+
+<div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:24px;text-align:center">
+  <div style="font-size:1.5em;margin-bottom:8px">专业版</div>
+  <div style="font-size:2.5em;font-weight:700;color:#fbbf24;margin-bottom:4px">¥29.9</div>
+  <div style="color:#94a3b8;font-size:0.85em;margin-bottom:16px">/月</div>
+  <div style="text-align:left;color:#cbd5e1;font-size:0.85em;line-height:2">
+    <div> 会员版全部功能</div>
+    <div> 批量审查(1000条)</div>
+    <div> 市场销量数据</div>
+    <div> 竞品分析报告</div>
+    <div> 广告策略建议</div>
+    <div> API Key 接入</div>
+  </div>
+  <button class="btn" style="margin-top:16px;width:100%;background:#fbbf24" onclick="showLogin()">立即开通</button>
+</div>
+
+</div>
+
+<div class="tip-box" style="text-align:center">
+  开通后自动解锁所有功能。目前测试阶段，注册即享30天免费试用会员（含批量审查+报告下载）。
+</div>
+</div>
+
+<!-- 会员功能面板（登录后自动解锁） -->
+<div id="premiumTools" class="tool-panel">
+<div class="back-link" onclick="goHome()">首页</div>
+<h3> 专业工具</h3>
+<div id="premiumLocked" style="color:#fbbf24;text-align:center;padding:20px">请先登录 — 免费注册即送30天会员试用</div>
+<div id="premiumUnlocked" style="display:none">
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
 <div style="background:#0f172a;border-radius:8px;padding:16px">
   <div style="color:#60a5fa;font-weight:700;margin-bottom:6px"> 批量审查</div>
-  <div id="batchStatus" style="color:#94a3b8;font-size:0.85em">需要会员版</div>
   <textarea id="batchText" rows="3" placeholder="每行一个产品，最多100个" style="margin-top:8px"></textarea>
   <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="pulseBtn(this);runBatch()">批量审查</button>
   <div id="batchResult" class="result"></div>
 </div>
 <div style="background:#0f172a;border-radius:8px;padding:16px">
   <div style="color:#60a5fa;font-weight:700;margin-bottom:6px"> 市场数据</div>
-  <div id="dataStatus" style="color:#94a3b8;font-size:0.85em">需要专业版</div>
   <input type="text" id="mktKeyword" placeholder="产品关键词" style="margin-top:8px">
   <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="pulseBtn(this);getMarketData()">查询数据</button>
   <div id="mktResult" class="result"></div>
@@ -189,10 +253,10 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 </div>
 <div style="background:#0f172a;border-radius:8px;padding:16px;margin-bottom:16px">
   <div style="color:#60a5fa;font-weight:700;margin-bottom:6px"> 竞品分析</div>
-  <div id="compStatus" style="color:#94a3b8;font-size:0.85em">需要专业版</div>
   <input type="text" id="competitorUrl" placeholder="竞品链接或 ASIN" style="margin-top:8px">
   <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="pulseBtn(this);analyzeCompetitor()">分析竞品</button>
   <div id="compAnalysisResult" class="result"></div>
+</div>
 </div>
 </div>
 
@@ -335,13 +399,9 @@ async function doRegister() {
 function updateUserBar(u) {
   document.getElementById("userStatus").textContent = u.email + " — " + u.tierName;
   document.getElementById("loginBtn").textContent = "切换";
-  // 更新会员面板状态
-  var tier = u.tier || "free";
-  if (tier === "premium" || tier === "pro") {
-    document.getElementById("batchStatus").innerHTML = "<span style=color:#34d399>已解锁 — 最多 " + (tier==="pro"?1000:100) + " 条</span>";
-    document.getElementById("dataStatus").innerHTML = tier==="pro" ? "<span style=color:#34d399>已解锁</span>" : "<span style=color:#fbbf24>需专业版</span>";
-    document.getElementById("compStatus").innerHTML = tier==="pro" ? "<span style=color:#34d399>已解锁</span>" : "<span style=color:#fbbf24>需专业版</span>";
-  }
+  // 登录后解锁专业工具面板
+  document.getElementById("premiumLocked").style.display = "none";
+  document.getElementById("premiumUnlocked").style.display = "block";
 }
 // 批量审查
 async function runBatch() {
