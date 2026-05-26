@@ -11,6 +11,7 @@ const app = express();
 const { reviewContent, reviewBatch, generateReport } = require("./compliance-engine");
 const { trackFromRequest, getStats } = require("./usage-tracker");
 const { register, login, checkAccess, saveCheck, getHistory, getTiers } = require("./membership");
+const { translateText } = require("./translator");
 
 // ============ 实时规则更新 ============
 const RULES_RAW = "https://raw.githubusercontent.com/chenen900/auto-token-earn/master/x402-api/platform-rules.json";
@@ -190,7 +191,7 @@ app.post("/api/v1/translate", async (req, res) => {
     if (!text) return res.status(400).json({ error: "Missing text" });
     const from = req.body.from || "en";
     const to = req.body.to || "zh";
-    const translated = from === "en" ? "[中] " + text : "[EN] " + text;
+    const translated = translateText(text, from, to);
     trackFromRequest(req, "/api/v1/translate", "$0.01");
     res.json({ original: text, translated, from, to });
   } catch (e) { res.status(500).json({ error: e.message }); }
