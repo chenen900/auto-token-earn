@@ -257,7 +257,7 @@ async function generateListing() {
 
 function calcProfit() {
   var cost=parseFloat(document.getElementById("prCost").value)||0,weight=parseFloat(document.getElementById("prWeight").value)||0.5,platform=document.getElementById("prPlatform").value,price=parseFloat(document.getElementById("prPrice").value)||0;
-  var rate=7.2,shipping=weight*60,costUSD=cost/rate;
+  var rate=7.2,shipping=weight*60/rate,costUSD=cost/rate;
   var platFee={amazon:0.15,temu:0,shopify:0.03}[platform]||0;
   var adBudget=price*0.2,totalCost=costUSD+shipping+(price*platFee)+adBudget,profit=price-totalCost,margin=price>0?profit/price*100:0;
   var el=document.getElementById("prResult");
