@@ -11,11 +11,33 @@ const app = express();
 const { reviewContent, reviewBatch, generateReport } = require("./compliance-engine");
 const { trackFromRequest, getStats } = require("./usage-tracker");
 
-// 加载 API 黄页
-const apiDir = JSON.parse(fs.readFileSync(path.join(__dirname, "directory.json"), "utf-8"));
+// ============ 实时规则更新 ============
+const RULES_RAW = "https://raw.githubusercontent.com/chenen900/auto-token-earn/master/x402-api/platform-rules.json";
+const DIRECTORY_RAW = "https://raw.githubusercontent.com/chenen900/auto-token-earn/master/api-directory/directory.json";
+let remoteRules = null;
+let apiDir = null;
+let lastUpdate = null;
+
+async function refreshRules() {
+  const https = require("https");
+  const get = (url) => new Promise((ok, fail) => {
+    https.get(url, (res) => { let d = ""; res.on("data", (c) => d += c); res.on("end", () => { try { ok(JSON.parse(d)); } catch (e) { fail(e); } }); }).on("error", fail);
+  });
+  try { remoteRules = await get(RULES_RAW); lastUpdate = new Date().toISOString(); } catch (e) {}
+  try { apiDir = await get(DIRECTORY_RAW); } catch (e) {}
+}
+refreshRules(); // 冷启动时拉取
+// 阿里云 FC 实例持续期间每 2 小时拉一次
+const updater = setInterval(refreshRules, 2 * 60 * 60 * 1000);
+// 防止 setInterval 阻止进程退出（FC 环境兼容）
+if (updater.unref) updater.unref();
 
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
+app.use(express.static(path.join(__dirname, "public")));
+
+// 工具箱首页
+app.get("/toolbox", (_, res) => res.sendFile(path.join(__dirname, "public", "toolbox.html")));
 
 // ============ 免费端点 ============
 
@@ -32,13 +54,14 @@ app.get("/", (_, res) => {
   });
 });
 
-app.get("/health", (_, res) => res.json({ status: "ok", region: "cn-hangzhou", timestamp: new Date().toISOString() }));
+app.get("/health", (_, res) => res.json({ status: "ok", region: "cn-hangzhou", rulesUpdated: lastUpdate, timestamp: new Date().toISOString() }));
 
 // API 黄页
 app.get("/api/v1/directory/search", (req, res) => {
+  const dir = apiDir || JSON.parse(fs.readFileSync(path.join(__dirname, "directory.json"), "utf-8"));
   const q = (req.query.q || "").toLowerCase();
   const cat = req.query.category;
-  const found = apiDir.apis.filter((a) => {
+  const found = (dir.apis || []).filter((a) => {
     if (cat && a.category !== cat) return false;
     return (a.name + " " + a.tags.join(" ") + " " + a.description).toLowerCase().includes(q);
   }).slice(0, 10);
