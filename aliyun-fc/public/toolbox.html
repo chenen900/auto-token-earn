@@ -21,8 +21,9 @@ h1{font-size:2.2em;background:linear-gradient(135deg,#60a5fa,#34d399);-webkit-ba
 .card .badge{position:absolute;top:12px;right:12px;background:#60a5fa;color:#0f172a;padding:2px 8px;border-radius:10px;font-size:0.7em;font-weight:700}
 .tool-panel{display:none}
 .tool-panel.active{display:block}
-.back-link{color:#60a5fa;cursor:pointer;font-size:0.9em;margin-bottom:20px;display:inline-block}
-.back-link:hover{text-decoration:underline}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:#e2e8f0;cursor:pointer;font-size:0.95em;margin-bottom:20px;padding:8px 16px;background:#334155;border-radius:8px;transition:.2s;font-weight:600}
+.back-link:hover{background:#475569;color:#fff}
+.back-link:before{content:'←';font-size:1.1em}
 label{display:block;color:#94a3b8;margin-bottom:6px;font-size:0.9em}
 textarea,input[type=text],select{width:100%;padding:10px 14px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:0.95em;margin-bottom:16px;resize:vertical}
 textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
