@@ -166,6 +166,36 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div id="prResult" class="result"></div>
 </div>
 
+<!-- ===== 会员升级 ===== -->
+<div id="premium" class="tool-panel">
+<div class="back-link" onclick="goHome()">首页</div>
+<h3> 升级专业版</h3>
+<div class="tip-box"><b>免费版</b> 单条审查 · <b>会员 (¥9.9/月)</b> 批量100条+报告 · <b>专业版 (¥29.9/月)</b> 全部+市场数据+竞品</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+<div style="background:#0f172a;border-radius:8px;padding:16px">
+  <div style="color:#60a5fa;font-weight:700;margin-bottom:6px"> 批量审查</div>
+  <div id="batchStatus" style="color:#94a3b8;font-size:0.85em">需要会员版</div>
+  <textarea id="batchText" rows="3" placeholder="每行一个产品，最多100个" style="margin-top:8px"></textarea>
+  <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="pulseBtn(this);runBatch()">批量审查</button>
+  <div id="batchResult" class="result"></div>
+</div>
+<div style="background:#0f172a;border-radius:8px;padding:16px">
+  <div style="color:#60a5fa;font-weight:700;margin-bottom:6px"> 市场数据</div>
+  <div id="dataStatus" style="color:#94a3b8;font-size:0.85em">需要专业版</div>
+  <input type="text" id="mktKeyword" placeholder="产品关键词" style="margin-top:8px">
+  <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="pulseBtn(this);getMarketData()">查询数据</button>
+  <div id="mktResult" class="result"></div>
+</div>
+</div>
+<div style="background:#0f172a;border-radius:8px;padding:16px;margin-bottom:16px">
+  <div style="color:#60a5fa;font-weight:700;margin-bottom:6px"> 竞品分析</div>
+  <div id="compStatus" style="color:#94a3b8;font-size:0.85em">需要专业版</div>
+  <input type="text" id="competitorUrl" placeholder="竞品链接或 ASIN" style="margin-top:8px">
+  <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="pulseBtn(this);analyzeCompetitor()">分析竞品</button>
+  <div id="compAnalysisResult" class="result"></div>
+</div>
+</div>
+
 <div style="margin-top:40px;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px">
 <h3 style="color:#60a5fa;margin-bottom:8px"> 推荐工具 & 合作伙伴</h3>
 <p style="color:#94a3b8;font-size:0.85em;margin-bottom:16px">以下是我们精选的跨境必备服务——如果你通过这里的链接注册，我们可能获得少量佣金（对你的价格不变），这是工具箱免费的原因。</p>
@@ -346,9 +376,7 @@ async function analyzeCompetitor() {
   if (r.error) { el.innerHTML = "<div style=color:#f87171>" + r.error + "<br><a href='#' onclick='openTool(\"premium\")' style=color:#60a5fa>升级专业版</a></div>"; return; }
   el.innerHTML = "<h3>竞品分析</h3><div style=display:grid;grid-template-columns:1fr 1fr;gap:8px><div class=item><div class=label>优势</div><div class=value>" + r.strengths.map(function(s) { return " " + s; }).join("<br>") + "</div></div><div class=item><div class=label>弱点</div><div class=value>" + r.weaknesses.map(function(s) { return " " + s; }).join("<br>") + "</div></div></div><div style=margin-top:12px><div class=label>建议策略</div>" + Object.entries(r.suggestedStrategy).map(function(e) { return "<div style='margin:4px 0;font-size:0.85em'><b style=color:#60a5fa>" + e[0] + ":</b> " + e[1] + "</div>"; }).join("") + "</div><div style=color:#64748b;font-size:0.7em;margin-top:8px>" + r.disclaimer + "</div>";
 }
-</script>
-
-</div> <!-- premium panel close -->
+// ===== 会员系统 =====
 
 <!-- 登录弹窗 -->
 <div id="loginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center">
