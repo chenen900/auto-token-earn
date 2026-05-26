@@ -34,6 +34,22 @@ app.use((req, res, next) => {
 });
 app.use("/.well-known", express.static(require("path").join(__dirname, ".well-known")));
 
+// API 黄页查询（免费，无需认证）
+var apiDir = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "..", "api-directory", "directory.json"), "utf-8"));
+app.get("/api/v1/directory/search", function (req, res) {
+  var q = (req.query.q || "").toLowerCase();
+  var cat = req.query.category;
+  var found = apiDir.apis.filter(function (a) {
+    if (cat && a.category !== cat) return false;
+    return (a.name + " " + a.tags.join(" ") + " " + a.description).toLowerCase().includes(q);
+  }).slice(0, 10);
+  res.json({ query: q, count: found.length, results: found });
+});
+app.get("/api/v1/directory/categories", function (_, res) { res.json(apiDir.categories); });
+app.get("/api/v1/directory/featured", function (_, res) {
+  res.json(apiDir.apis.filter(function (a) { return a.featured; }));
+});
+
 // ============ 路由 ============
 
 // 首页：API 目录
