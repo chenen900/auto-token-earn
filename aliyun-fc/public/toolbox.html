@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>跨境电商AI工具箱 — MediaCraft</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(135deg,#0f172a,#1e293b);color:#e2e8f0;min-height:100vh}
@@ -42,17 +43,17 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <body>
 <div class="container">
 <h1>跨境电商AI工具箱</h1>
-<p class="sub">Listing生成 · 合规审查 · 利润计算 — 浏览器打开就用，不需要登录</p>
+<p class="sub">合规审查 · Listing 格式化 · 利润计算 — 浏览器打开就用，不需要登录</p>
 
 <div class="tabs">
-<div class="tab active" onclick="switchTab('generator')">Listing 生成器</div>
-<div class="tab" onclick="switchTab('compliance')">合规审查</div>
+<div class="tab active" onclick="switchTab('compliance')">合规审查</div>
+<div class="tab" onclick="switchTab('generator')">Listing 格式化</div>
 <div class="tab" onclick="switchTab('profit')">利润计算器</div>
 </div>
 
-<!-- Listing 生成器 -->
-<div id="generator" class="panel active">
-<h3>输入产品信息，生成多平台 Listing</h3>
+<!-- Listing 格式化 -->
+<div id="generator" class="panel">
+<p style="color:#94a3b8;margin-bottom:16px">输入产品信息 → 检查合规 + SEO打分 + 格式化。(不含翻译——翻译请用 DeepL/Google Translate)</p>
 <div class="row">
 <div><label>目标平台</label><select id="genPlatform"><option value="amazon">Amazon (美国)</option><option value="temu">Temu</option><option value="shopify">Shopify 独立站</option></select></div>
 <div><label>产品类目</label><select id="genCategory"><option value="electronics">电子产品</option><option value="home">家居用品</option><option value="fashion">服装时尚</option><option value="beauty">美妆个护</option><option value="sports">运动户外</option><option value="other">其他</option></select></div>
@@ -63,7 +64,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <textarea id="genFeatures" rows="4" placeholder="防水IPX7&#10;蓝牙5.3连接稳定&#10;续航12小时&#10;TWS串联立体声"></textarea>
 <label>规格参数</label>
 <textarea id="genSpecs" rows="3" placeholder="尺寸：8x8x4cm&#10;重量：180g&#10;电池：2000mAh&#10;材质：ABS+硅胶"></textarea>
-<button class="btn" onclick="generateListing()">生成 Listing</button>
+<button class="btn" onclick="pulseBtn(this);generateListing()">生成 Listing</button>
 <div id="genResult" class="result"></div>
 </div>
 
@@ -78,7 +79,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 </div>
 <label>粘贴要检查的内容</label>
 <textarea id="compText" rows="5" placeholder="粘贴你的商品标题、描述、广告文案..."></textarea>
-<button class="btn" onclick="checkCompliance()">检查合规 <span class="api-badge">$0.02</span></button>
+<button class="btn" onclick="pulseBtn(this);checkCompliance()">检查合规 <span class="api-badge">$0.02</span></button>
 <div id="compResult" class="result"></div>
 </div>
 
@@ -93,13 +94,34 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div><label>目标平台</label><select id="prPlatform"><option value="amazon">Amazon (佣金15%)</option><option value="temu">Temu (全托管)</option><option value="shopify">Shopify (佣金0%)</option></select></div>
 <div><label>售价 ($)</label><input type="text" id="prPrice" placeholder="计划卖多少美元"></div>
 </div>
-<button class="btn" onclick="calcProfit()">计算利润</button>
+<button class="btn" onclick="pulseBtn(this);calcProfit()">计算利润</button>
 <div id="prResult" class="result"></div>
 </div>
 
 </div>
 
 <script>
+// GSAP 动效
+gsap.from("h1", { duration: 0.8, y: -30, opacity: 0, ease: "power3.out" });
+gsap.from(".sub", { duration: 0.8, y: -20, opacity: 0, delay: 0.2, ease: "power3.out" });
+gsap.from(".tabs", { duration: 0.6, opacity: 0, y: 10, delay: 0.4 });
+gsap.from(".panel.active", { duration: 0.5, opacity: 0, y: 15, delay: 0.5 });
+
+function animateResult(el) {
+  gsap.fromTo(el, { opacity: 0, y: 20, scale: 0.97 }, { duration: 0.4, opacity: 1, y: 0, scale: 1, ease: "back.out(1.2)" });
+  // 分数动画
+  var scoreEl = el.querySelector(".score");
+  if (scoreEl) {
+    var target = parseInt(scoreEl.textContent) || 0;
+    gsap.fromTo(scoreEl, { innerText: 0 }, { innerText: target, duration: 1, snap: { innerText: 1 }, ease: "power2.out" });
+  }
+  el.style.display = "block";
+}
+
+function pulseBtn(btn) {
+  gsap.fromTo(btn, { scale: 1 }, { scale: 0.95, duration: 0.1, yoyo: true, repeat: 1 });
+}
+
 var API = "https://mediacraft-api-pucprtuzpc.cn-hangzhou.fcapp.run";
 
 function switchTab(t) {
@@ -114,44 +136,54 @@ async function api(path, body) {
   return r.json();
 }
 
-// Listing 生成器
+// Listing 格式化
 async function generateListing() {
   var name = document.getElementById("genName").value.trim();
   var features = document.getElementById("genFeatures").value.trim();
   var specs = document.getElementById("genSpecs").value.trim();
   var platform = document.getElementById("genPlatform").value;
+  var category = document.getElementById("genCategory").value;
   if (!name) return alert("请填写产品名称");
 
   var el = document.getElementById("genResult");
-  el.style.display = "block";
-  el.innerHTML = "<div class=loading>AI 正在生成 Listing...</div>";
+  el.style.display = "block"; el.innerHTML = "<div class=loading>检查中...</div>"; animateResult(el);
 
-  var title = name;
-  if (features) title += " - " + features.split("\n")[0];
-  var body = title + "\n\nFeatures:\n" + features + "\n\nSpecs:\n" + specs;
-
-  // 翻译 + SEO + 合规 三连
-  var [tr, seo, comp] = await Promise.all([
-    api("/api/v1/translate", { text: title, from: "zh", to: "en" }),
-    api("/api/v1/seo-optimize", { title: title, description: features, keywords: name.split(" "), platform: platform }),
+  var body = name + "\n\n" + features + "\n\n" + specs;
+  var [seo, comp] = await Promise.all([
+    api("/api/v1/seo-optimize", { title: name, description: features, keywords: name.split(""), platform: platform }),
     api("/api/v1/compliance-check", { text: body, platform: platform, type: "title" }),
   ]);
 
   var seoScore = seo.score || 70;
   var compScore = comp.score || 100;
   var overall = Math.min(seoScore, compScore);
-
   var sc = overall >= 90 ? "good" : overall >= 70 ? "warn" : "bad";
   var platNames = { amazon: "Amazon", temu: "Temu", shopify: "Shopify" };
 
+  var issuesHtml = "";
+  if (comp.checks && comp.checks.length > 0) {
+    issuesHtml = "<div style=margin-top:12px>" + comp.checks.map(function(c){
+      return "<div class='issue " + c.severity + "'><b>[" + c.severity.toUpperCase() + "] " + (c.rule||c.label) + "</b>: " + (c.found||"") + " → " + (c.suggestion||"") + "</div>";
+    }).join("") + "</div>";
+  } else {
+    issuesHtml = "<div style=color:#34d399;padding:8px>合规检查通过</div>";
+  }
+
+  var tipsHtml = seo.suggestions ? seo.suggestions.slice(0,3).map(function(s){ return "<div style=color:#94a3b8;font-size:0.85em;margin:4px 0> " + s + "</div>"; }).join("") : "";
+
   el.innerHTML = [
-    "<h3>" + platNames[platform] + " Listing</h3>",
-    "<div class=score " + sc + ">" + overall + "/100</div>",
-    "<div class=item><div class=label>英文标题</div><div class=value>" + (tr.translated || title) + "</div></div>",
-    "<div class=item><div class=label>五点描述</div><div class=value>" + (features || "（请填写卖点）").replace(/\n/g, "<br>") + "</div></div>",
-    "<div class=item><div class=label>规格参数</div><div class=value>" + (specs || "（未填写）").replace(/\n/g, "<br>") + "</div></div>",
-    comp.checks && comp.checks.length > 0 ? comp.checks.map(function(c){ return "<div class='issue " + c.severity + "'><b>" + (c.rule||c.label) + "</b>: " + (c.found||"") + " → " + (c.suggestion||"") + "</div>"; }).join("") : "<div style=color:#34d399>合规检查通过</div>",
-    "<div style=margin-top:8px;color:#94a3b8;font-size:0.8em>调用: 翻译($0.01) + SEO($0.01) + 合规($0.02) = $0.04</div>"
+    "<h3>" + platNames[platform] + " Listing 检查报告</h3>",
+    "<div style=display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px>",
+    "<div style=text-align:center><div class=score " + sc + ">" + overall + "</div><div style=color:#94a3b8>综合评分</div></div>",
+    "<div style=display:flex;flex-direction:column;justify-content:center;gap:8px>",
+    "<div>SEO 评分: <b style=color:#60a5fa>" + seoScore + "/100</b></div>",
+    "<div>合规评分: <b style=color:" + (compScore>80?"#34d399":"#fbbf24") + ">" + compScore + "/100</b></div>",
+    "</div></div>",
+    "<div class=item><div class=label>商品标题 (请自行翻译后使用)</div><div class=value>" + name + "</div></div>",
+    "<div class=item><div class=label>卖点描述</div><div class=value>" + (features||"（未填写）").replace(/\n/g,"<br>") + "</div></div>",
+    issuesHtml,
+    tipsHtml ? "<div style=margin-top:12px><div class=label>SEO 建议</div>" + tipsHtml + "</div>" : "",
+    "<div style=margin-top:8px;color:#64748b;font-size:0.78em">调用: SEO($0.01) + 合规($0.02) = $0.03 | 不含翻译</div>"
   ].join("");
 }
 
