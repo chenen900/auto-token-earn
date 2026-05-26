@@ -75,6 +75,18 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
   <p>进货价多少？物流多少钱？平台抽多少佣金？一键算出你的真实利润——别卖了一堆才发现亏了。</p>
 </div>
 
+<div class="card" onclick="openTool('premium')" style="border-color:#fbbf24">
+  <div class="icon">解锁</div>
+  <h2>升级专业版</h2>
+  <p>批量审查 · 报告下载 · 销量数据 · 竞品分析 · 广告策略</p>
+  <div class="badge" style="background:#fbbf24">¥9.9起</div>
+</div>
+
+</div>
+
+<div id="userBar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;color:#94a3b8;font-size:0.85em">
+  <span id="userStatus">未登录 — 免费版</span>
+  <span style="cursor:pointer;color:#60a5fa" id="loginBtn" onclick="showLogin()">登录 / 注册</span>
 </div>
 
 <div class="tip-box">
@@ -262,6 +274,87 @@ function calcProfit() {
     "</div>"
   ].join("");
 }
+
+// ===== 会员系统 =====
+var userEmail = "";
+function showLogin() { var m = document.getElementById("loginModal"); m.style.display = "flex"; gsap.fromTo(m.children[0], { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.5)" }); }
+async function doLogin() {
+  var e = document.getElementById("loginEmail").value.trim(), p = document.getElementById("loginPassword").value.trim();
+  if (!e || !p) return;
+  var r = await fetch(API + "/api/v1/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: e, password: p }) }).then(function(r) { return r.json(); });
+  var el = document.getElementById("loginMsg");
+  if (r.ok) { userEmail = r.user.email; el.textContent = "登录成功 — " + r.user.tierName; updateUserBar(r.user); setTimeout(function() { document.getElementById("loginModal").style.display = "none"; }, 1000); }
+  else el.textContent = r.error || "登录失败";
+}
+async function doRegister() {
+  var e = document.getElementById("loginEmail").value.trim(), p = document.getElementById("loginPassword").value.trim();
+  if (!e || !p) return;
+  var r = await fetch(API + "/api/v1/auth/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: e, password: p, tier: "free" }) }).then(function(r) { return r.json(); });
+  var el = document.getElementById("loginMsg");
+  if (r.ok) { userEmail = r.user.email; el.textContent = "注册成功 — " + r.user.tierName; updateUserBar(r.user); setTimeout(function() { document.getElementById("loginModal").style.display = "none"; }, 1000); }
+  else el.textContent = r.error || "注册失败";
+}
+function updateUserBar(u) {
+  document.getElementById("userStatus").textContent = u.email + " — " + u.tierName;
+  document.getElementById("loginBtn").textContent = "切换";
+  // 更新会员面板状态
+  var tier = u.tier || "free";
+  if (tier === "premium" || tier === "pro") {
+    document.getElementById("batchStatus").innerHTML = "<span style=color:#34d399>已解锁 — 最多 " + (tier==="pro"?1000:100) + " 条</span>";
+    document.getElementById("dataStatus").innerHTML = tier==="pro" ? "<span style=color:#34d399>已解锁</span>" : "<span style=color:#fbbf24>需专业版</span>";
+    document.getElementById("compStatus").innerHTML = tier==="pro" ? "<span style=color:#34d399>已解锁</span>" : "<span style=color:#fbbf24>需专业版</span>";
+  }
+}
+// 批量审查
+async function runBatch() {
+  var text = document.getElementById("batchText").value.trim();
+  if (!text) return alert("请输入产品列表，每行一个");
+  var items = text.split("\n").filter(function(l) { return l.trim(); }).map(function(l) { return { text: l, platform: "amazon", type: "title" }; });
+  if (items.length > 100) items = items.slice(0, 100);
+  var el = document.getElementById("batchResult");
+  el.style.display = "block"; el.innerHTML = "<div class=loading>批量审查 " + items.length + " 条...</div>";
+  var r = await fetch(API + "/api/v1/compliance-batch", { method: "POST", headers: { "Content-Type": "application/json", "x-user-email": userEmail }, body: JSON.stringify({ items: items }) }).then(function(r) { return r.json(); });
+  if (r.error) { el.innerHTML = "<div style=color:#f87171>" + r.error + "</div>"; return; }
+  var passCount = r.results.filter(function(x) { return x.passed; }).length;
+  el.innerHTML = "<h3>批量结果: " + passCount + "/" + r.results.length + " 通过</h3>" + r.results.slice(0, 10).map(function(x, i) { return "<div style='margin:4px 0;color:" + (x.passed ? "#34d399" : "#f87171") + "'>" + (i+1) + ". " + (x.passed ? "通过" : x.score + "分") + "</div>"; }).join("") + (r.results.length > 10 ? "<div style=color:#94a3b8>...还有 " + (r.results.length - 10) + " 条</div>" : "");
+}
+// 市场数据
+async function getMarketData() {
+  var kw = document.getElementById("mktKeyword").value.trim();
+  if (!kw) return alert("请输入产品关键词");
+  var el = document.getElementById("mktResult");
+  el.style.display = "block"; el.innerHTML = "<div class=loading>查询中...</div>";
+  var r = await fetch(API + "/api/v1/market-data", { method: "POST", headers: { "Content-Type": "application/json", "x-user-email": userEmail }, body: JSON.stringify({ keyword: kw, platform: "amazon" }) }).then(function(r) { return r.json(); });
+  if (r.error) { el.innerHTML = "<div style=color:#f87171>" + r.error + "<br><a href='#' onclick='openTool(\"premium\")' style=color:#60a5fa>升级专业版</a></div>"; return; }
+  el.innerHTML = "<h3>" + kw + " 市场数据</h3><div style=display:grid;grid-template-columns:1fr 1fr;gap:8px><div class=item><div class=label>月销量估算</div><div class=value>" + r.estimatedMonthlySales + "</div></div><div class=item><div class=label>均价</div><div class=value>$" + r.averagePrice + "</div></div><div class=item><div class=label>竞争程度</div><div class=value>" + r.competitionLevel + "</div></div><div class=item><div class=label>趋势</div><div class=value>" + r.trend + "</div></div></div><div style=margin-top:12px><div class=label>Top 卖家</div>" + r.topSellers.map(function(s) { return "<div style=color:#e2e8f0;font-size:0.85em>" + s.title + " — " + s.price + " ★" + s.rating + "</div>"; }).join("") + "</div><div style=color:#64748b;font-size:0.7em;margin-top:8px>" + r.disclaimer + "</div>";
+}
+// 竞品分析
+async function analyzeCompetitor() {
+  var url = document.getElementById("competitorUrl").value.trim();
+  if (!url) return alert("请输入竞品链接或 ASIN");
+  var el = document.getElementById("compAnalysisResult");
+  el.style.display = "block"; el.innerHTML = "<div class=loading>分析中...</div>";
+  var r = await fetch(API + "/api/v1/competitor-analysis", { method: "POST", headers: { "Content-Type": "application/json", "x-user-email": userEmail }, body: JSON.stringify({ url: url }) }).then(function(r) { return r.json(); });
+  if (r.error) { el.innerHTML = "<div style=color:#f87171>" + r.error + "<br><a href='#' onclick='openTool(\"premium\")' style=color:#60a5fa>升级专业版</a></div>"; return; }
+  el.innerHTML = "<h3>竞品分析</h3><div style=display:grid;grid-template-columns:1fr 1fr;gap:8px><div class=item><div class=label>优势</div><div class=value>" + r.strengths.map(function(s) { return " " + s; }).join("<br>") + "</div></div><div class=item><div class=label>弱点</div><div class=value>" + r.weaknesses.map(function(s) { return " " + s; }).join("<br>") + "</div></div></div><div style=margin-top:12px><div class=label>建议策略</div>" + Object.entries(r.suggestedStrategy).map(function(e) { return "<div style='margin:4px 0;font-size:0.85em'><b style=color:#60a5fa>" + e[0] + ":</b> " + e[1] + "</div>"; }).join("") + "</div><div style=color:#64748b;font-size:0.7em;margin-top:8px>" + r.disclaimer + "</div>";
+}
 </script>
+
+</div> <!-- premium panel close -->
+
+<!-- 登录弹窗 -->
+<div id="loginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center">
+<div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:32px;max-width:400px;width:90%">
+<h3 style="color:#60a5fa;margin-bottom:16px">登录 / 注册 — 解锁专业功能</h3>
+<label>邮箱</label><input type="text" id="loginEmail" placeholder="your@email.com">
+<label>密码</label><input type="password" id="loginPassword" placeholder="6位以上">
+<div style="margin-top:16px;margin-bottom:8px"><button class="btn" onclick="doLogin()" style="width:100%">登录</button></div>
+<div><button class="btn" onclick="doRegister()" style="width:100%;background:#334155">注册免费账号</button></div>
+<div id="loginMsg" style="color:#94a3b8;font-size:0.85em;margin-top:8px;text-align:center"></div>
+<button onclick="document.getElementById('loginModal').style.display='none'" style="background:none;border:none;color:#64748b;margin-top:12px;cursor:pointer;width:100%;text-align:center">关闭</button>
+</div>
+</div>
+
+</div> <!-- container close -->
 </body>
 </html>
