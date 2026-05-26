@@ -2,25 +2,22 @@ var API = "https://mediacraft-api-pucprtuzpc.cn-hangzhou.fcapp.run";
 var userEmail = "";
 
 function openTool(t) {
-  document.getElementById("home").style.display = "none";
-  document.querySelectorAll(".tool-panel").forEach(function (e) { e.classList.remove("active"); });
-  document.getElementById(t).classList.add("active");
+  document.querySelectorAll(".panel").forEach(function (e) { e.classList.add("hidden"); });
+  document.getElementById(t).classList.remove("hidden");
+  window.scrollTo(0, 0);
 }
 
 function goHome() {
-  document.querySelectorAll(".tool-panel").forEach(function (e) { e.classList.remove("active"); });
-  document.getElementById("home").style.display = "block";
-}
-
-function pulseBtn(btn) {}
-
-function animateResult(el) {
-  el.style.display = "block";
-  el.style.opacity = "1";
+  document.querySelectorAll(".panel").forEach(function (e) { e.classList.add("hidden"); });
+  document.getElementById("home").classList.remove("hidden");
 }
 
 function showLogin() {
   document.getElementById("loginModal").style.display = "flex";
+}
+
+function hideLogin() {
+  document.getElementById("loginModal").style.display = "none";
 }
 
 async function doLogin() {
