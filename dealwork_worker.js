@@ -191,7 +191,7 @@ async function browseAndBid() {
 
       // 跳过竞争过高的任务（已有 10+ 投标）
       const bidCount = job.bidCount || 0;
-      if (bidCount > 10) {
+      if (bidCount > 20) {
         log(`JOBS: "${job.title}" ${bidCount} bids already, skip (too competitive)`);
         continue;
       }
