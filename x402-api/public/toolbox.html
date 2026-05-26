@@ -157,6 +157,8 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div><label>重量 (kg)</label><input type="text" id="prWeight" placeholder="包裹重量，如 0.3"></div>
 </div>
 <div class="row">
+<div><label>发货目的地</label><select id="prDest"><option value="US">美国 (~¥60/kg)</option><option value="EU">欧洲 (~¥55/kg)</option><option value="JP">日本 (~¥40/kg)</option><option value="UK">英国 (~¥55/kg)</option><option value="AU">澳大利亚 (~¥65/kg)</option></select></div>
+<div class="row">
 <div><label>目标平台</label><select id="prPlatform"><option value="amazon">Amazon (佣金15%)</option><option value="temu">Temu (全托管)</option><option value="shopify">Shopify (佣金3%)</option></select></div>
 <div><label>售价 ($)</label><input type="text" id="prPrice" placeholder="计划卖多少美元，如 19.99"></div>
 </div>
@@ -257,7 +259,9 @@ async function generateListing() {
 
 function calcProfit() {
   var cost=parseFloat(document.getElementById("prCost").value)||0,weight=parseFloat(document.getElementById("prWeight").value)||0.5,platform=document.getElementById("prPlatform").value,price=parseFloat(document.getElementById("prPrice").value)||0;
-  var rate=7.2,shipping=weight*60/rate,costUSD=cost/rate;
+  var rate=7.2, destRates={US:60,EU:55,JP:40,UK:55,AU:65}, destNames={US:"美国",EU:"欧洲",JP:"日本",UK:"英国",AU:"澳大利亚"};
+  var dest=document.getElementById("prDest").value, destName=destNames[dest]||"美国", shippingRate=destRates[dest]||60;
+  var shipping=weight*shippingRate/rate, costUSD=cost/rate;
   var platFee={amazon:0.15,temu:0,shopify:0.03}[platform]||0;
   var adBudget=price*0.2,totalCost=costUSD+shipping+(price*platFee)+adBudget,profit=price-totalCost,margin=price>0?profit/price*100:0;
   var el=document.getElementById("prResult");
@@ -266,7 +270,10 @@ function calcProfit() {
     "<h3>利润分析</h3>",
     "<div style=display:grid;grid-template-columns:1fr 1fr;gap:12px>",
     "<div class=item><div class=label>进货成本</div><div class=value> "+cost.toFixed(0)+" ($"+costUSD.toFixed(2)+")</div></div>",
-    "<div class=item><div class=label>物流(美国 ~ 60/kg)</div><div class=value>$"+shipping.toFixed(2)+"</div></div>",
+    "var destNames={US:'美国',EU:'欧洲',JP:'日本',UK:'英国',AU:'澳大利亚'};
+  var destName=destNames[dest]||'美国';
+  // ... inside innerHTML ...
+  "<div class=item><div class=label>物流("+destName+" ~¥"+ shippingRate +"/kg)</div><div class=value>$"+shipping.toFixed(2)+"</div></div>"",
     "<div class=item><div class=label>平台佣金</div><div class=value>$"+(price*platFee).toFixed(2)+"</div></div>",
     "<div class=item><div class=label>广告预算(20%)</div><div class=value>$"+adBudget.toFixed(2)+"</div></div></div>",
     "<div style=margin-top:16px;text-align:center>",
