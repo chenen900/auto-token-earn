@@ -375,7 +375,7 @@ function calcProfit() {
 
 // ===== 会员系统 =====
 var userEmail = "";
-function showLogin() { var m = document.getElementById("loginModal"); m.style.display = "flex"; gsap.fromTo(m.children[0], { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.5)" }); }
+function showLogin() { document.getElementById("loginModal").style.display = "flex"; }
 async function doLogin() {
   var e = document.getElementById("loginEmail").value.trim(), p = document.getElementById("loginPassword").value.trim();
   if (!e || !p) return;
@@ -432,7 +432,7 @@ async function analyzeCompetitor() {
   if (r.error) { el.innerHTML = "<div style=color:#f87171>" + r.error + "<br><a href='#' onclick='openTool(\"premium\")' style=color:#60a5fa>升级专业版</a></div>"; return; }
   el.innerHTML = "<h3>竞品分析</h3><div style=display:grid;grid-template-columns:1fr 1fr;gap:8px><div class=item><div class=label>优势</div><div class=value>" + r.strengths.map(function(s) { return " " + s; }).join("<br>") + "</div></div><div class=item><div class=label>弱点</div><div class=value>" + r.weaknesses.map(function(s) { return " " + s; }).join("<br>") + "</div></div></div><div style=margin-top:12px><div class=label>建议策略</div>" + Object.entries(r.suggestedStrategy).map(function(e) { return "<div style='margin:4px 0;font-size:0.85em'><b style=color:#60a5fa>" + e[0] + ":</b> " + e[1] + "</div>"; }).join("") + "</div><div style=color:#64748b;font-size:0.7em;margin-top:8px>" + r.disclaimer + "</div>";
 }
-// ===== 会员系统 =====
+</script>
 
 <!-- 登录弹窗 -->
 <div id="loginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center">
