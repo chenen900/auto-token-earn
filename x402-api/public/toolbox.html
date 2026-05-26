@@ -82,11 +82,6 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
   <div class="badge" style="background:#fbbf24">¥9.9起</div>
 </div>
 
-<div class="card" onclick="openTool('premiumTools')">
-  <div class="icon">工具箱</div>
-  <h2>专业功能</h2>
-  <p>批量审查 · 市场数据 · 竞品分析 — 登录后解锁</p>
-</div>
 
 </div>
 
@@ -226,34 +221,31 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 </div>
 
 <div class="tip-box" style="text-align:center">
-  开通后自动解锁所有功能。目前测试阶段，注册即享30天免费试用会员（含批量审查+报告下载）。
-</div>
+  注册即享30天免费试用会员（含批量审查+报告下载）。登录后下方工具自动解锁。
 </div>
 
-<!-- 会员功能面板（登录后自动解锁） -->
-<div id="premiumTools" class="tool-panel">
-<div class="back-link" onclick="goHome()">首页</div>
-<h3> 专业工具</h3>
-<div id="premiumLocked" style="color:#fbbf24;text-align:center;padding:20px">请先登录 — 免费注册即送30天会员试用</div>
+<div id="premiumLocked" style="color:#fbbf24;text-align:center;padding:20px;background:#0f172a;border-radius:8px">
+  请先登录 — 免费注册即送30天会员试用
+</div>
 <div id="premiumUnlocked" style="display:none">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;margin-top:20px">
 <div style="background:#0f172a;border-radius:8px;padding:16px">
   <div style="color:#60a5fa;font-weight:700;margin-bottom:6px"> 批量审查</div>
   <textarea id="batchText" rows="3" placeholder="每行一个产品，最多100个" style="margin-top:8px"></textarea>
-  <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="pulseBtn(this);runBatch()">批量审查</button>
+  <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="runBatch()">批量审查</button>
   <div id="batchResult" class="result"></div>
 </div>
 <div style="background:#0f172a;border-radius:8px;padding:16px">
   <div style="color:#60a5fa;font-weight:700;margin-bottom:6px"> 市场数据</div>
   <input type="text" id="mktKeyword" placeholder="产品关键词" style="margin-top:8px">
-  <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="pulseBtn(this);getMarketData()">查询数据</button>
+  <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="getMarketData()">查询数据</button>
   <div id="mktResult" class="result"></div>
 </div>
 </div>
 <div style="background:#0f172a;border-radius:8px;padding:16px;margin-bottom:16px">
   <div style="color:#60a5fa;font-weight:700;margin-bottom:6px"> 竞品分析</div>
   <input type="text" id="competitorUrl" placeholder="竞品链接或 ASIN" style="margin-top:8px">
-  <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="pulseBtn(this);analyzeCompetitor()">分析竞品</button>
+  <button class="btn" style="margin-top:8px;font-size:0.9em" onclick="analyzeCompetitor()">分析竞品</button>
   <div id="compAnalysisResult" class="result"></div>
 </div>
 </div>
