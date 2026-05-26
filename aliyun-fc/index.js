@@ -49,17 +49,12 @@ app.get("/toolbox", (_, res) => {
 
 // ============ 免费端点 ============
 
+// 根路径直接显示工具箱
+var toolboxHTML = "";
 app.get("/", (_, res) => {
-  res.json({
-    service: "MediaCraft AI — 国内镜像 (阿里云)",
-    endpoints: {
-      "/api/v1/compliance-check": "内容合规审查 $0.02/call",
-      "/api/v1/translate": "中英翻译 $0.01/call",
-      "/api/v1/seo-optimize": "SEO优化 $0.01/call",
-      "/api/v1/directory/search": "API黄页搜索 免费",
-      "/health": "健康检查",
-    },
-  });
+  if (!toolboxHTML) toolboxHTML = fs.readFileSync(path.join(__dirname, "public", "toolbox.html"), "utf-8");
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(toolboxHTML);
 });
 
 app.get("/health", (_, res) => res.json({ status: "ok", region: "cn-hangzhou", rulesUpdated: lastUpdate, timestamp: new Date().toISOString() }));
