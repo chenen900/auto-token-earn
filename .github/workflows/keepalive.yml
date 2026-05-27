@@ -1,0 +1,13 @@
+name: "Render Keepalive"
+
+on:
+  schedule:
+    - cron: "*/8 * * * *"  # 每8分钟 ping 一次
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep Render daemon alive
+        run: curl -sf https://mediacraft-x402-api.onrender.com/daemon/health && echo " OK" || echo " FAIL"

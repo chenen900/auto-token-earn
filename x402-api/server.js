@@ -424,6 +424,15 @@ function seoOptimize(title, description, keywords, platform) {
   };
 }
 
+// ============ 守护进程状态 ============
+let daemonStatus = { running: false, cycles: 0, lastCycle: null, errors: 0 };
+
+app.get("/daemon/status", (_, res) => {
+  res.json({ ...daemonStatus, uptime: process.uptime(), memory: process.memoryUsage().heapUsed });
+});
+
+app.get("/daemon/health", (_, res) => res.json({ ok: true, time: new Date().toISOString() }));
+
 // ============ 启动 ============
 
 app.listen(PORT, () => {
@@ -431,4 +440,38 @@ app.listen(PORT, () => {
   console.log(`Endpoints:`);
   Object.entries(PRICING).forEach(([path, price]) => console.log(`  ${price}/call — POST ${path}`));
   console.log(`x402 discovery: http://localhost:${PORT}/.well-known/x402`);
+
+  // 启动后台守护进程（Render 24/7 持续运行）
+  const startDaemon = process.env.DAEMON_ENABLED !== "false"; // 默认开启
+  if (startDaemon) {
+    console.log("[DAEMON] Starting background worker...");
+    const { runWorkerCycle } = require("../../daemon");
+    const path = require("path");
+    const CONFIG = {
+      MIN_API_INTERVAL_MS: 5000,
+      CYCLE_DELAY_MIN_MS: 7 * 60 * 1000,
+      CYCLE_DELAY_MAX_MS: 15 * 60 * 1000,
+      MAX_DAILY_SUBMISSIONS: 8,
+      MAX_PER_CYCLE: 3,
+      MIN_AGE_FOR_HELP_REQUEST: 5,
+    };
+
+    (async function daemonLoop() {
+      let cycle = 0;
+      while (true) {
+        cycle++;
+        try {
+          daemonStatus.running = true;
+          daemonStatus.lastCycle = new Date().toISOString();
+          await runWorkerCycle();
+          daemonStatus.cycles = cycle;
+        } catch (e) {
+          daemonStatus.errors++;
+          console.error(`[DAEMON] Cycle ${cycle} error:`, e.message);
+        }
+        const delay = 7 * 60 * 1000 + Math.floor(Math.random() * 8 * 60 * 1000);
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    })();
+  }
 });
