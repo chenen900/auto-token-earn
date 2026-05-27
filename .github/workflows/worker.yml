@@ -35,6 +35,14 @@ jobs:
       - name: Run TaskMarket Worker
         run: node taskmarket_worker.js
 
+      - name: Run Superteam Earn Worker
+        env:
+          SUPERTEAM_API_KEY: ${{ secrets.SUPERTEAM_API_KEY }}
+        run: node superteam_worker.js
+
+      - name: Run DeFi Simulator (daily)
+        run: node defi_simulator.js run
+
       - name: Commit learning data
         run: |
           git config user.name "MediaCraft AI"
