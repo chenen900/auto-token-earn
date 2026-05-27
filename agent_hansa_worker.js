@@ -14,6 +14,7 @@ const ROOT = __dirname;
 const LOG_DIR = process.env.LOG_DIR || path.join(ROOT, "logs");
 const DATA_DIR = path.join(ROOT, "data");
 const AUDIT_DIR = path.join(LOG_DIR, "audit");
+const PROOF_FILE = path.join(DATA_DIR, "published_articles.json");
 
 // ========== 内容安全审查 ==========
 
@@ -212,6 +213,45 @@ async function dailyQuests(learner) {
   return completed;
 }
 
+// ========== Proof URL 系统（Dev.to → AgentHansa） ==========
+
+function loadProofArticles() {
+  try {
+    if (fs.existsSync(PROOF_FILE)) {
+      return JSON.parse(fs.readFileSync(PROOF_FILE, "utf-8"));
+    }
+  } catch (e) {}
+  return [];
+}
+
+function getBestProofUrl(category) {
+  const articles = loadProofArticles();
+  if (articles.length === 0) return null;
+
+  // 精确匹配类别
+  const exact = articles.filter((a) => a.category === category);
+  if (exact.length > 0) {
+    // 返回最新的匹配文章
+    return exact[exact.length - 1].url;
+  }
+
+  // 回退：返回最新文章
+  return articles[articles.length - 1].url;
+}
+
+function getProofUrlInfo(category) {
+  const articles = loadProofArticles();
+  if (articles.length === 0) return null;
+
+  const exact = articles.filter((a) => a.category === category);
+  const best = exact.length > 0 ? exact[exact.length - 1] : articles[articles.length - 1];
+  return {
+    url: best.url,
+    title: best.title,
+    category: best.category,
+  };
+}
+
 // 从评论内容中提取简短版本用于论坛回复
 function extractShortComment(fullResponse, category) {
   const shorts = {
@@ -389,17 +429,22 @@ async function allianceWarQuests(accountAgeDays, learner) {
     try {
       if (type === "create_help_request") {
         const helpReq = await createHelpRequest(category, learner);
-        const proofUrl = `https://agenthansa.com/help/${helpReq.id}`;
+        const devtoProof = getBestProofUrl(category);
+        const proofUrl = devtoProof || `https://agenthansa.com/help/${helpReq.id}`;
         await submitToQuest(q.id, helpReq.id, proofUrl);
         learner.recordSubmission(q.id, category, type, helpReq.id, proofUrl);
+        if (devtoProof) log(`PROOF: Dev.to article attached — ${devtoProof}`);
         log(`QUEST: Submitted "${q.title}" ($${q.reward_usd}) — help request created`);
         markDoneToday(qKey);
         submitted++;
       } else if (type === "respond_help") {
         const resp = await respondToHelp(category, learner);
         if (resp) {
-          const proofUrl = `https://agenthansa.com/help/${resp.request.id}`;
+          // 优先使用 Dev.to 文章作为 proof URL，回退到 help request URL
+          const devtoProof = getBestProofUrl(category);
+          const proofUrl = devtoProof || `https://agenthansa.com/help/${resp.request.id}`;
           await submitToQuest(q.id, resp.response.id, proofUrl);
+          if (devtoProof) log(`PROOF: Using Dev.to article as proof — ${devtoProof}`);
           log(`QUEST: Submitted "${q.title}" ($${q.reward_usd})`);
           markDoneToday(qKey);
           submitted++;
@@ -573,13 +618,16 @@ async function proBonoHelp(learner) {
         const check = contentSafetyCheck(humanized);
         if (!check.pass) continue;
 
+        const devtoProof = getBestProofUrl(category);
+        const proofUrl = devtoProof || `https://agenthansa.com/help/${req.id}`;
+
         await apiPost(`/help/requests/${req.id}/respond`, { content: humanized });
-        log(`PROBONO: Responded to "${req.title.substring(0, 50)}..." (score:${humanizer.score(humanized)})`);
+        log(`PROBONO: Responded to "${req.title.substring(0, 50)}..." (score:${humanizer.score(humanized)})${devtoProof ? " [Dev.to proof]" : ""}`);
 
         learner.recordSubmission(
           req.id, category, "pro_bono",
           humanized,
-          `https://agenthansa.com/help/${req.id}`
+          proofUrl
         );
 
         markDoneToday(rKey);
