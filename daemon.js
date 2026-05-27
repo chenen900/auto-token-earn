@@ -290,6 +290,16 @@ async function runWorkerCycle() {
 
 // ========== 主循环 ==========
 async function main() {
+  // ===== 开销意识：不花钱的纯 Node.js 运算，但追踪收益 =====
+  // daemon 跑在 Render 上，不消耗 Claude Token
+  // 每次循环记录收益，确保净赚
+  const { CostMonitor } = require("./cost_monitor");
+  const costMon = new CostMonitor(DATA_DIR);
+  const roi = costMon.roiReport();
+  if (roi.earned > 0 || roi.cost > 0) {
+    log(`COST: Today $${roi.earned} earned / $${roi.cost} token cost = ${roi.verdict}`);
+  }
+
   log("========================================");
   log("DAEMON: MediaCraft AI 持续守护进程启动");
   log(`CONFIG: ${CONFIG.MAX_DAILY_SUBMISSIONS} max/day, ${CONFIG.MAX_PER_CYCLE}/cycle, ${CONFIG.CYCLE_DELAY_MIN_MS / 60000}-${CONFIG.CYCLE_DELAY_MAX_MS / 60000}min delay`);
