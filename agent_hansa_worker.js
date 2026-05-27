@@ -8,6 +8,7 @@ const path = require("path");
 const fs = require("fs");
 const { LearningEngine } = require("./learning_engine");
 const { HumanizerFilter } = require("./humanizer_filter");
+const { TrialEngine } = require("./trial_engine");
 const humanizer = new HumanizerFilter({ aggressiveness: 0.5 });
 
 const ROOT = __dirname;
@@ -361,7 +362,8 @@ async function respondToHelp(category, learner) {
   // Humanizer: 去AI痕迹
   const humanized = humanizer.humanize(generated.content);
   const score = humanizer.score(humanized);
-  log(`HUMANIZE: Score ${score}/50 (was AI vocab check)`);
+  const devtoProof = getBestProofUrl(category);
+  log(`HUMANIZE: Score ${score}/50${devtoProof ? " [Dev.to proof available]" : ""}`);
 
   const check = contentSafetyCheck(humanized);
   if (!check.pass) throw new Error(`Help response 审查不通过: ${check.reason}`);
@@ -376,15 +378,18 @@ async function respondToHelp(category, learner) {
   });
 
   // 记录到学习引擎
-  learner.recordSubmission(
-    target.id,
-    category,
-    "respond_help",
-    generated.content,
-    `https://agenthansa.com/help/${target.id}`
-  );
+  const proofUrl = devtoProof || `https://agenthansa.com/help/${target.id}`;
+  learner.recordSubmission(target.id, category, "respond_help", humanized, proofUrl);
 
-  log(`HELP: Responded to "${target.title.substring(0, 50)}..." — style: ${generated.styleVariant}`);
+  // 记录到试错引擎
+  trials.recordTrial({
+    questId: target.id, category, type: "respond_help",
+    style: generated.styleVariant,
+    proofType: devtoProof ? "devto" : "help_url",
+    hypothesis: `${category} + ${generated.styleVariant} + ${devtoProof ? "devto" : "help_url"} proof`,
+  });
+
+  log(`HELP: Responded to "${target.title.substring(0, 50)}..." — style: ${generated.styleVariant}${devtoProof ? " [Dev.to proof]" : ""}`);
   return { response: res, request: target };
 }
 
@@ -407,14 +412,28 @@ async function allianceWarQuests(accountAgeDays, learner) {
     log(`QUEST: Account age ${accountAgeDays} days (< 5), Personal Task locked until day 5`);
   }
 
-  // 按策略排序：优先处理我们擅长的类别
-  const scored = quests.map((q) => {
+  // 策略排序：已知高胜率优先，但保留探索机会
+  const tInsights = trials.getLatestInsights();
+  const scored = quests.map((q, idx) => {
     const cat = extractCategory(q.title) || "unknown";
     const prefIdx = strategy.preferredCategories.indexOf(cat);
-    const score = prefIdx >= 0 ? strategy.preferredCategories.length - prefIdx : 0;
+    let score = prefIdx >= 0 ? strategy.preferredCategories.length - prefIdx : 0;
+    // 每轮至少尝试一个非偏好类别（探索）
+    if (prefIdx === -1 && idx === 0) score = 0.5; // 给未知类别一个机会
     return { quest: q, category: cat, score };
   });
   scored.sort((a, b) => b.score - a.score);
+
+  // 试错：30% 概率优先尝试新类别
+  if (Math.random() < 0.3 && scored.length > 1) {
+    const knownCats = new Set(strategy.preferredCategories);
+    const explorer = scored.find((s) => !knownCats.has(s.category));
+    if (explorer) {
+      scored.splice(scored.indexOf(explorer), 1);
+      scored.unshift(explorer);
+      log(`TRIAL: Exploring new category — ${explorer.category}`);
+    }
+  }
 
   let submitted = 0;
 
@@ -670,13 +689,17 @@ async function getAccountStatus() {
 async function main() {
   if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
 
-  // 初始化学习引擎
+  // 初始化引擎
   const learner = new LearningEngine(DATA_DIR);
+  const trials = new TrialEngine(DATA_DIR);
+  trials.syncFromLearning(learner);
 
   log("========================================");
-  log("WORKER v2: AgentHansa + Learning Engine");
+  log("WORKER v2: AgentHansa + Learning + Trial Engine");
   const stats = learner.getStats();
+  const tReport = trials.dailyReport();
   log(`MEMORY: ${stats.totalSubmissions} subs, ${stats.totalWins} wins (${stats.winRate})`);
+  log(`TRIALS: ${tReport.trials} today, ${tReport.won} won, $${tReport.earned}`);
   log("========================================");
 
   // Phase 1: 签到
@@ -716,8 +739,20 @@ async function main() {
     if (committed) log("LEARN: Auto-committed learning data to repo");
   }
 
+  // 试错日报
+  const trialSummary = trials.summary();
+  if (trialSummary.daily.trials > 0) {
+    log(`TRIAL: ${trialSummary.daily.trials} experiments today, ${trialSummary.daily.won} won, $${trialSummary.daily.earned} (${trialSummary.daily.winRate})`);
+    if (trialSummary.overall && trialSummary.overall.recommendations) {
+      for (const rec of trialSummary.overall.recommendations) {
+        log(`TRIAL-INSIGHT: ${rec}`);
+      }
+    }
+  }
+  trials._save(path.join(DATA_DIR, "trial_log.json"), trials.trials);
+
   log("========================================");
-  log(`WORKER: Done. $${earn.total} | ${earn.winRate} win rate | Rank ${earn.rank}/${earn.totalAgents}`);
+  log(`WORKER: Done. $${earn.total} | ${earn.winRate} win rate | Rank ${earn.rank}/${earn.totalAgents} | Trials: ${trialSummary.daily.trials}`);
   log("========================================");
 
   return earn;
