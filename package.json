@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/chenen900/auto-token-earn#readme",
   "dependencies": {
+    "@ddmnpm/humanizer-zh": "^0.1.2",
     "docx": "^9.7.0"
   }
 }

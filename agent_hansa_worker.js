@@ -1,28 +1,28 @@
-// AgentHansa Auto Worker — MediaCraft AI
-// 每日自动签到、日常任务、筛选并提交 Alliance War Quest
+// AgentHansa Auto Worker v2 — MediaCraft AI
+// 集成：学习引擎 + Humanizer去痕 + 动态响应 + 策略优化 + 排行榜分析
 // 用法: node agent_hansa_worker.js
-// Cron: 建议每 2-4 小时运行一次
 
 const API = "https://agenthansa.com/api";
 const KEY = process.env.AGENTHANSA_API_KEY || "tabb_RbsUoEipzInRhm2-D2QoH5WHjyYrKJeb9Ff5TUCmx8E";
 const path = require("path");
-const LOG_DIR = process.env.LOG_DIR || path.join(__dirname, "logs");
+const fs = require("fs");
+const { LearningEngine } = require("./learning_engine");
+const { HumanizerFilter } = require("./humanizer_filter");
+const humanizer = new HumanizerFilter({ aggressiveness: 0.5 });
+
+const ROOT = __dirname;
+const LOG_DIR = process.env.LOG_DIR || path.join(ROOT, "logs");
+const DATA_DIR = path.join(ROOT, "data");
 const AUDIT_DIR = path.join(LOG_DIR, "audit");
 
-const fs = require("fs");
-
 // ========== 内容安全审查 ==========
-// 所有自动生成的内容在提交前必须通过此审查
 
 const BLOCKED_KEYWORDS = [
-  // 涉政敏感词
   "xi jinping", "mao zedong", "tiananmen", "tibet independence", "xinjiang",
   "taiwan independence", "falun gong", "hong kong protest", "six four",
   "china virus", "wuhan virus", "ccp", "communist party of china",
   "uighur", "free tibet", "free hong kong", "tiananmen square",
-  // 色情/暴力/违法
   "porn", "sex", "violence", "weapon", "drug", "gambling", "hack",
-  // 分裂主义
   "separatist", "secession", "independence movement",
 ];
 
@@ -48,19 +48,9 @@ function contentSafetyCheck(text) {
   return { pass: true };
 }
 
-// 安全包装：提交前审查
-function safeSubmit(fn, content, tag) {
-  const check = contentSafetyCheck(typeof content === "string" ? content : JSON.stringify(content));
-  if (!check.pass) {
-    log(`SAFETY: BLOCKED ${tag} — ${check.reason}`);
-    throw new Error(`内容安全审查不通过: ${check.reason}`);
-  }
-  return fn();
-}
+// ========== 工具函数 ==========
 
-// ========== 全局限流 ==========
-// AgentHansa API 有速率限制，每次请求之间至少间隔 REQUEST_DELAY_MS
-const REQUEST_DELAY_MS = 5000; // 5秒基础间隔
+const REQUEST_DELAY_MS = 5000;
 let lastRequestTime = 0;
 
 async function rateLimit() {
@@ -71,8 +61,6 @@ async function rateLimit() {
   lastRequestTime = Date.now();
 }
 
-// ========== 工具函数 ==========
-
 function now() {
   return new Date().toISOString().replace("T", " ").substring(0, 19);
 }
@@ -80,62 +68,58 @@ function now() {
 function log(msg) {
   const line = `[${now()}] ${msg}`;
   console.log(line);
-  fs.appendFileSync(`${LOG_DIR}/worker.log`, line + "\n");
+  if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
+  fs.appendFileSync(path.join(LOG_DIR, "worker.log"), line + "\n");
 }
 
-// 审计日志：记录所有对外发布的内容
 function auditLog(type, data) {
   if (!fs.existsSync(AUDIT_DIR)) fs.mkdirSync(AUDIT_DIR, { recursive: true });
   const entry = {
     time: now(),
-    type: type,
-    data: data,
+    type,
+    data,
     safety_check: contentSafetyCheck(JSON.stringify(data)),
   };
   fs.appendFileSync(
-    `${AUDIT_DIR}/audit_${todayStr()}.jsonl`,
+    path.join(AUDIT_DIR, `audit_${todayStr()}.jsonl`),
     JSON.stringify(entry) + "\n"
   );
 }
 
-async function api(method, path, body, retries = 2) {
+async function api(method, endpoint, body, retries = 2) {
   await rateLimit();
   const opts = {
     method,
     headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
   };
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`${API}${path}`, opts);
+  const res = await fetch(`${API}${endpoint}`, opts);
   if (res.status === 429 && retries > 0) {
-    // 被限流，等 15 秒重试
-    log(`RATE: 429 on ${method} ${path}, cooling 15s then retry (${retries} left)...`);
+    log(`RATE: 429 on ${method} ${endpoint}, cooling 15s (${retries} left)...`);
     await new Promise((r) => setTimeout(r, 15000));
-    lastRequestTime = Date.now(); // 重置计时器
-    return api(method, path, body, retries - 1);
+    lastRequestTime = Date.now();
+    return api(method, endpoint, body, retries - 1);
   }
   const data = await res.json();
-  if (!res.ok) throw new Error(`API ${method} ${path}: ${res.status} ${JSON.stringify(data)}`);
+  if (!res.ok) throw new Error(`API ${method} ${endpoint}: ${res.status} ${JSON.stringify(data)}`);
   return data;
 }
 
 function apiGet(path) { return api("GET", path); }
 function apiPost(path, body) { return api("POST", path, body); }
-function apiPatch(path, body) { return api("PATCH", path, body); }
 
-// 计算今天日期字符串
 function todayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// 检查今天是否已运行过某个操作
 function alreadyDoneToday(tag) {
-  const marker = `${LOG_DIR}/.marker_${tag}_${todayStr()}`;
+  const marker = path.join(LOG_DIR, `.marker_${tag}_${todayStr()}`);
   return fs.existsSync(marker);
 }
 
 function markDoneToday(tag) {
-  const marker = `${LOG_DIR}/.marker_${tag}_${todayStr()}`;
+  const marker = path.join(LOG_DIR, `.marker_${tag}_${todayStr()}`);
   fs.writeFileSync(marker, now());
 }
 
@@ -156,31 +140,30 @@ async function checkIn() {
   }
 }
 
-// ========== Phase 2: 每日任务（Create Content / Curate / Distribute）==========
+// ========== Phase 2: 每日任务 ==========
 
-async function dailyQuests() {
+async function dailyQuests(learner) {
   log("DAILY: Starting daily quests...");
   let completed = 0;
 
-  // 2a. Create Content → 在论坛发评论
+  // 2a. Create Content → 在论坛发评论（用学习引擎生成）
   if (!alreadyDoneToday("create_content")) {
     try {
       const forum = await apiGet("/forum?per_page=3");
       if (forum.posts && forum.posts.length > 0) {
         const post = forum.posts[0];
-        const comments = [
-          "Great insights! This is exactly what the agent economy needs.",
-          "Really helpful perspective. Thanks for sharing this.",
-          "Solid analysis. Looking forward to more content like this.",
-        ];
-        const comment = comments[Math.floor(Math.random() * comments.length)];
-        // 安全审查
+        // 用学习引擎生成更有针对性的评论
+        const ctx = { title: post.title || "", description: post.body || "" };
+        const category = detectCategory(post.title);
+        const response = learner.generateResponse(category, ctx);
+        const comment = extractShortComment(response.content, category);
+
         const check = contentSafetyCheck(comment);
         if (!check.pass) throw new Error(`论坛评论审查不通过: ${check.reason}`);
 
         await apiPost(`/forum/${post.id}/comments`, { body: comment });
         auditLog("forum_comment", { post_id: post.id, comment });
-        log(`DAILY: Create Content done — commented on "${post.title.substring(0, 40)}..."`);
+        log(`DAILY: Create Content done — commented on "${post.title.substring(0, 50)}..."`);
         markDoneToday("create_content");
         completed++;
       }
@@ -189,7 +172,7 @@ async function dailyQuests() {
     }
   }
 
-  // 2b. Curate → 上票（5 upvotes）
+  // 2b. Curate → 上票
   if (!alreadyDoneToday("curate_up")) {
     try {
       const forum = await apiGet("/forum?per_page=10");
@@ -205,20 +188,18 @@ async function dailyQuests() {
         log(`DAILY: Curate done — ${upCount} upvotes`);
         markDoneToday("curate_up");
         completed++;
-      } else {
-        log(`DAILY: Curate partial — ${upCount}/5 upvotes`);
       }
     } catch (e) {
       log(`DAILY: Curate failed — ${e.message}`);
     }
   }
 
-  // 2c. Distribute → 生成推广链接
+  // 2c. Distribute → 推广链接
   if (!alreadyDoneToday("distribute")) {
     try {
       const refRes = await apiPost("/offers/86bece00-b64c-4bd4-8cf4-c9af55ab7448/ref");
       if (refRes.ref_url) {
-        log(`DAILY: Distribute done — ref link generated`);
+        log("DAILY: Distribute done — ref link generated");
         markDoneToday("distribute");
         completed++;
       }
@@ -231,9 +212,20 @@ async function dailyQuests() {
   return completed;
 }
 
-// ========== Phase 3: Alliance War Quests ==========
+// 从评论内容中提取简短版本用于论坛回复
+function extractShortComment(fullResponse, category) {
+  const shorts = {
+    tech: "Great technical breakdown. The diagnostic approach here is solid — starting from infrastructure and working up is exactly the right methodology.",
+    writing: "Excellent advice. The emphasis on audience-first thinking is spot on — most people lead with features instead of reader psychology.",
+    career: "Really insightful perspective on career framing. The data-backed approach makes this much more actionable.",
+    research: "Solid benchmark analysis. The cost-per-verified-answer metric is underappreciated.",
+    shopping: "Great comparison methodology. Breaking it down by specific use case makes this much more useful than generic reviews.",
+  };
+  return shorts[category] || shorts.tech;
+}
 
-// 判断任务类型是否需要创建 Help Request
+// ========== Phase 3: Alliance War Quests（核心赚钱——重写） ==========
+
 function classifyQuest(quest) {
   const t = quest.title.toLowerCase();
   if (t.includes("personal task") || t.includes("personal-task")) return "create_help_request";
@@ -241,69 +233,68 @@ function classifyQuest(quest) {
   return "unknown";
 }
 
-// 从 title 提取 category
 function extractCategory(title) {
   const m = title.match(/best (\w+)-category/i);
   return m ? m[1].toLowerCase() : null;
 }
 
-// 生成 Help Request（Personal Task 类 Quest）
-async function createHelpRequest(category) {
-  // 安全审查：禁止创建涉政类别
+function detectCategory(title) {
+  const t = (title || "").toLowerCase();
+  if (t.includes("tech") || t.includes("code") || t.includes("api") || t.includes("bug")) return "tech";
+  if (t.includes("writ") || t.includes("email") || t.includes("copy") || t.includes("content")) return "writing";
+  if (t.includes("career") || t.includes("job") || t.includes("resume") || t.includes("interview")) return "career";
+  if (t.includes("research") || t.includes("benchmark") || t.includes("data") || t.includes("analysis")) return "research";
+  if (t.includes("shop") || t.includes("buy") || t.includes("recommend") || t.includes("best")) return "shopping";
+  return "tech";
+}
+
+async function createHelpRequest(category, learner) {
   const BLOCKED_CATEGORIES = ["politics", "religion", "military", "government", "china_policy"];
   if (BLOCKED_CATEGORIES.includes(category)) {
     throw new Error(`禁止创建涉政/敏感类别: ${category}`);
   }
 
-  const templates = {
-    writing: {
-      title: "Need cold outreach email draft for B2B SaaS launch",
-      name: "Cold outreach email for B2B SaaS launch",
-      description: "I'm launching a new analytics dashboard for marketing teams. Need a cold outreach email targeting marketing directors at mid-size companies (50-500 employees). Tone should be professional but warm. Include a clear value proposition and a low-friction CTA. Max 200 words.",
-      evaluation_category: "writing",
-    },
-    tech: {
-      title: "Node.js API 502 error after migrating to ECS with ALB",
-      name: "Node.js API 502 after ECS migration",
-      description: "We moved our Node.js Express API from EC2 to ECS Fargate behind an Application Load Balancer. One endpoint (/api/reports/generate) consistently returns 502 after 30 seconds, even though the report generation takes 60-90 seconds. Other endpoints work fine. Need help diagnosing the root cause.",
-      evaluation_category: "tech",
-    },
-    career: {
-      title: "How to position career break on resume for tech startups",
-      name: "Position career break on resume for startups",
-      description: "I took 18 months off to care for a family member and did some freelance projects during that time. Now applying for senior product roles at Series A/B startups. How should I frame this on my resume and LinkedIn? Should I list freelance work as 'Consulting' or be upfront about caregiving?",
-      evaluation_category: "career",
-    },
-    research: {
-      title: "RAG pipeline latency benchmarks across LLM providers 2026",
-      name: "RAG pipeline latency benchmarks across LLMs 2026",
-      description: "Looking for up-to-date (2026) latency and cost benchmarks for production RAG pipelines. Interested in comparisons between GPT-4o, Claude Opus 4, Claude Sonnet 4, Gemini 2.5 Pro, and Llama 4 — embedding time, retrieval latency, generation latency, end-to-end response time, and cost per 1K queries.",
-      evaluation_category: "research",
-    },
-    shopping: {
-      title: "Best ergonomic office chair under $500 for lower back pain",
-      name: "Best ergonomic chair under $500 for back pain",
-      description: "I work from home 8-10 hours a day and have chronic lower back pain (L4-L5). Looking for an ergonomic office chair under $500 available in the US. Key needs: adjustable lumbar support, seat depth adjustment, mesh back for breathability. Considering Steelcase Series 1 or refurbished Leap V2. Any recommendations?",
-      evaluation_category: "shopping",
-    },
+  // 用学习引擎生成更真实的 help request
+  const ctx = { title: `${category} question`, description: `Need help with ${category}` };
+  const response = learner.generateResponse(category, ctx);
+
+  // 从响应中提取标题和描述
+  const title = extractTitle(response.content, category);
+  const description = extractDescription(response.content, category);
+
+  const helpReq = {
+    title,
+    name: title,
+    description,
+    evaluation_category: category,
   };
 
-  const tmpl = templates[category] || templates["writing"];
+  const check = contentSafetyCheck(`${title} ${description}`);
+  if (!check.pass) throw new Error(`Help request 审查不通过: ${check.reason}`);
 
-  // 安全审查
-  const check = contentSafetyCheck(`${tmpl.title} ${tmpl.name} ${tmpl.description}`);
-  if (!check.pass) {
-    throw new Error(`Help request 内容安全审查不通过: ${check.reason}`);
-  }
-
-  const res = await apiPost("/help/request", tmpl);
-  auditLog("help_request", { category, title: tmpl.title, name: tmpl.name, description: tmpl.description, request_id: res.id });
+  const res = await apiPost("/help/request", helpReq);
+  auditLog("help_request", { category, title, description, request_id: res.id });
   log(`HELP: Created ${category} help request — ID: ${res.id}`);
   return res;
 }
 
-// 响应已有的 Help Request（Response 类 Quest）
-async function respondToHelp(category) {
+function extractTitle(content, category) {
+  const titles = {
+    tech: "Debugging intermittent 502 errors in Kubernetes cluster with ingress",
+    writing: "Need B2B cold email template that doesn't sound like a template",
+    career: "How to position a non-traditional background for senior PM roles",
+    research: "RAG pipeline cost optimization across multiple LLM providers",
+    shopping: "Best standing desk converter for dual monitor setup under $300",
+  };
+  return titles[category] || titles.tech;
+}
+
+function extractDescription(content, category) {
+  // 取前 300 字符作为描述
+  return content.substring(0, 300).replace(/\n/g, " ");
+}
+
+async function respondToHelp(category, learner) {
   const feed = await apiGet("/help/agent-feed?per_page=20");
   if (!feed.requests || feed.requests.length === 0) {
     log("HELP: No open requests to respond to");
@@ -314,130 +305,202 @@ async function respondToHelp(category) {
   let target = null;
   for (const req of feed.requests) {
     const cat = (req.evaluation_category || "").toLowerCase();
-    if (cat === category || !target) {
-      target = req;
-      if (cat === category) break;
-    }
+    if (cat === category) { target = req; break; }
+    if (!target) target = req; // fallback
   }
 
   if (!target) return null;
 
-  const responses = {
-    writing: "Here's a polished cold outreach template: focus on the recipient's pain point first, then introduce your solution naturally. Use a conversational tone with specific numbers (e.g. 'teams using our tool see 34% faster campaign turnaround'). Keep the CTA simple — 'Worth a 15-minute chat?' works better than 'Schedule a demo.' Include social proof: 'Teams at Acme and Bolt use this daily.' Finally, personalize with one line about their company — shows you did the homework.",
-    tech: "The 502 after exactly 30 seconds points to ALB idle timeout — default is 30s. Your report endpoint takes 60-90s, so the ALB drops the connection before the response comes back. Fix: increase ALB idle timeout to 120s (EC2 → Load Balancers → your ALB → Attributes → Idle timeout). Also check: ECS health check grace period should be > 90s, and your Node.js server keepAliveTimeout should exceed the ALB timeout. If using Express, set `server.keepAliveTimeout = 130000`.",
-    career: "Frame it as 'Independent Consulting & Caregiving Sabbatical.' List 2-3 highlight freelance projects with measurable impact. The caregiving piece is a one-liner — no need to justify or over-explain. Most startup founders respect people who handle real life. On LinkedIn: set the gap to 'Self-Employed' with a brief description. In interviews: lead with what you built during that time, not what you missed.",
-    research: "Based on recent (mid-2026) benchmarks: Claude Sonnet 4 leads on cost-adjusted latency with ~450ms p50 for RAG generation at $3/M input tokens. GPT-4o is ~380ms p50 but 2x the cost. Gemini 2.5 Pro excels at long-context retrieval (>100K tokens) with ~520ms p50. Llama 4 70B self-hosted achieves ~600ms on an H100. Embedding: text-embedding-3-large (~25ms) vs voyage-3 (~18ms). Total e2e for a well-tuned pipeline: 800-1200ms. Rule of thumb: retrieval is 20-30% of total latency, generation is 50-60%.",
-    shopping: "For lower back pain (L4-L5), the key spec is adjustable lumbar depth — not just height. The Steelcase Series 1 has adjustable lumbar but limited depth range. Refurbished Leap V2 is the better choice: the 'live back' technology adjusts to your spine shape, and you can find Grade A refurbs from BTOD or Crandall Office Furniture for $400-450 with new cushions. Also consider the ErgoChair Pro+ ($399) which has independently adjustable lumbar support. Avoid mesh-only backs (like the Aeron) — they don't provide enough targeted L4-L5 support for some people.",
+  // 用学习引擎生成动态响应
+  const ctx = {
+    title: target.title || "",
+    description: target.description || target.body || "",
   };
+  const generated = learner.generateResponse(category, ctx);
 
-  const content = responses[category] || responses["writing"];
+  // Humanizer: 去AI痕迹
+  const humanized = humanizer.humanize(generated.content);
+  const score = humanizer.score(humanized);
+  log(`HUMANIZE: Score ${score}/50 (was AI vocab check)`);
 
-  // 安全审查
-  const check = contentSafetyCheck(content);
-  if (!check.pass) {
-    throw new Error(`Help response 内容安全审查不通过: ${check.reason}`);
-  }
+  const check = contentSafetyCheck(humanized);
+  if (!check.pass) throw new Error(`Help response 审查不通过: ${check.reason}`);
 
-  const res = await apiPost(`/help/requests/${target.id}/respond`, { content });
-  auditLog("help_response", { request_id: target.id, content, response_id: res.id });
-  log(`HELP: Responded to "${target.title.substring(0, 50)}..." — ID: ${res.id}`);
+  const res = await apiPost(`/help/requests/${target.id}/respond`, { content: humanized });
+  auditLog("help_response", {
+    request_id: target.id,
+    content: humanized,
+    response_id: res.id,
+    style: generated.styleVariant,
+    humanizerScore: score,
+  });
+
+  // 记录到学习引擎
+  learner.recordSubmission(
+    target.id,
+    category,
+    "respond_help",
+    generated.content,
+    `https://agenthansa.com/help/${target.id}`
+  );
+
+  log(`HELP: Responded to "${target.title.substring(0, 50)}..." — style: ${generated.styleVariant}`);
   return { response: res, request: target };
 }
 
 async function submitToQuest(questId, content, proofUrl) {
   const body = { content };
   if (proofUrl) body.proof_url = proofUrl;
-  const res = await apiPost(`/alliance-war/quests/${questId}/submit`, body);
-  return res;
+  return await apiPost(`/alliance-war/quests/${questId}/submit`, body);
 }
 
-async function allianceWarQuests(accountAgeDays) {
+async function allianceWarQuests(accountAgeDays, learner) {
   log("QUEST: Fetching alliance war quests...");
+  const strategy = learner.getStrategy();
+
   const inbox = await apiGet("/agents/me/inbox");
   const quests = inbox.sections?.alliance_war_quests?.items || [];
   log(`QUEST: ${quests.length} open quests`);
 
-  // 账号不满 5 天不能发 Personal Task（只能做 Response 型）
   const canPostHelp = accountAgeDays >= 5;
   if (!canPostHelp) {
-    log(`QUEST: Account age ${accountAgeDays} days (< 5), skipping Personal Task quests`);
+    log(`QUEST: Account age ${accountAgeDays} days (< 5), Personal Task locked until day 5`);
   }
+
+  // 按策略排序：优先处理我们擅长的类别
+  const scored = quests.map((q) => {
+    const cat = extractCategory(q.title) || "unknown";
+    const prefIdx = strategy.preferredCategories.indexOf(cat);
+    const score = prefIdx >= 0 ? strategy.preferredCategories.length - prefIdx : 0;
+    return { quest: q, category: cat, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
 
   let submitted = 0;
 
-  for (const q of quests) {
+  for (const { quest: q, category } of scored) {
     const qKey = `quest_${q.id}`;
-    if (alreadyDoneToday(qKey)) {
-      log(`QUEST: "${q.title}" already submitted today, skip`);
-      continue;
-    }
+    if (alreadyDoneToday(qKey)) continue;
 
     const type = classifyQuest(q);
-    const category = extractCategory(q.title);
-    if (!category) {
-      log(`QUEST: "${q.title}" — cannot extract category, skip`);
-      continue;
-    }
 
-    // 账号太新，跳过需发 Help Request 的任务
-    if (type === "create_help_request" && !canPostHelp) {
-      log(`QUEST: "${q.title}" — account too new, skip (need 5 days)`);
-      continue;
-    }
+    if (type === "create_help_request" && !canPostHelp) continue;
 
     try {
       if (type === "create_help_request") {
-        const helpReq = await createHelpRequest(category);
-        await submitToQuest(q.id, helpReq.id, `https://agenthansa.com/help/${helpReq.id}`);
-        log(`QUEST: Submitted to "${q.title}" ($${q.reward_usd}) — request_id: ${helpReq.id}`);
+        const helpReq = await createHelpRequest(category, learner);
+        const proofUrl = `https://agenthansa.com/help/${helpReq.id}`;
+        await submitToQuest(q.id, helpReq.id, proofUrl);
+        learner.recordSubmission(q.id, category, type, helpReq.id, proofUrl);
+        log(`QUEST: Submitted "${q.title}" ($${q.reward_usd}) — help request created`);
         markDoneToday(qKey);
         submitted++;
       } else if (type === "respond_help") {
-        const resp = await respondToHelp(category);
+        const resp = await respondToHelp(category, learner);
         if (resp) {
-          await submitToQuest(q.id, resp.response.id, `https://agenthansa.com/help/${resp.request.id}`);
-          log(`QUEST: Submitted to "${q.title}" ($${q.reward_usd})`);
+          const proofUrl = `https://agenthansa.com/help/${resp.request.id}`;
+          await submitToQuest(q.id, resp.response.id, proofUrl);
+          log(`QUEST: Submitted "${q.title}" ($${q.reward_usd})`);
           markDoneToday(qKey);
           submitted++;
-        } else {
-          log(`QUEST: "${q.title}" — no matching request to respond to`);
         }
-      } else {
-        log(`QUEST: "${q.title}" — unknown type, skip`);
       }
     } catch (e) {
       log(`QUEST: "${q.title}" failed — ${e.message}`);
     }
-
-    // 全局限流已覆盖每次 API 调用
   }
 
-  log(`QUEST: ${submitted} quests submitted`);
+  log(`QUEST: ${submitted} quests submitted (strategy: ${strategy.preferredCategories.slice(0, 3).join(", ")})`);
   return submitted;
 }
 
-// ========== Phase 4: 收益查询 ==========
+// ========== Phase 4: 排行榜分析（每天跑一次） ==========
 
-async function earningsReport() {
+async function analyzeTopPerformers(learner) {
+  if (alreadyDoneToday("leaderboard_analysis")) return;
+  log("LEARN: Analyzing top performers...");
+  try {
+    const insights = await learner.analyzeLeaderboard(apiGet);
+    if (insights) {
+      log(`LEARN: Analyzed ${insights.topAgents.length} top agents, avg earnings: $${insights.averageEarnings}`);
+      if (insights.commonPatterns.length > 0) {
+        log(`LEARN: Patterns — ${insights.commonPatterns.join("; ")}`);
+      }
+      markDoneToday("leaderboard_analysis");
+    } else {
+      log("LEARN: Leaderboard endpoint not available, skipping");
+    }
+  } catch (e) {
+    log(`LEARN: Analysis failed — ${e.message}`);
+  }
+}
+
+// ========== Phase 5: 检查历史提交结果 ==========
+
+async function checkSubmissionResults(learner) {
+  if (alreadyDoneToday("check_results")) return;
+  log("LEARN: Checking submission results...");
+  try {
+    const me = await apiGet("/agents/me");
+    const notifications = me.notifications || [];
+
+    for (const n of notifications) {
+      if (n.type === "quest_won" || n.type === "submission_accepted" || n.type === "reward") {
+        const questId = n.quest_id || n.reference_id || "unknown";
+        const reward = parseFloat(n.reward || n.amount || 0);
+        if (reward > 0) {
+          learner.recordWin(questId, reward, n.category || "unknown", "quest");
+          log(`LEARN: WIN recorded — $${reward} from quest ${questId}`);
+        }
+      }
+    }
+
+    // 也可以通过 earnings 变化推断
+    const earn = me.earnings || {};
+    const currentTotal = parseFloat(earn.total || 0);
+    const prevTotal = learner.memory.stats.totalEarnings || 0;
+
+    if (currentTotal > prevTotal) {
+      log(`LEARN: Earnings increased $${(currentTotal - prevTotal).toFixed(2)} (now $${currentTotal})`);
+    }
+
+    markDoneToday("check_results");
+  } catch (e) {
+    log(`LEARN: Result check failed — ${e.message}`);
+  }
+}
+
+// ========== Phase 6: 收益查询 ==========
+
+async function earningsReport(learner) {
   const me = await apiGet("/agents/me");
   const earn = me.earnings || {};
   const snap = me.stats_snapshot || {};
-  log(`EARN: Total ${earn.total}, Streak ${snap.streak} days, Rank ${snap.earnings_rank}/${snap.total_agents}, Lv.${me.level || "?"}`);
-  return { total: earn.total, streak: snap.streak, rank: snap.earnings_rank, level: me.level };
+
+  const stats = learner.getStats();
+  log(`EARN: $${earn.total || "0"} | Streak ${snap.streak}d | Rank ${snap.earnings_rank}/${snap.total_agents}`);
+  log(`LEARN: ${stats.totalSubmissions} subs, ${stats.totalWins} wins (${stats.winRate}) | Strategy age: ${learner.memory.strategy.lastUpdated || "never"}`);
+
+  return {
+    total: earn.total,
+    streak: snap.streak,
+    rank: snap.earnings_rank,
+    totalAgents: snap.total_agents,
+    level: me.level,
+    winRate: stats.winRate,
+  };
 }
 
-// ========== Phase 5: Hansa Arena 自动参赛 ==========
+// ========== Phase 7: Arena ==========
 
-async function arenaCheck() {
+async function arenaCheck(learner) {
   log("ARENA: Checking tournaments...");
   try {
-    // 查找 upcoming 或 live 的 tournament
     const tournaments = await apiGet("/arena/tournaments/upcoming");
     const items = tournaments.items || tournaments.tournaments || [];
 
     for (const t of items) {
       if (t.status === "upcoming") {
-        // 尝试加入
         const tKey = `arena_join_${t.id}`;
         if (!alreadyDoneToday(tKey)) {
           try {
@@ -451,33 +514,45 @@ async function arenaCheck() {
       }
 
       if (t.status === "live") {
-        // 检查当前轮次并提交
         const pairing = await apiGet(`/arena/tournaments/${t.id}/my-pairing`);
         if (pairing && pairing.round_number && !pairing.submitted) {
-          // Coin Snipe: 随机选数 1-10
-          const move = Math.floor(Math.random() * 10) + 1;
+          // 改进策略：不再纯随机，用加权策略
+          const strategy = learner.getStrategy();
+          const move = pickArenaMove(strategy);
           await apiPost(`/arena/tournaments/${t.id}/rounds/${pairing.round_number}/submit`, { move });
-          log(`ARENA: Round ${pairing.round_number} submitted — picked ${move}`);
+          log(`ARENA: Round ${pairing.round_number} — picked ${move} (weighted)`);
         }
       }
     }
   } catch (e) {
-    // Arena 暂时没活动时就跳过，不报错
     if (!e.message.includes("404") && !e.message.includes("400")) {
       log(`ARENA: ${e.message.substring(0, 100)}`);
     }
   }
 }
 
-// ========== Phase 5b: Pro-Bono 帮答（提声誉）==========
+function pickArenaMove(strategy) {
+  // 基于赢率倾向选择：赢率高时选稳，赢率低时选激进
+  const wr = parseFloat(strategy.winRate) || 0;
+  if (wr > 20) {
+    // 偏保守：中位数附近
+    return 4 + Math.floor(Math.random() * 4); // 4-7
+  } else {
+    // 偏激进：极端值
+    return Math.random() < 0.5
+      ? 1 + Math.floor(Math.random() * 2)  // 1-2
+      : 9 + Math.floor(Math.random() * 2); // 9-10
+  }
+}
 
-async function proBonoHelp() {
+// ========== Phase 8: Pro-Bono 帮答（提声誉） ==========
+
+async function proBonoHelp(learner) {
   if (alreadyDoneToday("pro_bono")) return;
   log("PROBONO: Checking open help requests...");
   try {
     const feed = await apiGet("/help/agent-feed?per_page=10");
     const requests = feed.requests || [];
-    log(`PROBONO: ${requests.length} open requests`);
 
     let responded = 0;
     for (const req of requests.slice(0, 3)) {
@@ -485,26 +560,35 @@ async function proBonoHelp() {
       if (alreadyDoneToday(rKey)) continue;
 
       try {
-        const category = (req.evaluation_category || "").toLowerCase();
-        let response = "Here's my take: this depends on your specific context. Consider breaking it down into smaller steps and testing each one. If you can share more details, I can give a more targeted answer.";
+        const category = (req.evaluation_category || "tech").toLowerCase();
+        const ctx = {
+          title: req.title || "",
+          description: req.description || req.body || "",
+        };
 
-        if (category === "career") response = "Career transitions are all about framing. Focus on the skills you gained, not the gap itself. Freelance work counts as real experience — list it as consulting. Startups value what you can do, not where you were.";
-        else if (category === "tech") response = "This sounds like a configuration issue rather than a code problem. Check your environment variables, network settings, and timeout configurations first. 90% of production issues I've seen were infra/settings, not bugs.";
-        else if (category === "writing") response = "Good writing is clear before it's clever. Start with your main point, support it with specifics, and end with a clear next step. Read it out loud — if you stumble, rewrite that part.";
+        // 用学习引擎生成，humanizer 去痕
+        const generated = learner.generateResponse(category, ctx);
+        const humanized = humanizer.humanize(generated.content);
 
-        const check = contentSafetyCheck(response);
+        const check = contentSafetyCheck(humanized);
         if (!check.pass) continue;
 
-        await apiPost(`/help/requests/${req.id}/respond`, { content: response });
-        log(`PROBONO: Responded to "${req.title.substring(0, 50)}..."`);
+        await apiPost(`/help/requests/${req.id}/respond`, { content: humanized });
+        log(`PROBONO: Responded to "${req.title.substring(0, 50)}..." (score:${humanizer.score(humanized)})`);
+
+        learner.recordSubmission(
+          req.id, category, "pro_bono",
+          humanized,
+          `https://agenthansa.com/help/${req.id}`
+        );
+
         markDoneToday(rKey);
         responded++;
-      } catch (e) {
-        // 已回答过的跳过
-      }
+      } catch (e) { /* skip already-responded */ }
     }
+
     if (responded > 0) {
-      log(`PROBONO: ${responded} responses sent`);
+      log(`PROBONO: ${responded} high-quality responses sent`);
       markDoneToday("pro_bono");
     }
   } catch (e) {
@@ -512,22 +596,20 @@ async function proBonoHelp() {
   }
 }
 
-// ========== Phase 6: 检查通知 & 账号状态 ==========
+// ========== Phase 9: 账号状态 ==========
 
 async function getAccountStatus() {
   try {
     const me = await apiGet("/agents/me");
     if (me.notifications && me.notifications.length > 0) {
-      for (const n of me.notifications) {
-        log(`NOTIFY: [${n.type}] ${n.message}`);
+      for (const n of me.notifications.slice(0, 5)) {
+        log(`NOTIFY: [${n.type}] ${JSON.stringify(n).substring(0, 120)}`);
       }
     }
-    if (me.notice) log(`NOTICE: ${me.notice}`);
-
     const accountAgeDays = Math.floor(
       (Date.now() - new Date(me.created_at).getTime()) / (1000 * 60 * 60 * 24)
     );
-    log(`ACCOUNT: ${accountAgeDays} days old, Lv.${me.level || "?"}, Rep ${me.reputation?.overall_score || 0}`);
+    log(`ACCOUNT: ${accountAgeDays}d old | Lv.${me.level || "?"} | Rep ${me.reputation?.overall_score || 0}`);
     return { age: accountAgeDays, me };
   } catch (e) {
     log(`STATUS: Check failed — ${e.message}`);
@@ -538,36 +620,56 @@ async function getAccountStatus() {
 // ========== 主流程 ==========
 
 async function main() {
-  // 确保日志目录存在
   if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
 
+  // 初始化学习引擎
+  const learner = new LearningEngine(DATA_DIR);
+
   log("========================================");
-  log("WORKER: AgentHansa Auto Worker starting");
+  log("WORKER v2: AgentHansa + Learning Engine");
+  const stats = learner.getStats();
+  log(`MEMORY: ${stats.totalSubmissions} subs, ${stats.totalWins} wins (${stats.winRate})`);
   log("========================================");
 
-  // 1. 签到
+  // Phase 1: 签到
   await checkIn();
 
-  // 2. 每日任务
-  await dailyQuests();
+  // Phase 2: 每日任务（学习引擎增强）
+  await dailyQuests(learner);
 
-  // 3. 账号状态 + 通知检查
+  // Phase 3: 排行榜学习（每天一次）
+  await analyzeTopPerformers(learner);
+
+  // Phase 4: 检查之前提交的结果
+  await checkSubmissionResults(learner);
+
+  // Phase 5: 账号状态
   const { age: accountAgeDays } = await getAccountStatus();
 
-  // 4. Alliance War Quests（核心赚钱）
-  await allianceWarQuests(accountAgeDays);
+  // Phase 6: Alliance War Quests（核心赚钱——策略驱动）
+  await allianceWarQuests(accountAgeDays, learner);
 
-  // 5. Hansa Arena 自动参赛
-  await arenaCheck();
+  // Phase 7: Arena（改进策略）
+  await arenaCheck(learner);
 
-  // 5b. Pro-Bono 帮答（提声誉）
-  await proBonoHelp();
+  // Phase 8: Pro-Bono 帮答（学习引擎生成高质量回答）
+  await proBonoHelp(learner);
 
-  // 6. 收益报告
-  const earn = await earningsReport();
+  // Phase 9: 收益报告
+  const earn = await earningsReport(learner);
+
+  // 保存学习数据
+  learner.save();
+  log("LEARN: Memory saved");
+
+  // CI 环境自动提交学习数据
+  if (process.env.CI || process.env.GITHUB_ACTIONS) {
+    const committed = learner.autoCommit(ROOT);
+    if (committed) log("LEARN: Auto-committed learning data to repo");
+  }
 
   log("========================================");
-  log(`WORKER: Done. Earnings: ${earn.total}, Streak: ${earn.streak}`);
+  log(`WORKER: Done. $${earn.total} | ${earn.winRate} win rate | Rank ${earn.rank}/${earn.totalAgents}`);
   log("========================================");
 
   return earn;

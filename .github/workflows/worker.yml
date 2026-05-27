@@ -1,10 +1,8 @@
-name: "AgentHansa Auto Worker"
+name: "MediaCraft AI — Multi-Worker"
 
 on:
   schedule:
-    # 每 4 小时运行一次 (UTC: 0点, 4点, 8点, 12点, 16点, 20点)
     - cron: "0 */4 * * *"
-  # 允许手动触发
   workflow_dispatch:
 
 jobs:
@@ -19,7 +17,7 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Run AgentHansa Worker
+      - name: Run AgentHansa Worker (v2 + Learning + Humanizer)
         env:
           AGENTHANSA_API_KEY: ${{ secrets.AGENTHANSA_API_KEY }}
         run: node agent_hansa_worker.js
@@ -33,3 +31,14 @@ jobs:
         env:
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
         run: node devto_worker.js
+
+      - name: Run TaskMarket Worker
+        run: node taskmarket_worker.js
+
+      - name: Commit learning data
+        run: |
+          git config user.name "MediaCraft AI"
+          git config user.email "bot@mediacraft.ai"
+          git add data/ logs/ --all
+          git diff --cached --quiet || git commit -m "[auto] learning update $(date +%Y-%m-%d)"
+          git push || true
