@@ -1,0 +1,81 @@
+{
+  "description": "美国各州国际快递费率参考 (USD/kg)，基于 USPS/UPS/FedEx 2026 公开费率",
+  "lastUpdated": "2026-05-27",
+  "source": "USPS Commercial Base, UPS Standard, FedEx International Economy",
+  "carriers": {
+    "usps": {
+      "name": "USPS Priority Mail International",
+      "baseRate": 45,
+      "perKg": 8.5,
+      "deliveryDays": "6-10 business days"
+    },
+    "ups": {
+      "name": "UPS Standard",
+      "baseRate": 38,
+      "perKg": 7.2,
+      "deliveryDays": "5-8 business days"
+    },
+    "fedex": {
+      "name": "FedEx International Economy",
+      "baseRate": 42,
+      "perKg": 7.8,
+      "deliveryDays": "5-7 business days"
+    }
+  },
+  "zones": {
+    "US_WEST": {
+      "states": ["CA","OR","WA","NV","AZ","UT","ID","MT","WY","CO","NM","AK","HI"],
+      "ratePerKg": 52,
+      "deliveryDays": "5-8 days",
+      "majorPorts": ["Los Angeles","San Francisco","Seattle","Portland"]
+    },
+    "US_CENTRAL": {
+      "states": ["TX","OK","KS","NE","SD","ND","MN","IA","MO","WI","IL","IN","MI","OH","KY","AR","LA","MS","AL","TN"],
+      "ratePerKg": 58,
+      "deliveryDays": "6-9 days",
+      "majorPorts": ["Houston","Chicago","Dallas","Memphis"]
+    },
+    "US_EAST": {
+      "states": ["NY","NJ","PA","DE","MD","DC","VA","WV","NC","SC","GA","FL","CT","RI","MA","NH","VT","ME"],
+      "ratePerKg": 65,
+      "deliveryDays": "7-10 days",
+      "majorPorts": ["New York","Miami","Savannah","Norfolk","Charleston"]
+    }
+  },
+  "stateMap": {
+    "AL": {"zone":"US_CENTRAL","avgRate":56},"AK": {"zone":"US_WEST","avgRate":68},
+    "AZ": {"zone":"US_WEST","avgRate":50},"AR": {"zone":"US_CENTRAL","avgRate":55},
+    "CA": {"zone":"US_WEST","avgRate":48},"CO": {"zone":"US_WEST","avgRate":52},
+    "CT": {"zone":"US_EAST","avgRate":62},"DE": {"zone":"US_EAST","avgRate":63},
+    "FL": {"zone":"US_EAST","avgRate":61},"GA": {"zone":"US_EAST","avgRate":60},
+    "HI": {"zone":"US_WEST","avgRate":72},"ID": {"zone":"US_WEST","avgRate":54},
+    "IL": {"zone":"US_CENTRAL","avgRate":57},"IN": {"zone":"US_CENTRAL","avgRate":57},
+    "IA": {"zone":"US_CENTRAL","avgRate":56},"KS": {"zone":"US_CENTRAL","avgRate":55},
+    "KY": {"zone":"US_CENTRAL","avgRate":58},"LA": {"zone":"US_CENTRAL","avgRate":59},
+    "ME": {"zone":"US_EAST","avgRate":66},"MD": {"zone":"US_EAST","avgRate":62},
+    "MA": {"zone":"US_EAST","avgRate":64},"MI": {"zone":"US_CENTRAL","avgRate":57},
+    "MN": {"zone":"US_CENTRAL","avgRate":56},"MS": {"zone":"US_CENTRAL","avgRate":58},
+    "MO": {"zone":"US_CENTRAL","avgRate":56},"MT": {"zone":"US_WEST","avgRate":56},
+    "NE": {"zone":"US_CENTRAL","avgRate":55},"NV": {"zone":"US_WEST","avgRate":50},
+    "NH": {"zone":"US_EAST","avgRate":64},"NJ": {"zone":"US_EAST","avgRate":62},
+    "NM": {"zone":"US_WEST","avgRate":53},"NY": {"zone":"US_EAST","avgRate":63},
+    "NC": {"zone":"US_EAST","avgRate":61},"ND": {"zone":"US_CENTRAL","avgRate":57},
+    "OH": {"zone":"US_CENTRAL","avgRate":58},"OK": {"zone":"US_CENTRAL","avgRate":55},
+    "OR": {"zone":"US_WEST","avgRate":52},"PA": {"zone":"US_EAST","avgRate":61},
+    "RI": {"zone":"US_EAST","avgRate":63},"SC": {"zone":"US_EAST","avgRate":60},
+    "SD": {"zone":"US_CENTRAL","avgRate":56},"TN": {"zone":"US_CENTRAL","avgRate":58},
+    "TX": {"zone":"US_CENTRAL","avgRate":57},"UT": {"zone":"US_WEST","avgRate":52},
+    "VT": {"zone":"US_EAST","avgRate":65},"VA": {"zone":"US_EAST","avgRate":61},
+    "WA": {"zone":"US_WEST","avgRate":50},"WV": {"zone":"US_EAST","avgRate":60},
+    "WI": {"zone":"US_CENTRAL","avgRate":56},"WY": {"zone":"US_WEST","avgRate":54},
+    "DC": {"zone":"US_EAST","avgRate":63}
+  },
+  "sampleRates": [
+    {"from":"Shenzhen","to":"Los Angeles, CA","weight":1,"usps":53,"ups":45,"fedex":49},
+    {"from":"Shenzhen","to":"New York, NY","weight":1,"usps":68,"ups":58,"fedex":63},
+    {"from":"Shenzhen","to":"Chicago, IL","weight":1,"usps":62,"ups":52,"fedex":57},
+    {"from":"Shenzhen","to":"Miami, FL","weight":1,"usps":65,"ups":55,"fedex":60},
+    {"from":"Shenzhen","to":"Seattle, WA","weight":1,"usps":55,"ups":46,"fedex":50},
+    {"from":"Shanghai","to":"Dallas, TX","weight":1,"usps":60,"ups":50,"fedex":55}
+  ]
+}

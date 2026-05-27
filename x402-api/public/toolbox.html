@@ -87,6 +87,12 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
   <p>进货+物流+佣金+广告=真实利润。别卖一堆才发现亏了。</p>
 </div>
 
+<div class="card" onclick="openTool('feedback')" style="position:relative">
+  <div class="icon">反馈</div><h2>建议 & Bug</h2>
+  <p>功能建议？数据纠错？发现 Bug？直接告诉我们。</p>
+  <div class="badge">需要你</div>
+</div>
+
 <div class="card gold" onclick="openTool('premium')" style="position:relative">
   <div class="icon">解锁</div><h2>升级专业版</h2>
   <p>批量审查 · 报告下载 · 销量数据 · 竞品分析 · 广告策略</p>
@@ -138,12 +144,27 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div id="profit" class="panel hidden">
 <div class="back-link" onclick="goHome()">首页</div>
 <h3>跨境利润计算器</h3>
-<div class="tip-box"><b>公式：</b>利润=售价-进货-物流-佣金-广告 &nbsp;|&nbsp; 物流:美国¥60/kg 欧洲¥55 日本¥40 &nbsp;|&nbsp; Amazon佣金15%</div>
+<div class="tip-box"><b>新：</b>接入美国 50 州真实快递费率（USPS/UPS/FedEx 2026 价格）</div>
 <div class="row"><div><label>进货价(¥)</label><input type="text" id="prCost" placeholder="35"></div><div><label>重量(kg)</label><input type="text" id="prWeight" placeholder="0.3"></div></div>
-<div class="row"><div><label>目的地</label><select id="prDest"><option value="US">美国 ¥60/kg</option><option value="EU">欧洲 ¥55/kg</option><option value="JP">日本 ¥40/kg</option><option value="UK">英国 ¥55/kg</option></select></div><div><label>平台</label><select id="prPlatform"><option value="amazon">Amazon 15%</option><option value="temu">Temu 免费</option><option value="shopify">Shopify 3%</option></select></div></div>
+<div class="row">
+<div><label>目的地州</label><select id="prState"><option value="CA">California 加利福尼亚</option><option value="NY">New York 纽约</option><option value="TX">Texas 德克萨斯</option><option value="FL">Florida 佛罗里达</option><option value="WA">Washington 华盛顿</option><option value="IL">Illinois 伊利诺伊</option><option value="GA">Georgia 佐治亚</option><option value="NJ">New Jersey 新泽西</option><option value="PA">Pennsylvania 宾夕法尼亚</option><option value="OH">Ohio 俄亥俄</option></select></div>
+<div><label>平台</label><select id="prPlatform"><option value="amazon">Amazon 15%</option><option value="temu">Temu 免费</option><option value="shopify">Shopify 3%</option></select></div>
+</div>
 <div><label>售价($)</label><input type="text" id="prPrice" placeholder="19.99"></div>
-<button class="btn" onclick="calcProfit()">计算利润</button>
+<button class="btn" onclick="calcProfit()">计算利润（实时费率）</button>
 <div id="prResult" class="result" style="display:none"></div>
+</div>
+
+<!-- ====== 反馈 & Bug 通道 ====== -->
+<div id="feedback" class="panel hidden">
+<div class="back-link" onclick="goHome()">首页</div>
+<h3>反馈 & Bug 报告</h3>
+<div class="tip-box">工具箱还在成长中。你遇到的任何问题、想要的功能、发现的错误，直接告诉我们。每一条都会看。</div>
+<div><label>类型</label><select id="fbType"><option value="suggestion">功能建议</option><option value="bug">Bug 报告</option><option value="data">数据纠错</option><option value="other">其他</option></select></div>
+<label>描述</label><textarea id="fbMessage" rows="4" placeholder="详细描述你遇到的问题或想要的功能..."></textarea>
+<div><label>联系方式（可选）</label><input type="email" id="fbEmail" placeholder="留邮箱我们可以回复你"></div>
+<button class="btn" onclick="submitFeedback()">提交反馈</button>
+<div id="fbResult" class="result" style="display:none"></div>
 </div>
 
 <!-- ====== 升级专业版 ====== -->

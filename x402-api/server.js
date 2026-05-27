@@ -424,6 +424,101 @@ function seoOptimize(title, description, keywords, platform) {
   };
 }
 
+// ============ 会员系统 ============
+const membership = (() => {
+  const fs = require("fs");
+  const path = require("path");
+  const crypto = require("crypto");
+  const USERS_FILE = path.join(__dirname, "users.json");
+  const TIERS = {
+    free: { name: "免费版", limit: { batch: 0, export: false, history: false, data: false, competitor: false } },
+    premium: { name: "会员", price: "¥9.9/月", limit: { batch: 100, export: true, history: true, data: false, competitor: false } },
+    pro: { name: "专业版", price: "¥29.9/月", limit: { batch: 1000, export: true, history: true, data: true, competitor: true } },
+  };
+  function load() { try { return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8")); } catch (e) { return {}; } }
+  function save(u) { fs.writeFileSync(USERS_FILE, JSON.stringify(u, null, 2)); }
+  function hash(pw) { return crypto.createHash("sha256").update(pw + "mediacraft-salt").digest("hex"); }
+  function sanitize(u) { return { email: u.email, tier: u.tier, tierName: TIERS[u.tier]?.name || "免费版", createdAt: u.createdAt, apiKey: u.apiKey, checkCount: (u.checks || []).length }; }
+  return { TIERS, load, save, hash, sanitize };
+})();
+
+// 注册
+app.post("/api/v1/auth/register", (req, res) => {
+  const { email, password, tier } = req.body || {};
+  if (!email || !password) return res.status(400).json({ ok: false, error: "邮箱和密码必填" });
+  const users = membership.load();
+  if (users[email]) return res.json({ ok: false, error: "邮箱已注册" });
+  users[email] = {
+    email, passwordHash: membership.hash(password), tier: tier || "free",
+    createdAt: new Date().toISOString(), checks: [],
+    apiKey: "mc_" + require("crypto").randomBytes(16).toString("hex"),
+  };
+  membership.save(users);
+  res.json({ ok: true, user: membership.sanitize(users[email]) });
+});
+
+// 登录
+app.post("/api/v1/auth/login", (req, res) => {
+  const { email, password } = req.body || {};
+  const users = membership.load();
+  const u = users[email];
+  if (!u || u.passwordHash !== membership.hash(password)) return res.json({ ok: false, error: "邮箱或密码错误" });
+  res.json({ ok: true, user: membership.sanitize(u) });
+});
+
+// ============ 美国快递费率 ============
+const SHIPPING = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "us-shipping-rates.json"), "utf-8"));
+
+app.get("/api/v1/shipping-rates", (_, res) => res.json(SHIPPING));
+
+app.post("/api/v1/shipping-calculate", (req, res) => {
+  const { weight, state, carrier } = req.body || {};
+  if (!weight || !state) return res.status(400).json({ error: "需要 weight(kg) 和 state(州代码)" });
+  const stateData = SHIPPING.stateMap[state.toUpperCase()];
+  if (!stateData) return res.json({ error: `未找到 ${state} 的费率数据` });
+  const zone = SHIPPING.zones[stateData.zone];
+  const perKg = carrier && SHIPPING.carriers[carrier] ? SHIPPING.carriers[carrier].perKg + SHIPPING.carriers[carrier].baseRate / Math.max(weight, 0.5)
+    : stateData.avgRate;
+  const total = Math.round(perKg * weight * 100) / 100;
+  res.json({
+    state: state.toUpperCase(), zone: stateData.zone, weight,
+    ratePerKg: Math.round(perKg * 100) / 100,
+    totalUSD: total,
+    totalCNY: Math.round(total * 7.2 * 100) / 100,
+    zoneInfo: zone,
+    allCarriers: {
+      usps: Math.round((SHIPPING.carriers.usps.baseRate + SHIPPING.carriers.usps.perKg * weight) * 100) / 100,
+      ups: Math.round((SHIPPING.carriers.ups.baseRate + SHIPPING.carriers.ups.perKg * weight) * 100) / 100,
+      fedex: Math.round((SHIPPING.carriers.fedex.baseRate + SHIPPING.carriers.fedex.perKg * weight) * 100) / 100,
+    },
+  });
+});
+
+// ============ 反馈 / Bug 通道 ============
+const FEEDBACK_FILE = require("path").join(__dirname, "..", "data", "feedback.jsonl");
+app.post("/api/v1/feedback", (req, res) => {
+  const { type, message, email, page } = req.body || {};
+  if (!message) return res.status(400).json({ error: "反馈内容不能为空" });
+  const entry = {
+    time: new Date().toISOString(),
+    type: type || "suggestion",
+    message, email: email || "anonymous", page: page || "unknown",
+  };
+  const dir = require("path").dirname(FEEDBACK_FILE);
+  if (!require("fs").existsSync(dir)) require("fs").mkdirSync(dir, { recursive: true });
+  require("fs").appendFileSync(FEEDBACK_FILE, JSON.stringify(entry) + "\n");
+  console.log(`[FEEDBACK] ${entry.type}: ${message.substring(0, 80)}`);
+  res.json({ ok: true, message: "感谢反馈！我们会尽快处理。" });
+});
+
+// 获取反馈列表（简单管理查看）
+app.get("/api/v1/feedback", (req, res) => {
+  try {
+    const lines = require("fs").readFileSync(FEEDBACK_FILE, "utf-8").trim().split("\n").slice(-50);
+    res.json(lines.map((l) => JSON.parse(l)));
+  } catch (e) { res.json([]); }
+});
+
 // ============ 守护进程状态 ============
 let daemonStatus = { running: false, cycles: 0, lastCycle: null, errors: 0 };
 
