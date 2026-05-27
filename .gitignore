@@ -3,3 +3,4 @@ logs/
 *.log
 tmp_*.json
 node_modules/
+data/platform_credentials.json
