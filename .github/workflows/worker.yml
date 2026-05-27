@@ -27,6 +27,11 @@ jobs:
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
         run: node devto_worker.js
 
+      - name: Run Hashnode Content Publisher
+        env:
+          HASHNODE_API_KEY: ${{ secrets.HASHNODE_API_KEY }}
+        run: node hashnode_worker.js
+
       - name: Run TaskMarket Worker
         run: node taskmarket_worker.js
 
