@@ -237,12 +237,11 @@ app.post("/api/v1/compliance-check", async (req, res) => {
       platform: platform || "douyin",
     });
 
-    result.debug = {
-      textLen: reviewText.length,
-      keyword: testKw,
-      directMatch,
-      engineVersion: "v2.1.0-unicode-fix",
-    };
+    // 附加真实处罚案例（护城河）
+    result.enforcementCases = (RULES_DB.enforcementCases || []).filter(c => {
+      return c.platform === (platform || "douyin") || !platform;
+    }).slice(0, 3);
+
     trackFromRequest(req, "/api/v1/compliance-check", "$0.02");
     res.json(result);
   } catch (e) {

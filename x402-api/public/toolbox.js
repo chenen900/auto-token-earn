@@ -8,6 +8,10 @@ function openTool(t) {
   if (el) el.classList.remove("hidden");
   window.scrollTo(0, 0);
 }
+function toggleHelp(id) {
+  var el = document.getElementById("help-" + id);
+  if (el) el.classList.toggle("show");
+}
 function goHome() {
   document.querySelectorAll(".panel").forEach(function (e) { e.classList.add("hidden"); });
   var el = document.getElementById("home");
@@ -102,7 +106,15 @@ async function checkCompliance() {
   var items = (r.checks || []).map(function (c) {
     return "<div class='issue " + c.severity + "'><b>[" + c.severity.toUpperCase() + "] " + (c.rule || c.label) + "</b>: " + (c.found || "") + (c.suggestion ? " → " + c.suggestion : "") + "</div>";
   }).join("");
-  el.innerHTML = "<h3>审查报告</h3><div class=score " + sc + ">" + r.score + "/100</div><p style=text-align:center;margin-bottom:12px>" + r.verdict + "</p>" + (items || "<div style=text-align:center;color:#34d399;padding:20px>合规检查通过，可以发布</div>");
+  // 处罚案例
+  var casesHtml = "";
+  if (r.enforcementCases && r.enforcementCases.length > 0) {
+    casesHtml = "<div style='margin-top:12px;background:#451a1a;border-radius:8px;padding:12px'><div class=label style=color:#f87171>真实处罚案例参考</div>" +
+      r.enforcementCases.map(function(c) { return "<div style='font-size:0.8em;margin:6px 0;color:#fca5a5'>"+c.date+" | "+c.platform+" | "+c.violation+" | <b>"+c.penalty+"</b><br><span style=color:#fbbf24>"+c.lesson+"</span></div>"; }).join("") +
+      "</div>";
+  }
+
+  el.innerHTML = "<h3>审查报告</h3><div class=score " + sc + ">" + r.score + "/100</div><p style=text-align:center;margin-bottom:12px>" + r.verdict + "</p>" + (items || "<div style=text-align:center;color:#34d399;padding:20px>合规检查通过，可以发布</div>") + casesHtml;
 }
 
 // ========== Listing 生成 ==========
