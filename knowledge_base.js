@@ -50,8 +50,9 @@ const CATEGORIES = {
 // ====== 原子结构 ======
 // { id, time, work, category, source, pattern, confidence, tags, detail }
 
-let usageLog = {};
-function trackUsage(category) { usageLog[category] = (usageLog[category]||0)+1; }
+const USAGE_FILE = path.join(KB_DIR, "_usage.json");
+let usageLog = (()=>{ try { return JSON.parse(fs.readFileSync(USAGE_FILE,"utf-8")); } catch(e) { return {}; } })();
+function trackUsage(category) { usageLog[category] = (usageLog[category]||0)+1; try { fs.writeFileSync(USAGE_FILE, JSON.stringify(usageLog)); } catch(e) {} }
 function getUsage() { return usageLog; }
 
 function ensureDir() { if (!fs.existsSync(KB_DIR)) fs.mkdirSync(KB_DIR, { recursive: true }); }
