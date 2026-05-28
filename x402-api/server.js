@@ -153,6 +153,14 @@ app.get("/dashboard", (_, res) => {
     summary: {
       总调用: Object.values(stats.calls).reduce((a, b) => a + b, 0),
       预估收益: "$" + stats.earnings.total.toFixed(2),
+      挂牌状态: "Agentic.Market + x402scan 自动发现中",
+      服务数: 5,
+      收款地址: PAY_TO_SOL.substring(0,8) + "...",
+    },
+    marketplaces: {
+      agentic_market: "自动发现 /.well-known/x402",
+      x402scan: "自动索引",
+      mcp_hive: "待提交PR",
     },
   });
 });
