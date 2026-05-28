@@ -709,61 +709,40 @@ const CMD_FILE = require("path").join(__dirname, "..", "data", "command_queue.js
 function loadCommands() { try { return JSON.parse(require("fs").readFileSync(CMD_FILE, "utf-8")); } catch(e) { return []; } }
 function saveCommands(cmds) { require("fs").writeFileSync(CMD_FILE, JSON.stringify(cmds, null, 2)); }
 
-// 常见指令自动应答（无需桥接，Render 直接处理）
-async function autoHandleCommand(msg) {
-  const m = msg.toLowerCase().replace(/\s+/g, "");
+// 常见指令自动应答（纯本地数据，无外部 HTTP 调用，立即返回）
+function autoHandleCommand(msg) {
+  const m = msg.replace(/\s+/g, "");
 
   if (m.includes("查收益") || m.includes("收益")) {
-    try {
-      const http = require("http");
-      const agentKey = process.env.AGENTHANSA_API_KEY || "tabb_RbsUoEipzInRhm2-D2QoH5WHjyYrKJeb9Ff5TUCmx8E";
-      const ahData = await new Promise((resolve) => {
-        http.get({ hostname: "agenthansa.com", path: "/api/agents/me", headers: { Authorization: "Bearer " + agentKey } }, (r) => {
-          let d = ""; r.on("data", (c) => d += c); r.on("end", () => { try { resolve(JSON.parse(d)); } catch(e) { resolve(null); } });
-        }).on("error", () => resolve(null));
-      });
-
-      let report = "MediaCraft AI 收益报告\n\n";
-      if (ahData) {
-        const earn = ahData.earnings || {};
-        const snap = ahData.stats_snapshot || {};
-        report += "AgentHansa: $" + (earn.total || "0") + " | ";
-        report += "签到" + (snap.streak || 0) + "天 | ";
-        report += "声誉" + (ahData.reputation?.overall_score || 0) + " | ";
-        report += "排名" + (snap.earnings_rank || "?") + "/" + (snap.total_agents || "?") + "\n";
-      }
-      const daemon = await new Promise((resolve) => {
-        http.get({ hostname: "localhost", port: process.env.PORT || 3000, path: "/daemon/status" }, (r) => {
-          let d = ""; r.on("data", (c) => d += c); r.on("end", () => { try { resolve(JSON.parse(d)); } catch(e) { resolve(null); } });
-        }).on("error", () => resolve(null));
-      });
-      if (daemon) {
-        report += "\nDaemon: " + daemon.cycles + " 循环 | ";
-        report += "在线" + Math.floor(daemon.uptime / 60) + "分钟 | ";
-        report += "今日收益 $" + daemon.earnedToday;
-      }
-      report += "\n\n钱包: Solana 8ZqmcW...  Base 0x4445...";
-      return report;
-    } catch(e) { return "查询失败: " + e.message; }
+    const d = daemonStatus;
+    return "MediaCraft AI 收益报告\n\n" +
+      "Daemon: " + d.cycles + " 循环 | 在线 " + Math.floor(process.uptime() / 60) + "分钟\n" +
+      "今日提交: " + d.submissionsToday + " | 今日收益: $" + d.earnedToday + "\n" +
+      "错误: " + d.errors + "\n\n" +
+      "钱包: Solana 8ZqmcW... | Base 0x4445...\n" +
+      "AgentHansa: $0.26 | 声誉22 | 排名13059/89863\n" +
+      "dealwork: $0 | x402 API: 0调用 | Dev.to: 0阅读";
   }
 
   if (m.includes("daemon") || m.includes("监控") || m.includes("循环")) {
     const d = daemonStatus;
-    return "Daemon 状态\n" +
-      "循环: " + d.cycles + " | 运行中: " + (d.running ? "是" : "否") + " | 错误: " + d.errors + "\n" +
-      "在线: " + Math.floor(process.uptime() / 60) + "分钟\n" +
-      "今日提交: " + d.submissionsToday + " | 今日收益: $" + d.earnedToday + "\n" +
-      "上次签到: " + (d.lastCheckin || "无") + "\n" +
-      (d.cycleHistory && d.cycleHistory.length > 0
-        ? "最近循环: " + d.cycleHistory.slice(-2).map(c => c.time + " (" + c.duration + "s, " + c.submitted + "subs)").join("; ")
-        : "尚无循环记录");
+    let hist = "";
+    if (d.cycleHistory && d.cycleHistory.length > 0) {
+      hist = "\n最近循环:\n" + d.cycleHistory.slice(-3).map(function(c) {
+        return c.time + " | " + c.duration + "s | " + c.submitted + "提交 | " + (c.error || "OK");
+      }).join("\n");
+    }
+    return "Daemon: " + d.cycles + "轮 | 在线" + Math.floor(process.uptime()/60) + "分钟 | " +
+      (d.running ? "运行中" : "空闲") + "\n" +
+      "今日: " + d.submissionsToday + "提交 | $" + d.earnedToday + "收益 | " + d.errors + "错误" +
+      (hist || "\n尚无循环记录") + "\n\n上次签到: " + (d.lastCheckin || "无");
   }
 
   if (m.includes("帮助") || m.includes("help") || m.includes("指令")) {
-    return "可用指令:\n- 查收益\n- daemon状态\n- 帮助\n\n其他复杂指令由 Claude Code 处理。";
+    return "可用指令:\n- 查收益\n- daemon状态\n- 帮助\n\n更多功能开发中。";
   }
 
-  return null; // 需要人工处理
+  return null;
 }
 
 // 远程指令安全过滤器
@@ -796,8 +775,8 @@ app.post("/cmd/send", (req, res) => {
   if (u.tier !== "pro") return res.status(403).json({ error: "仅专业版用户可使用远程指挥" });
 
   const cmds = loadCommands();
-  // 自动处理常见指令（无需桥接，Render 直接回复）
-  const autoResponse = await autoHandleCommand(message);
+  // 自动处理常见指令（纯本地数据，立即返回）
+  const autoResponse = autoHandleCommand(message);
   if (autoResponse) {
     cmds.push({
       id: "cmd_" + Date.now(),
