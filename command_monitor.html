@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>指挥台实时监控</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei",sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh}
+.topbar{background:#111827;border-bottom:1px solid #1e293b;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+.topbar h1{font-size:1em;color:#60a5fa}
+.topbar .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+.topbar .dot.live{background:#34d399}.topbar .dot.dead{background:#64748b;animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.container{max-width:800px;margin:0 auto;padding:16px}
+.cmd-card{background:#111827;border:1px solid #1e293b;border-radius:10px;padding:14px;margin:10px 0;animation:slideIn .3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.cmd-card .user{color:#60a5fa;font-size:0.8em;margin-bottom:6px}
+.cmd-card .msg{font-size:0.95em;line-height:1.6;margin:6px 0;padding:10px;background:#0f172a;border-radius:6px;white-space:pre-wrap}
+.cmd-card .msg.question{border-left:3px solid #fbbf24}
+.cmd-card .msg.answer{border-left:3px solid #34d399;color:#cbd5e1}
+.cmd-card .time{color:#475569;font-size:0.7em}
+.cmd-card .status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.7em;margin-left:8px}
+.status.pending{background:#451a1a;color:#f87171}.status.done{background:#1a3a1a;color:#34d399}
+.empty{text-align:center;color:#334155;padding:60px 20px;font-size:1.2em}
+.count{background:#1e293b;padding:4px 10px;border-radius:10px;font-size:0.8em;color:#94a3b8}
+</style></head><body>
+<div class=topbar>
+<h1><span class="dot live" id=d></span>指挥台实时监控</h1>
+<div class=count id=count>0 条指令</div>
+</div>
+<div class=container id=list>
+<div class=empty>等待指令...</div>
+</div>
+<script>
+var API='https://mediacraft-x402-api.onrender.com';
+var seen=new Set();
+async function refresh(){
+  try{
+    var r=await fetch(API+'/cmd/history');
+    var cmds=await r.json();
+    var real=cmds.filter(c=>c.message!=='__ping__');
+    document.getElementById('count').textContent=real.length+' 条指令';
+
+    if(real.length===0){
+      document.getElementById('list').innerHTML='<div class=empty>等待指令...</div>';
+    }else{
+      var html='';
+      for(var i=real.length-1;i>=0;i--){
+        var c=real[i];
+        if(!c.id) continue;
+        var isNew=!seen.has(c.id);
+        if(isNew && c.status==='done') seen.add(c.id);
+        html+='<div class="cmd-card'+(isNew?'':'')+'">'+
+          '<div class=user>'+c.email+' <span class="status '+c.status+'">'+ (c.status==='done'?'已回复':'等待中')+'</span>'+
+          '<span class=time> '+new Date(c.createdAt).toLocaleTimeString()+'</span></div>'+
+          '<div class="msg question">'+c.message+'</div>'+
+          (c.response?'<div class="msg answer">'+c.response+'</div>':'')+
+          '</div>';
+      }
+      document.getElementById('list').innerHTML=html;
+    }
+    document.getElementById('d').className='dot live';
+  }catch(e){
+    document.getElementById('d').className='dot dead';
+  }
+}
+refresh();setInterval(refresh,3000);
+</script></body></html>
