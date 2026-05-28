@@ -24,7 +24,8 @@ const PRICING = {
 };
 
 app.use(cors());
-app.use(express.json({ type: "application/json", limit: "1mb" }));
+app.use(express.json({ type: ["application/json", "application/json; charset=utf-8", "application/json;charset=utf-8"], limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(express.static(require("path").join(__dirname, "public")));
 app.use((req, res, next) => {
   if (req.headers["content-type"] && !req.headers["content-type"].includes("charset")) {
