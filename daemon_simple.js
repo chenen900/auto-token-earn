@@ -295,7 +295,7 @@ async function cycle() {
     saveMem();
   } catch(e) {}
 
-  log("======== Cycle Done | " + memory.submissions + " total subs | $" + memory.earned + " earned ========");
+  undefined
 }
 
 async function main() {
