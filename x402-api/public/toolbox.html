@@ -93,9 +93,15 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
   <div class="badge">需要你</div>
 </div>
 
+<div class="card gold" onclick="openTool('listing')" style="position:relative">
+  <div class="icon">AI写</div><h2>AI Listing 生成</h2>
+  <p>输入中文产品信息→输出完整英文Listing。标题+五点+关键词。</p>
+  <div class="badge">会员</div>
+</div>
+
 <div class="card gold" onclick="openTool('premium')" style="position:relative">
   <div class="icon">解锁</div><h2>升级专业版</h2>
-  <p>批量审查 · 报告下载 · 销量数据 · 竞品分析 · 广告策略</p>
+  <p>批量审查 · 竞品分析 · AI Listing · 市场数据</p>
   <div class="badge">¥9.9起</div>
 </div>
 
@@ -223,6 +229,26 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div id="prEstimate" class="tip-box" style="display:none"></div>
 <button class="btn" onclick="calcProfit()">计算利润</button>
 <div id="prResult" class="result" style="display:none"></div>
+</div>
+
+<!-- ====== AI Listing 生成器 ====== -->
+<div id="listing" class="panel hidden">
+<div class="back-link" onclick="goHome()">首页</div>
+<h3>AI Listing 生成器</h3>
+<div class="tip-box"><b>做什么：</b>输入中文产品信息，AI 自动生成完整英文 Amazon Listing（标题+五点+描述+搜索词）。<br><b>会员功能</b> — 免费版可预览标题，完整Listing需升级。</div>
+<div class="row">
+<div><label>品牌</label><input type="text" id="lsBrand" placeholder="你的品牌名"></div>
+<div><label>产品名称（中文）</label><input type="text" id="lsProduct" placeholder="例如：便携蓝牙音箱"></div>
+</div>
+<div><label>卖点（一行一个，中文）</label><textarea id="lsFeatures" rows="3" placeholder="防水IPX7&#10;蓝牙5.3&#10;续航12小时&#10;超轻便180g"></textarea></div>
+<div class="row">
+<div><label>类目</label><select id="lsCategory"><option value="electronics">电子</option><option value="home">家居</option><option value="fashion">服装</option><option value="beauty">美妆</option><option value="sports">运动</option><option value="toys">玩具</option><option value="general">通用</option></select></div>
+<div><label>目标平台</label><select id="lsPlatform"><option value="amazon">Amazon</option><option value="shopify">Shopify</option><option value="temu">Temu</option></select></div>
+</div>
+<div><label>规格参数（可选）</label><input type="text" id="lsSpecs" placeholder="尺寸：8x8x4cm | 重量：180g | 电池：2000mAh"></div>
+<div><label>目标用户（可选）</label><input type="text" id="lsTarget" placeholder="例如：户外运动爱好者、上班族">
+<button class="btn" onclick="generateAIListing()">生成 AI Listing</button>
+<div id="lsResult" class="result" style="display:none"></div>
 </div>
 
 <!-- ====== 反馈 & Bug 通道 ====== -->

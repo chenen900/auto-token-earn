@@ -641,6 +641,26 @@ app.post("/api/v1/competitor-analysis", requireTier("pro"), (req, res) => {
   });
 });
 
+// ============ AI Listing 生成器（会员功能） ============
+const { generateListing } = require("./listing-generator");
+
+app.post("/api/v1/listing-generate", requireTier("premium", "pro"), (req, res) => {
+  const { brand, product, features, specs, category, targetAudience, platform } = req.body || {};
+  if (!product) return res.status(400).json({ error: "需要 product（产品名称）" });
+  try {
+    const listing = generateListing({
+      brand: brand || "MediaCraft",
+      product, features, specs,
+      category: category || "general",
+      targetAudience, platform: platform || "amazon",
+    });
+    trackFromRequest(req, "/api/v1/listing-generate", req.user.tier === "pro" ? "$0.03" : "$0.05");
+    res.json(listing);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // 获取反馈列表（简单管理查看）
 app.get("/api/v1/feedback", (req, res) => {
   try {

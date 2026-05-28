@@ -290,6 +290,77 @@ async function analyzeCompetitor() {
     "</div><div style=margin-top:12px><div class=label>建议策略</div>" + strategies + "</div>";
 }
 
+// ========== AI Listing 生成器 ==========
+async function generateAIListing() {
+  var product = document.getElementById("lsProduct").value.trim();
+  if (!product) return alert("请填写产品名称");
+  var el = document.getElementById("lsResult");
+  el.style.display = "block";
+  el.innerHTML = "<div class=loading>AI 正在生成 Listing...</div>";
+
+  var data = {
+    brand: document.getElementById("lsBrand").value.trim() || "YourBrand",
+    product: product,
+    features: document.getElementById("lsFeatures").value.trim(),
+    specs: document.getElementById("lsSpecs").value.trim(),
+    category: document.getElementById("lsCategory").value,
+    platform: document.getElementById("lsPlatform").value,
+    targetAudience: document.getElementById("lsTarget").value.trim(),
+  };
+
+  try {
+    var r = await fetch(API + "/api/v1/listing-generate", {
+      method: "POST", headers: { "Content-Type": "application/json", "x-user-email": userEmail },
+      body: JSON.stringify(data)
+    });
+    var result = await r.json();
+
+    if (result.error) {
+      el.innerHTML = "<div style=color:#f87171>" + result.error + "</div>";
+      if (result.requiredTiers) {
+        el.innerHTML += "<div style=margin-top:8px><button class=btn onclick='openTool(\"premium\")'>升级会员</button></div>";
+      }
+      return;
+    }
+
+    var l = result.listing;
+    var comp = result.compliance;
+    var seo = result.seo;
+    var compColor = comp.score >= 90 ? "#34d399" : comp.score >= 70 ? "#fbbf24" : "#f87171";
+
+    var issuesHtml = "";
+    if (comp.issues && comp.issues.length > 0) {
+      issuesHtml = comp.issues.map(function(i) {
+        return "<div class='issue " + i.severity + "'>[" + i.severity + "] " + i.rule + (i.suggestion ? " → " + i.suggestion : "") + "</div>";
+      }).join("");
+    }
+
+    el.innerHTML = "<h3>AI Listing — " + result.category + " / " + result.platform + "</h3>" +
+      "<div style=display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px>" +
+      "<div style=text-align:center><div class=score style=font-size:1.5em;color:" + compColor + ">合规 " + comp.score + "</div></div>" +
+      "<div style=text-align:center><div class=score style=font-size:1.5em;color:#60a5fa>SEO " + seo.score + "</div></div>" +
+      "</div>" +
+
+      "<div class=item style=margin-bottom:10px><div class=label>标题 (" + l.titleLength + "/" + l.titleMax + ")</div>" +
+      "<div style=background:#0f172a;padding:10px;border-radius:6px;color:#e2e8f0;font-size:0.95em>" + l.title + "</div></div>" +
+
+      "<div class=item style=margin-bottom:10px><div class=label>五点描述</div>" +
+      l.bullets.map(function(b, i) { return "<div style=background:#0f172a;padding:8px 10px;border-radius:6px;color:#cbd5e1;font-size:0.85em;margin:4px 0'><b style=color:#60a5fa>" + (i+1) + ".</b> " + b + "</div>"; }).join("") + "</div>" +
+
+      "<div class=item style=margin-bottom:10px><div class=label>产品描述</div>" +
+      "<div style=background:#0f172a;padding:10px;border-radius:6px;color:#94a3b8;font-size:0.85em;max-height:200px;overflow-y:auto'>" + l.description + "</div></div>" +
+
+      "<div class=item><div class=label>后台搜索词</div>" +
+      "<div style=background:#0f172a;padding:8px;border-radius:6px;color:#64748b;font-size:0.8em'>" + l.searchTerms + "</div></div>" +
+
+      (issuesHtml ? "<div style=margin-top:10px>" + issuesHtml + "</div>" : "") +
+
+      "<div class=tip-box style='margin-top:12px;text-align:center'><b>会员功能：</b>一键生成完整Listing，省去2小时手动撰写。升级后还可批量导出+多平台适配。</div>";
+  } catch (e) {
+    el.innerHTML = "<div style=color:#f87171>生成失败：" + e.message + "</div>";
+  }
+}
+
 // ========== 支付流程 ==========
 var paymentTier = "premium";
 function showPayment(tier) {
