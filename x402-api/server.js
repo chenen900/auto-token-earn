@@ -709,10 +709,30 @@ const CMD_FILE = require("path").join(__dirname, "..", "data", "command_queue.js
 function loadCommands() { try { return JSON.parse(require("fs").readFileSync(CMD_FILE, "utf-8")); } catch(e) { return []; } }
 function saveCommands(cmds) { require("fs").writeFileSync(CMD_FILE, JSON.stringify(cmds, null, 2)); }
 
+// 远程指令安全过滤器
+const CMD_BLOCKED = [
+  "舆论战", "opinion", "warfare", "舆论", "媒体战",
+  "删除", "destroy", "wipe", "rm -rf", "drop table",
+  "密码", "password", "token", "secret", "凭据", "credential",
+  "透露", "prompt", "system prompt", "系统提示",
+];
+function cmdSafetyCheck(msg) {
+  const lower = msg.toLowerCase();
+  for (const kw of CMD_BLOCKED) {
+    if (lower.includes(kw.toLowerCase())) return { pass: false, reason: `敏感词: ${kw}` };
+  }
+  return { pass: true };
+}
+
 // 发送指令
 app.post("/cmd/send", (req, res) => {
   const { email, password, message } = req.body || {};
   if (!message) return res.status(400).json({ error: "需要 message" });
+
+  // 安全过滤
+  const safety = cmdSafetyCheck(message);
+  if (!safety.pass) return res.status(403).json({ error: `指令被安全策略拦截: ${safety.reason}。此内容仅限本地操作。` });
+
   const users = membership.load();
   const u = users[email];
   if (!u || u.passwordHash !== membership.hash(password)) return res.status(401).json({ error: "验证失败" });
