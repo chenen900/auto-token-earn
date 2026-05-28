@@ -262,6 +262,36 @@ async function analyzeCompetitor() {
     "</div><div style=margin-top:12px><div class=label>建议策略</div>" + strategies + "</div>";
 }
 
+// ========== 支付流程 ==========
+var paymentTier = "premium";
+function showPayment(tier) {
+  paymentTier = tier;
+  document.getElementById("paymentModal").style.display = "flex";
+  document.getElementById("paymentAmount").textContent = tier === "pro" ? "29.9" : "9.9";
+  document.getElementById("paymentTierName").textContent = tier === "pro" ? "专业版" : "会员";
+  document.getElementById("paymentEmail").value = userEmail || "";
+}
+function hidePayment() { document.getElementById("paymentModal").style.display = "none"; }
+
+async function confirmPayment() {
+  var email = document.getElementById("paymentEmail").value.trim();
+  if (!email) { document.getElementById("paymentMsg").textContent = "请填写注册邮箱"; return; }
+  var el = document.getElementById("paymentMsg");
+  el.textContent = "提交中...";
+  try {
+    var r = await fetch(API + "/api/v1/feedback", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "payment", message: "用户申请开通 " + (paymentTier === "pro" ? "专业版(29.9)" : "会员(9.9)"), email: email, page: "payment" })
+    });
+    var data = await r.json();
+    if (data.ok) {
+      el.innerHTML = "<span style=color:#34d399>申请已提交！我们将在24小时内核实并开通。如有问题会邮件联系你。</span>";
+    }
+  } catch (e) {
+    el.textContent = "网络错误，请重试";
+  }
+}
+
 // ========== 反馈 / Bug 提交 ==========
 async function submitFeedback() {
   var type = document.getElementById("fbType").value;

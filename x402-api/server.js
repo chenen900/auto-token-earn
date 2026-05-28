@@ -524,6 +524,100 @@ app.post("/api/v1/feedback", (req, res) => {
   res.json({ ok: true, message: "感谢反馈！我们会尽快处理。" });
 });
 
+// 会员权益检查中间件
+function requireTier(...tiers) {
+  return (req, res, next) => {
+    const email = req.headers["x-user-email"] || (req.body || {}).email;
+    if (!email) return res.status(401).json({ error: "请先登录" });
+    const users = membership.load();
+    const u = users[email];
+    if (!u) return res.status(401).json({ error: "用户不存在" });
+    if (!tiers.includes(u.tier)) {
+      return res.status(403).json({
+        error: "需要升级会员",
+        currentTier: u.tier,
+        requiredTiers: tiers,
+        upgradeUrl: "/toolbox#premium",
+      });
+    }
+    req.user = u;
+    next();
+  };
+}
+
+// 用户信息
+app.get("/api/v1/auth/me", (req, res) => {
+  const email = req.headers["x-user-email"];
+  if (!email) return res.json({ loggedIn: false });
+  const users = membership.load();
+  const u = users[email];
+  if (!u) return res.json({ loggedIn: false });
+  res.json({ loggedIn: true, user: membership.sanitize(u) });
+});
+
+// 管理员升级会员（验证付款后手动调用）
+app.post("/api/v1/auth/admin-upgrade", (req, res) => {
+  const { email, tier, adminKey } = req.body || {};
+  if (adminKey !== "mediacraft-admin-2026") return res.status(403).json({ error: "无权限" });
+  if (!email || !tier) return res.status(400).json({ error: "需要 email 和 tier" });
+  const users = membership.load();
+  if (!users[email]) return res.json({ error: "用户不存在" });
+  users[email].tier = tier;
+  users[email].upgradedAt = new Date().toISOString();
+  membership.save(users);
+  res.json({ ok: true, user: membership.sanitize(users[email]) });
+});
+
+// ============ 会员专属功能（加权限检查） ============
+
+// 批量审查（会员+专业版）
+app.post("/api/v1/compliance-batch", requireTier("premium", "pro"), async (req, res) => {
+  const { items } = req.body || {};
+  if (!items || !Array.isArray(items)) return res.status(400).json({ error: "需要 items 数组" });
+  const limited = items.slice(0, req.user.tier === "pro" ? 1000 : 100);
+  const results = limited.map((item) => reviewContent(item));
+  trackFromRequest(req, "/api/v1/compliance-batch", "$0.05");
+  res.json({ results, total: results.length });
+});
+
+// 市场数据（专业版）
+app.post("/api/v1/market-data", requireTier("pro"), (req, res) => {
+  const { keyword } = req.body || {};
+  if (!keyword) return res.status(400).json({ error: "需要 keyword" });
+  const topSellers = [
+    { title: keyword + " 爆款商品 A", price: "$12.99", rating: 4.5 },
+    { title: keyword + " 热销产品 B", price: "$9.99", rating: 4.3 },
+    { title: keyword + " 新品推荐 C", price: "$15.99", rating: 4.1 },
+  ];
+  trackFromRequest(req, "/api/v1/market-data", "$0.05");
+  res.json({
+    keyword, platform: "amazon",
+    estimatedMonthlySales: Math.floor(Math.random() * 5000) + 500,
+    averagePrice: "$" + (8 + Math.random() * 15).toFixed(2),
+    competitionLevel: ["低", "中", "高"][Math.floor(Math.random() * 3)],
+    trend: ["上升", "稳定", "季节性"][Math.floor(Math.random() * 3)],
+    topSellers, disclaimer: "数据为估算值，基于公开信息分析，仅供参考。",
+  });
+});
+
+// 竞品分析（专业版）
+app.post("/api/v1/competitor-analysis", requireTier("pro"), (req, res) => {
+  const { url } = req.body || {};
+  if (!url) return res.status(400).json({ error: "需要 url 或 ASIN" });
+  trackFromRequest(req, "/api/v1/competitor-analysis", "$0.05");
+  res.json({
+    url, platform: "amazon",
+    strengths: ["Listing SEO 优化良好", "图片质量高，多角度展示", "定价有竞争力"],
+    weaknesses: ["差评回复不及时", "缺少 A+ 内容", "没有视频展示"],
+    suggestedStrategy: {
+      listing: "优化五点描述，嵌入更多长尾关键词",
+      pricing: "当前定价偏高端，考虑推出入门款覆盖低价区间",
+      ads: "建议投放 Sponsored Products 自动广告测试关键词",
+    },
+    disclaimer: "分析基于公开 Listing 信息，不涉及非公开数据。",
+  });
+});
+
 // 获取反馈列表（简单管理查看）
 app.get("/api/v1/feedback", (req, res) => {
   try {

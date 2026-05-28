@@ -228,7 +228,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div id="premium" class="panel hidden">
 <div class="back-link" onclick="goHome()">首页</div>
 <h3>选择你的套餐</h3>
-<div class="col3" style="margin-bottom:20px">
+<div id="premiumContent" class="col3" style="margin-bottom:20px">
 
 <div class="price-box">
   <div style="font-size:1.3em;margin-bottom:4px">免费版</div>
@@ -243,7 +243,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
   <div class="price" style="color:#60a5fa">¥9.9</div>
   <div class="meta">/月</div>
   <ul><li>免费版全部</li><li>批量审查(100条)</li><li>报告下载</li><li>历史记录</li><li class="no">市场数据</li><li class="no">竞品分析</li></ul>
-  <button class="btn" style="width:100%" onclick="showLogin()">立即开通</button>
+  <button class="btn" style="width:100%" onclick="showPayment('premium')">立即开通/button>
 </div>
 
 <div class="price-box">
@@ -251,12 +251,12 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
   <div class="price" style="color:#fbbf24">¥29.9</div>
   <div class="meta">/月</div>
   <ul><li>会员版全部</li><li>批量(1000条)</li><li>市场销量数据</li><li>竞品分析报告</li><li>广告策略建议</li><li>API Key接入</li></ul>
-  <button class="btn btn-gold" style="width:100%" onclick="showLogin()">立即开通</button>
+  <button class="btn btn-gold" style="width:100%" onclick="showPayment('premium')">立即开通/button>
 </div>
 
 </div>
 
-<div class="tip-box" style="text-align:center">注册即送30天会员试用 — 批量审查+报告下载全解锁</div>
+<div class="tip-box" style="text-align:center">付款后凭邮箱联系客服手动开通 — 自动支付即将上线</div>
 
 <div id="premiumLocked" style="text-align:center;padding:16px;color:#fbbf24;background:#0f172a;border-radius:8px">登录后解锁专业工具</div>
 
@@ -294,6 +294,28 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div style="margin-top:8px"><button class="btn" onclick="doRegister()" style="width:100%;background:#334155">注册免费账号</button></div>
 <div id="loginMsg" style="color:#94a3b8;font-size:0.85em;margin-top:8px;text-align:center"></div>
 <button onclick="hideLogin()" style="background:none;border:none;color:#64748b;margin-top:10px;cursor:pointer;width:100%">关闭</button>
+</div>
+</div>
+
+<!-- 支付弹窗 -->
+<div id="paymentModal" class="modal-overlay" style="display:none">
+<div class="modal-box" style="max-width:450px">
+<h3 style="color:#60a5fa;margin-bottom:8px" id="paymentTitle">开通会员</h3>
+<div style="text-align:center;padding:12px">
+  <div style="font-size:3em;font-weight:700;color:#fbbf24" id="paymentAmount">9.9</div>
+  <div style="color:#94a3b8;margin:8px 0" id="paymentTierName">会员</div>
+  <div style="color:#64748b;font-size:0.8em">人民币</div>
+</div>
+<div style="background:#0f172a;border-radius:8px;padding:14px;margin:12px 0;text-align:center">
+  <div style="color:#94a3b8;font-size:0.85em;margin-bottom:8px">请扫码支付（微信/支付宝）</div>
+  <div style="width:160px;height:160px;background:#1e293b;border:2px dashed #334155;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:0.75em;text-align:center">请提供<br>收款二维码</div>
+  <div style="color:#fbbf24;font-size:0.8em;margin-top:8px">备注填写注册邮箱</div>
+</div>
+<label>注册邮箱</label>
+<input type="email" id="paymentEmail" placeholder="your@email.com">
+<button class="btn" style="width:100%;margin-top:8px" onclick="confirmPayment()">已完成付款</button>
+<div id="paymentMsg" style="color:#94a3b8;font-size:0.85em;margin-top:8px;text-align:center"></div>
+<button onclick="hidePayment()" style="background:none;border:none;color:#64748b;margin-top:10px;cursor:pointer;width:100%">关闭</button>
 </div>
 </div>
 
