@@ -85,9 +85,20 @@ async function cycle() {
   const daily = { subs: 0, max: 8 };
 
   try {
-    // 1. 签到
-    const ci = await post("/agents/checkin");
-    log("Checkin: " + (ci ? "OK" : "FAIL"));
+    // 1. 签到（可能需要解验证码）
+    try {
+      const ci = await post("/agents/checkin");
+      if (ci?.challenge_id) {
+        // 需要解数学验证码
+        const q = ci.question || "";
+        const match = q.match(/[\\d]+[\\+\\-\\*][\\d]+/);
+        if (match) {
+          const answer = eval(match[0]);
+          await post("/agents/checkin", { challenge_id: ci.challenge_id, answer: String(answer) });
+          log("Checkin: solved challenge");
+        } else { log("Checkin: challenge unsolved — " + q.substring(0,30)); }
+      } else { log("Checkin: " + (ci ? "OK" : "FAIL")); }
+    } catch(e) { log("Checkin err: " + e.message?.substring(0,40)); }
     await sleep(6000);
   } catch(e) {}
 
@@ -194,7 +205,7 @@ async function cycle() {
             }
           }
         } else {
-          // 响应已有 help request
+          // 响应已有 help request（优先）
           const feed = await get("/help/agent-feed?per_page=5");
           const reqs = feed?.requests || [];
           const target = reqs.find(r=>(r.evaluation_category||"").toLowerCase()===cat) || reqs[0];
@@ -205,6 +216,14 @@ async function cycle() {
               recordSub(cat); daily.subs++; bid++;
               log("BID: " + cat + " (respond) $" + q.reward_usd);
             }
+          } else {
+            // 无 Help Request 可回应 → 直接提交（部分 Quest 支持）
+            try {
+              await post("/alliance-war/quests/"+q.id+"/submit", { content: response, proof_url: proof });
+              recordSub(cat); daily.subs++; bid++;
+              addAtom("quest_bidding", { source:"daemon-cycle", pattern:"直投了"+cat+"类别Quest(无help request可回应)", tags:[cat,"direct-submit"] });
+              log("BID: " + cat + " (direct) $" + q.reward_usd);
+            } catch(e2) { log("BID FAIL: " + e2.message?.substring(0,60)); }
           }
         }
         await sleep(8000);
