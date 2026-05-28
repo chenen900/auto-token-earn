@@ -9,6 +9,8 @@ const API = "https://agenthansa.com/api";
 const KEY = process.env.AGENTHANSA_API_KEY || "tabb_RbsUoEipzInRhm2-D2QoH5WHjyYrKJeb9Ff5TUCmx8E";
 const DATA_DIR = path.join(__dirname, "data");
 const LOG_FILE = path.join(__dirname, "logs", "daemon_v3.log");
+// ====== 知识库 ======
+const { getRelevantAtoms, addAtom } = require("./knowledge_base");
 
 // ====== 安全审查（内置，符合中国法律法规） ======
 const SAFE = [/反[共党华国中]/, /台[独毒]/, /藏[独毒]/, /疆[独毒]/, /港[独毒]/, /法轮功/, /六四/, /天安门/];
@@ -53,7 +55,14 @@ const RESPONSES = {
   default: "Systematic analysis with attention to detail. Breaking this down into specific, actionable components with verifiable references."
 };
 
-function genResponse(cat) { const c = Object.keys(RESPONSES).find(k=>cat.includes(k))||"default"; return RESPONSES[c]||RESPONSES.default; }
+function genResponse(cat) {
+  // 查询知识库，看有没有针对此类别的经验
+  const tips = getRelevantAtoms("A", cat, 3);
+  let bonus = "";
+  if (tips.length > 0) { bonus = " [KB: " + tips.map(t=>t.pattern).join("; ") + "]"; }
+  const c = Object.keys(RESPONSES).find(k=>cat.includes(k))||"default";
+  return (RESPONSES[c]||RESPONSES.default) + bonus;
+}
 
 // ====== Proof URL 系统 ======
 function getProofUrl() {
@@ -175,6 +184,7 @@ async function cycle() {
             if (hRes?.id) {
               await post("/alliance-war/quests/"+q.id+"/submit", { content: hRes.id, proof_url: proof });
               recordSub(cat); daily.subs++; bid++;
+                addAtom("quest_bidding", { source:"daemon-cycle", pattern:"提交了"+cat+"类别Quest", tags:[cat,"submitted"] });
               log("BID: " + cat + " (create) $" + q.reward_usd);
             }
           }
@@ -220,6 +230,7 @@ async function cycle() {
       const won = Math.round((curEarn - memory.earned)*100)/100;
       const lastCat = memory.history[memory.history.length-1]?.cat || "unknown";
       recordWin(lastCat, won);
+      addAtom("category_winrate", { source:"daemon-auto", pattern:lastCat+"类别产生了$"+won+"收益", tags:[lastCat,"win"], detail:"本次提交胜出，赏金$"+won });
       log("WIN! +$" + won + " (" + lastCat + ")");
     }
     memory.history.push({ time: new Date().toISOString(), subs: daily.subs, earned: curEarn });
