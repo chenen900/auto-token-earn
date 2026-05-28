@@ -1,1 +1,2 @@
 {"id":"A-mpp9njok","time":"2026-05-28T09:03:58.052Z","work":"A","category":"category_winrate","source":"research:40-day-run","pattern":"30次提交→6胜→20%胜率→赚$20.90。排名#236/51978","confidence":"observed","tags":["benchmark","real-data"],"detail":"前0.5%的agent。胜率20%即可赚钱"}
+{"id":"A-mpp9zeaq","time":"2026-05-28T09:13:10.946Z","work":"A","category":"category_winrate","source":"self:test","pattern":"AgentHansa当前仅1个活跃Quest(00 Twitter帖)。单平台任务量不足","confidence":"observed","tags":["volume","diversification"],"detail":"必须依赖多平台(TaskMarket/Superteam/Toku)并行弥补任务量"}

@@ -40,6 +40,20 @@ function bestCat() { let best=null,rate=0; for (const [k,v] of Object.entries(me
 // ====== 24赛道匹配 ======
 const CATEGORIES = ["tech","code","debug","programming","dev","writing","content","blog","article","translation","translate","bilingual","chinese","compliance","legal","review","audit","research","analysis","data","career","job","shopping","recommend"];
 const BLUE_OCEAN = ["compliance","legal","translation","chinese","bilingual","code","debug"];
+function scoreDifficulty(q) {
+  const title = (q.title||"").toLowerCase();
+  const reward = parseFloat(q.reward_usd||0);
+  let score = 50; // base
+  if (title.includes("twitter")||title.includes("social")) score += 10; // needs external account
+  if (title.includes("write")||title.includes("blog")||title.includes("article")) score -= 10; // we can do this
+  if (title.includes("code")||title.includes("tech")||title.includes("debug")) score -= 15; // our strength
+  if (reward >= 100) score += 20; // high reward = high competition
+  if (reward <= 20) score -= 10; // low reward = low competition
+  const level = score >= 70 ? "高" : score >= 40 ? "中" : "低";
+  const successRate = score >= 70 ? "15-25%" : score >= 40 ? "25-40%" : "40-60%";
+  return { score, level, successRate };
+}
+
 function detectCat(title) { const t=(title||"").toLowerCase(); for (const c of CATEGORIES) { if (t.includes(c)) return c; } return "tech"; }
 
 // ====== 响应模板 ======
@@ -159,6 +173,13 @@ async function cycle() {
     const inbox = await get("/agents/me/inbox");
     const quests = inbox?.sections?.alliance_war_quests?.items || [];
     log("Quests: " + quests.length);
+    // 高额任务标记
+    for (const q of quests) {
+      const reward = parseFloat(q.reward_usd||0);
+      if (reward >= 50) log("HIGH-VALUE QUEST: $" + reward + " — " + (q.title||"").substring(0,60) + " (需人工介入? " + (reward>=100?"是":"否") + ")");
+      const diff = scoreDifficulty(q);
+      if (reward >= 30) log("QUEST OPPORTUNITY: $" + reward + " | 难度:" + diff.level + " | 成功率:" + diff.successRate + " | " + (q.title||"").substring(0,50));
+    }
 
     // 优先技术类（胜率40%）> 分析类（25%）> 社交类（10%）
     const priority = ["tech","code","debug","programming","dev","research","analysis","data","writing","content","career","translation","compliance","shopping"];

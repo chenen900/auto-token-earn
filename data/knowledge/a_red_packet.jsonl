@@ -1,1 +1,2 @@
 {"id":"A-mpp9njoj","time":"2026-05-28T09:03:58.051Z","work":"A","category":"red_packet","source":"research:case-study","pattern":"每3小时刷新红包，$0.12-0.91。需60秒内抢","confidence":"observed","tags":["redpacket","timing"],"detail":"高频轮询/api/red-packets，解析数学题"}
+{"id":"A-mpp9zeaq","time":"2026-05-28T09:13:10.946Z","work":"A","category":"red_packet","source":"self:test","pattern":"红包API端点/api/red-packets。活跃时才有返回。抢红包需<60秒响应","confidence":"observed","tags":["api","timing"],"detail":"红包出现时间不固定,需高频轮询。数学题解析用eval有风险,改用Function"}

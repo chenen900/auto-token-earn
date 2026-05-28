@@ -1,1 +1,2 @@
 {"id":"A-mpp9njon","time":"2026-05-28T09:03:58.055Z","work":"D","category":"agent_market","source":"research:agent-selling","pattern":"Agent配置包可以卖$2.9-19.9。Coze+闲鱼渠道","confidence":"observed","tags":["monetize","distribution"],"detail":"先上闲鱼测试市场需求，再扩展Gumroad"}
+{"id":"A-mpp9zeaj","time":"2026-05-28T09:13:10.939Z","work":"D","category":"agent_market","source":"research:cashclaw","pattern":"Mission模板化:定义任务类型→定价→步骤→交付物。可复用任务定义","confidence":"observed","tags":["mission","template"],"detail":"cashclaw用JSON定义任务模板(blog-post/competitor-analysis/email-outreach等)，每模板含价格+时间+步骤"}
