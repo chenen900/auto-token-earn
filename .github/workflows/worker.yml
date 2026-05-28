@@ -40,6 +40,11 @@ jobs:
           SUPERTEAM_API_KEY: ${{ secrets.SUPERTEAM_API_KEY }}
         run: node superteam_worker.js
 
+      - name: Run Toku Agency Worker
+        env:
+          TOKU_API_KEY: ${{ secrets.TOKU_API_KEY }}
+        run: node toku_worker.js
+
       - name: Run DeFi Simulator (daily)
         run: node defi_simulator.js run
 
