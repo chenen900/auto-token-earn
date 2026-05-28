@@ -712,6 +712,10 @@ function saveCommands(cmds) { require("fs").writeFileSync(CMD_FILE, JSON.stringi
 // 常见指令自动应答（纯本地数据，无外部 HTTP 调用，立即返回）
 function autoHandleCommand(msg) { return null; }
 
+// 远程指令安全过滤器
+const CMD_BLOCKED = ["舆论战","opinion","warfare","删除","密码","token","secret","凭据","credential"];
+function cmdSafetyCheck(msg) { for (const kw of CMD_BLOCKED) { if ((msg||"").toLowerCase().includes(kw.toLowerCase())) return { pass: false, reason: "敏感词: "+kw }; } return { pass: true }; }
+
 // 发送指令
 app.post("/cmd/send", (req, res) => {
   const { email, password, message } = req.body || {};
