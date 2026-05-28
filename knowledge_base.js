@@ -165,7 +165,20 @@ function seed() {
   return stats();
 }
 
-module.exports = { CATEGORIES, addAtom, getAtoms, getByWork, search, getRelevantAtoms, stats, seed };
+function dashboard() {
+  const s = stats();
+  return [
+    'KNOWLEDGE BASE DASHBOARD',
+    'Atoms: ' + s.totalAtoms + ' | Categories: ' + Object.keys(s.byCategory).length,
+    '',
+    'A: ' + (s.byWork['A']||0) + ' | B: ' + (s.byWork['B']||0) + ' | C: ' + (s.byWork['C']||0),
+    'D: ' + (s.byWork['D']||0) + ' | E: ' + (s.byWork['E']||0) + ' | F: ' + (s.byWork['F']||0) + ' | G: ' + (s.byWork['G']||0),
+    '',
+    'Top: ' + Object.entries(s.byCategory).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>k+':'+v).join(', ')
+  ].join('\n');
+}
+
+module.exports = { CATEGORIES, addAtom, getAtoms, getByWork, search, getRelevantAtoms, stats, seed, dashboard };
 
 // CLI
 if (require.main === module) {
