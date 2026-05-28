@@ -120,7 +120,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 </div>
 <label>粘贴文字</label>
 <textarea id="compText" rows="4" placeholder="举例：国家级最好的护肤品，100%有效，治疗痘痘，加微信购买"></textarea>
-<button class="btn" onclick="checkCompliance()">免费检查</button></button>
+<button class="btn" onclick="checkCompliance()">免费检查</button>
 <div id="compResult" class="result" style="display:none"></div>
 </div>
 
@@ -136,7 +136,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <label>产品名称</label><input type="text" id="genName" placeholder="便携蓝牙音箱 防水IPX7 续航12小时">
 <label>卖点（一行一个）</label><textarea id="genFeatures" rows="3" placeholder="防水IPX7&#10;蓝牙5.3&#10;续航12小时"></textarea>
 <label>规格</label><textarea id="genSpecs" rows="2" placeholder="尺寸：8x8x4cm | 重量：180g"></textarea>
-<button class="btn" onclick="generateListing()">免费检查</button></button>
+<button class="btn" onclick="generateListing()">免费检查</button>
 <div id="genResult" class="result" style="display:none"></div>
 </div>
 
@@ -233,7 +233,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div><label>类型</label><select id="fbType"><option value="suggestion">功能建议</option><option value="bug">Bug 报告</option><option value="data">数据纠错</option><option value="other">其他</option></select></div>
 <label>描述</label><textarea id="fbMessage" rows="4" placeholder="详细描述你遇到的问题或想要的功能..."></textarea>
 <div><label>联系方式（可选）</label><input type="email" id="fbEmail" placeholder="留邮箱我们可以回复你"></div>
-<button class="btn" onclick="submitFeedback()">提交反馈</button></button>
+<button class="btn" onclick="submitFeedback()">提交反馈</button>
 <div id="fbResult" class="result" style="display:none"></div>
 </div>
 
@@ -275,10 +275,10 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 
 <div id="premiumUnlocked" style="display:none">
 <div class="row" style="margin-top:16px">
-<div class="tool-box"><h4>批量审查</h4><textarea id="batchText" rows="3" placeholder="每行一个产品"></textarea><button class="btn btn-sm" onclick="runBatch()">批量审查</button></button><div id="batchResult" class="result" style="display:none"></div></div>
-<div class="tool-box"><h4>市场数据</h4><input type="text" id="mktKeyword" placeholder="产品关键词"><button class="btn btn-sm" onclick="getMarketData()">查询</button></button><div id="mktResult" class="result" style="display:none"></div></div>
+<div class="tool-box"><h4>批量审查</h4><textarea id="batchText" rows="3" placeholder="每行一个产品"></textarea><button class="btn btn-sm" onclick="runBatch()">批量审查</button><div id="batchResult" class="result" style="display:none"></div></div>
+<div class="tool-box"><h4>市场数据</h4><input type="text" id="mktKeyword" placeholder="产品关键词"><button class="btn btn-sm" onclick="getMarketData()">查询</button><div id="mktResult" class="result" style="display:none"></div></div>
 </div>
-<div class="tool-box" style="margin-top:12px"><h4>竞品分析</h4><input type="text" id="competitorUrl" placeholder="竞品链接或ASIN"><button class="btn btn-sm" onclick="analyzeCompetitor()">分析</button></button><div id="compAnalysisResult" class="result" style="display:none"></div></div>
+<div class="tool-box" style="margin-top:12px"><h4>竞品分析</h4><input type="text" id="competitorUrl" placeholder="竞品链接或ASIN"><button class="btn btn-sm" onclick="analyzeCompetitor()">分析</button><div id="compAnalysisResult" class="result" style="display:none"></div></div>
 </div>
 </div>
 
@@ -303,10 +303,10 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <h3 style="color:#60a5fa;margin-bottom:12px">登录 / 注册</h3>
 <label>邮箱</label><input type="email" id="loginEmail" placeholder="your@email.com">
 <label>密码</label><input type="password" id="loginPassword" placeholder="6位以上">
-<div style="margin-top:12px"><button class="btn" onclick="doLogin()" style="width:100%">登录</button></button></div>
-<div style="margin-top:8px"><button class="btn" onclick="doRegister()" style="width:100%;background:#334155">注册免费账号</button></button></div>
+<div style="margin-top:12px"><button class="btn" onclick="doLogin()" style="width:100%">登录</button></div>
+<div style="margin-top:8px"><button class="btn" onclick="doRegister()" style="width:100%;background:#334155">注册免费账号</button></div>
 <div id="loginMsg" style="color:#94a3b8;font-size:0.85em;margin-top:8px;text-align:center"></div>
-<button onclick="hideLogin()" style="background:none;border:none;color:#64748b;margin-top:10px;cursor:pointer;width:100%">关闭</button></button>
+<button onclick="hideLogin()" style="background:none;border:none;color:#64748b;margin-top:10px;cursor:pointer;width:100%">关闭</button>
 </div>
 </div>
 
@@ -326,9 +326,9 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 </div>
 <label>注册邮箱</label>
 <input type="email" id="paymentEmail" placeholder="your@email.com">
-<button class="btn" style="width:100%;margin-top:8px" onclick="confirmPayment()">已完成付款</button></button>
+<button class="btn" style="width:100%;margin-top:8px" onclick="confirmPayment()">已完成付款</button>
 <div id="paymentMsg" style="color:#94a3b8;font-size:0.85em;margin-top:8px;text-align:center"></div>
-<button onclick="hidePayment()" style="background:none;border:none;color:#64748b;margin-top:10px;cursor:pointer;width:100%">关闭</button></button>
+<button onclick="hidePayment()" style="background:none;border:none;color:#64748b;margin-top:10px;cursor:pointer;width:100%">关闭</button>
 </div>
 </div>
 

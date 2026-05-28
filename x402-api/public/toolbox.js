@@ -56,17 +56,20 @@ function updateUserBar(u) {
   document.getElementById("userStatus").textContent = u.email + " — " + u.tierName;
   document.getElementById("loginBtn").textContent = "账户";
 
-  // 根据等级显示/隐藏专业工具
   var unlocked = document.getElementById("premiumUnlocked");
   var cards = document.getElementById("premiumCards");
-  if (unlocked && cards) {
-    if (u.tier === "premium" || u.tier === "pro") {
-      unlocked.style.display = "block";
-      cards.style.display = "none";
-    } else {
-      unlocked.style.display = "none";
-      cards.style.display = "";
-    }
+  var locked = document.getElementById("premiumLocked");
+
+  if (u.tier === "premium" || u.tier === "pro") {
+    // 付费用户：显示工具，隐藏价格卡和"请登录"提示
+    if (unlocked) unlocked.style.display = "block";
+    if (cards) cards.style.display = "none";
+    if (locked) locked.style.display = "none";
+  } else {
+    // 免费用户：显示价格卡，如果有登录则隐藏"请登录"提示
+    if (unlocked) unlocked.style.display = "none";
+    if (cards) cards.style.display = "";
+    if (locked && userEmail) locked.style.display = "none";
   }
 }
 
