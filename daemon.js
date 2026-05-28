@@ -322,26 +322,36 @@ async function main() {
 
   log("========================================");
   log("DAEMON: MediaCraft AI 持续守护进程启动");
-  log(`CONFIG: ${CONFIG.MAX_DAILY_SUBMISSIONS} max/day, ${CONFIG.MAX_PER_CYCLE}/cycle, ${CONFIG.CYCLE_DELAY_MIN_MS / 60000}-${CONFIG.CYCLE_DELAY_MAX_MS / 60000}min delay`);
-  log("========================================");
+  log(`CONFIG: ${CONFIG.MAX_DAILY_SUBMISSIONS} max/day, first cycle in 60s`);
+
+  // 首轮快速启动（60秒后，不等太久）
+  log("DAEMON: First cycle starting in 60s...");
+  await sleep(60000);
 
   let cycleNum = 0;
 
   while (true) {
+    // 检查暂停标志
+    const pauseFile = path.join(DATA_DIR, "daemon_paused");
+    if (fs.existsSync(pauseFile)) {
+      log("DAEMON: PAUSED — delete data/daemon_paused to resume");
+      await sleep(30000);
+      continue;
+    }
+
     cycleNum++;
     const cycleStart = Date.now();
 
     try {
       log(`\n=== Cycle #${cycleNum} ===`);
-      await runWorkerCycle();
+      await runWorkerCycle(cycleNum);
     } catch (e) {
       log(`DAEMON: Cycle crashed — ${e.message}`);
     }
 
-    // 计算延迟
     const elapsed = Date.now() - cycleStart;
     const baseDelay = randomBetween(CONFIG.CYCLE_DELAY_MIN_MS, CONFIG.CYCLE_DELAY_MAX_MS);
-    const actualDelay = Math.max(baseDelay - elapsed, 30000); // 最少 30 秒
+    const actualDelay = Math.max(baseDelay - elapsed, 30000);
 
     log(`DAEMON: Cycle ${cycleNum} done in ${(elapsed / 1000).toFixed(0)}s, sleeping ${(actualDelay / 60000).toFixed(1)}min...`);
 

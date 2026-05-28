@@ -682,14 +682,61 @@ app.get("/api/v1/feedback", (req, res) => {
   } catch (e) { res.json([]); }
 });
 
-// ============ 守护进程状态 ============
-let daemonStatus = { running: false, cycles: 0, lastCycle: null, errors: 0 };
+// ============ 守护进程状态 & 监控 ============
+let daemonStatus = {
+  running: false, cycles: 0, lastCycle: null, errors: 0,
+  lastCheckin: null, lastQuestSubmit: null, lastEarnings: null,
+  submissionsToday: 0, winsToday: 0, earnedToday: 0,
+  cycleHistory: [], // 最近 20 次循环记录
+};
 
 app.get("/daemon/status", (_, res) => {
-  res.json({ ...daemonStatus, uptime: process.uptime(), memory: process.memoryUsage().heapUsed });
+  res.json({ ...daemonStatus, uptime: process.uptime(), memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + "MB" });
 });
 
 app.get("/daemon/health", (_, res) => res.json({ ok: true, time: new Date().toISOString() }));
+
+// 监控面板（人类可读）
+app.get("/daemon/monitor", (_, res) => {
+  const historyHtml = daemonStatus.cycleHistory.map(c =>
+    `<tr><td>${c.time}</td><td>${c.duration}s</td><td>${c.submitted} subs</td><td>$${c.earned}</td><td style=color:${c.error ? '#f87171' : '#34d399'}>${c.error || 'OK'}</td></tr>`
+  ).join("");
+
+  const sec = Math.floor(process.uptime());
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+
+  res.send(`<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><title>Daemon Monitor</title>
+<style>body{font-family:monospace;background:#0f172a;color:#e2e8f0;padding:20px;max-width:800px;margin:0 auto}
+h1{color:#60a5fa}.card{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;margin:12px 0}
+.good{color:#34d399}.warn{color:#fbbf24}.bad{color:#f87171}
+table{width:100%;border-collapse:collapse;font-size:0.85em}
+th,td{padding:6px 10px;text-align:left;border-bottom:1px solid #334155}
+th{color:#64748b}.refresh{color:#64748b;font-size:0.8em}</style></head><body>
+<h1>MediaCraft Daemon Monitor</h1><p class=refresh>Auto-refresh 30s | Uptime: ${h}h ${m}m ${s}s</p>
+<div class=card>
+<h3>Current Status</h3>
+<p>Cycles: <b>${daemonStatus.cycles}</b> | Running: <b class="${daemonStatus.running ? 'good' : 'warn'}">${daemonStatus.running ? 'YES' : 'IDLE'}</b> | Errors: <b class="${daemonStatus.errors > 0 ? 'bad' : 'good'}">${daemonStatus.errors}</b></p>
+<p>Today: <b>${daemonStatus.submissionsToday}</b> submissions | <b>${daemonStatus.winsToday}</b> wins | <b>$${daemonStatus.earnedToday}</b> earned</p>
+<p>Last checkin: ${daemonStatus.lastCheckin || '—'} | Last quest: ${daemonStatus.lastQuestSubmit || '—'}</p>
+</div>
+<div class=card><h3>Cycle History (last 20)</h3>
+<table><tr><th>Time</th><th>Duration</th><th>Subs</th><th>Earned</th><th>Status</th></tr>${historyHtml || '<tr><td colspan=5>No cycles yet</td></tr>'}</table></div>
+<script>setTimeout(()=>location.reload(),30000)</script></body></html>`);
+});
+
+// 手动控制 daemon（通过文件标志，跨进程）
+const DAEMON_PAUSE_FILE = require("path").join(__dirname, "..", "data", "daemon_paused");
+app.post("/daemon/pause", (req, res) => {
+  require("fs").writeFileSync(DAEMON_PAUSE_FILE, new Date().toISOString());
+  res.json({ ok: true, paused: true, message: "Daemon will pause before next cycle" });
+});
+app.post("/daemon/resume", (req, res) => {
+  try { require("fs").unlinkSync(DAEMON_PAUSE_FILE); } catch (e) {}
+  res.json({ ok: true, paused: false, message: "Daemon resumed" });
+});
+app.get("/daemon/paused", (_, res) => {
+  res.json({ paused: require("fs").existsSync(DAEMON_PAUSE_FILE) });
+});
 
 // ============ 启动 ============
 
