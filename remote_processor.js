@@ -17,7 +17,7 @@ function api(method, pathStr, body) {
   return new Promise((resolve) => {
     const url = new URL(pathStr, API);
     const d = body ? JSON.stringify(body) : "";
-    const req = https.request({ hostname: url.hostname, path: url.pathname, method, headers: { "Content-Type": "application/json; charset=utf-8", "Content-Length": Buffer.byteLength(d) } }, (res) => {
+    const req = https.request({ hostname: url.hostname, path: url.pathname + url.search, method, headers: { "Content-Type": "application/json; charset=utf-8", "Content-Length": Buffer.byteLength(d) } }, (res) => {
       let o = ""; res.on("data", c => o += c); res.on("end", () => { try { resolve(JSON.parse(o)); } catch(e) { resolve(null); } });
     });
     req.on("error", () => resolve(null));
@@ -103,7 +103,7 @@ async function checkAndProcess() {
       const response = await processMessage(cmd);
       if (response) { await reply(cmd.id, response); save(cmd.id); console.log("[" + now() + "] replied"); }
     }
-  } catch(e) {}
+  } catch(e) { console.error("Poll error:", e.message); }
 }
 
 async function main() {

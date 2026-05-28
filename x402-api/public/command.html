@@ -94,6 +94,15 @@ function checkNew(){
     .then(cmds=>{
       var container = document.getElementById('messages');
       cmds.forEach(c=>{
+        // Show questions that need reply
+        if(c.question && !c.userReply && !document.getElementById('q_'+c.id)){
+          var qDiv = document.createElement('div');
+          qDiv.className='msg bot';
+          qDiv.id='q_'+c.id;
+          qDiv.innerHTML = '<b>确认请求</b><br>'+c.question+'<br><div style=margin-top:8px><input id=rp_'+c.id+' placeholder=回复... style=width:70%><button class=btn style=width:25%;padding:6px onclick=sendReply(\"'+c.id+'\")>发送</button></div>';
+          container.appendChild(qDiv);
+          container.scrollTop = container.scrollHeight;
+        }
         if(c.status==='done' && c.response && !document.getElementById('resp_'+c.id)){
           // Remove pending message
           var pending = document.getElementById('cmd_'+c.id);
@@ -104,6 +113,15 @@ function checkNew(){
     });
 }
 
+function sendReply(cmdId){
+  var reply = document.getElementById('rp_'+cmdId).value.trim();
+  if(!reply) return;
+  fetch(API+'/cmd/reply',{method:'POST',headers:{'Content-Type':'application/json; charset=utf-8'},body:JSON.stringify({id:cmdId,email:email,password:password,reply:reply})})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.ok){ document.getElementById('q_'+cmdId).innerHTML += '<div style=color:#34d399;margin-top:4px>已发送: '+reply+'</div>'; }
+    });
+}
 function loadHistory(){
   fetch(API+'/cmd/history')
     .then(r=>r.json())
