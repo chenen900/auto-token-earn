@@ -353,9 +353,38 @@ async function generateAIListing() {
       "<div class=item><div class=label>后台搜索词</div>" +
       "<div style=background:#0f172a;padding:8px;border-radius:6px;color:#64748b;font-size:0.8em'>" + l.searchTerms + "</div></div>" +
 
-      (issuesHtml ? "<div style=margin-top:10px>" + issuesHtml + "</div>" : "") +
+      (issuesHtml ? "<div style=margin-top:10px>" + issuesHtml + "</div>" : "");
 
-      "<div class=tip-box style='margin-top:12px;text-align:center'><b>会员功能：</b>一键生成完整Listing，省去2小时手动撰写。升级后还可批量导出+多平台适配。</div>";
+    // 同品类洞察
+    if (result.insights) {
+      var ins = result.insights;
+      // 爆款广告词
+      var adCopyHtml = ins.adCopyPatterns.map(function(p) {
+        return "<div style='margin:6px 0;padding:8px;background:#1e293b;border-radius:6px;border-left:3px solid #fbbf24'>" +
+          "<div style=color:#fbbf24;font-size:0.8em>" + p.type + "</div>" +
+          "<div style=color:#e2e8f0;font-size:0.85em;margin:4px 0>\"" + p.text + "\"</div>" +
+          "<div style=color:#64748b;font-size:0.75em>" + p.why + "</div></div>";
+      }).join("");
+
+      // 竞品链接
+      var compLink = "<a href='" + ins.competitorLink + "' target='_blank' style='color:#60a5fa;text-decoration:underline'>在 Amazon 查看同品类竞品 →</a>";
+
+      // 热门关键词
+      var kwTags = ins.topKeywords.map(function(k) {
+        return "<span style='display:inline-block;background:#1e3a5f;padding:2px 8px;border-radius:10px;margin:2px;font-size:0.75em;color:#93c5fd'>" + k + "</span>";
+      }).join(" ");
+
+      el.innerHTML += "<div style='margin-top:16px;background:#0f172a;border-radius:8px;padding:16px;border:1px solid #334155'>" +
+        "<h4 style=color:#fbbf24;margin-bottom:8px>同品类洞察 & 竞品参考</h4>" +
+        "<div style=display:grid;grid-template-columns:1fr 1fr;gap:12px>" +
+        "<div><div class=label>爆款广告词模板</div>" + adCopyHtml + "</div>" +
+        "<div><div class=label>竞品直达</div>" + compLink + "<div style='margin-top:12px'><div class=label>热门搜索词</div>" + kwTags + "</div></div>" +
+        "</div>" +
+        "<div class=tip-box style='margin-top:10px;font-size:0.8em'><b>类目建议：</b>" + ins.tips + "</div>" +
+        "</div>";
+    }
+
+    el.innerHTML += "<div class=tip-box style='margin-top:12px;text-align:center'><b>会员功能：</b>一键生成完整Listing，省去2小时手动撰写。升级后还可批量导出+多平台适配。</div>";
   } catch (e) {
     el.innerHTML = "<div style=color:#f87171>生成失败：" + e.message + "</div>";
   }

@@ -643,6 +643,7 @@ app.post("/api/v1/competitor-analysis", requireTier("pro"), (req, res) => {
 
 // ============ AI Listing 生成器（会员功能） ============
 const { generateListing } = require("./listing-generator");
+const CATEGORY_INSIGHTS = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "category-insights.json"), "utf-8"));
 
 app.post("/api/v1/listing-generate", requireTier("premium", "pro"), (req, res) => {
   const { brand, product, features, specs, category, targetAudience, platform } = req.body || {};
@@ -654,6 +655,18 @@ app.post("/api/v1/listing-generate", requireTier("premium", "pro"), (req, res) =
       category: category || "general",
       targetAudience, platform: platform || "amazon",
     });
+
+    // 附加同品类洞察
+    const insights = CATEGORY_INSIGHTS[category] || CATEGORY_INSIGHTS.general;
+    const searchQuery = encodeURIComponent((features || product).split(/[\n,，]+/)[0] || product);
+    listing.insights = {
+      category: insights.name,
+      adCopyPatterns: insights.adCopyPatterns,
+      competitorLink: `https://www.amazon.com/s?k=${searchQuery}`,
+      topKeywords: insights.topKeywords,
+      tips: insights.tips,
+    };
+
     trackFromRequest(req, "/api/v1/listing-generate", req.user.tier === "pro" ? "$0.03" : "$0.05");
     res.json(listing);
   } catch (e) {

@@ -1,0 +1,91 @@
+{
+  "electronics": {
+    "name": "电子",
+    "adCopyPatterns": [
+      { "type": "标题钩子", "text": "Why {product} Enthusiasts Are Switching to [Brand Name]", "why": "制造好奇心+社交证明" },
+      { "type": "五点开头", "text": "STOP wasting money on cheap {product}s that break in 3 months.", "why": "痛点开头，立刻抓住注意力" },
+      { "type": "A+描述", "text": "We spent 2 years engineering the perfect {product}. Here's what makes it different:", "why": "讲述品牌故事" },
+      { "type": "Scarcity", "text": "Limited stock — we only produce 500 units per batch to ensure quality control.", "why": "稀缺性提升紧迫感" }
+    ],
+    "topKeywords": ["wireless", "bluetooth", "fast charging", "portable", "long battery life", "USB-C", "waterproof", "noise cancelling"],
+    "competitorSearch": "https://www.amazon.com/s?k={keywords}",
+    "exampleASINs": ["B0BZR8J7PY", "B09Z2LXJKR", "B0C6GJZN5K"],
+    "tips": "电子类标题必须包含：品牌+核心功能+关键参数（如续航/防水等级）。前3个词最重要——Amazon移动端只显示前80字符。"
+  },
+  "home": {
+    "name": "家居",
+    "adCopyPatterns": [
+      { "type": "标题钩子", "text": "Transform Your {room} in Minutes with This {product}", "why": "承诺快速改变+具体场景" },
+      { "type": "五点开头", "text": "Tired of cluttered countertops? This {product} gives you back your space.", "why": "共鸣+解决方案" },
+      { "type": "A+描述", "text": "Designed in [City], inspired by minimalist aesthetics. Meet your new favorite {product}.", "why": "设计故事+情感连接" },
+      { "type": "Social Proof", "text": "Join 50,000+ happy homes that upgraded their {room} with {brand}.", "why": "大众认可" }
+    ],
+    "topKeywords": ["organizer", "storage", "decor", "modern", "space saving", "aesthetic", "minimalist", "gift"],
+    "competitorSearch": "https://www.amazon.com/s?k={keywords}",
+    "exampleASINs": [],
+    "tips": "家居类图片比文字重要10倍。五点描述中必须包含尺寸+材质。生活方式场景图（lifestyle photo）转化率比白底图高3倍。"
+  },
+  "fashion": {
+    "name": "服装",
+    "adCopyPatterns": [
+      { "type": "标题钩子", "text": "The {product} That Goes from Office to Dinner — Effortlessly", "why": "多场景+省心" },
+      { "type": "五点开头", "text": "Made from our signature {material} blend that feels like luxury, wears like iron.", "why": "材质+体验双重承诺" },
+      { "type": "A+描述", "text": "We spent 18 months sourcing the perfect fabric. The result? A {product} you'll reach for every morning.", "why": "研发故事增加价值感" },
+      { "type": "Urgency", "text": "Each batch is small — our artisans can only produce 200 pieces per week.", "why": "限量+手工感" }
+    ],
+    "topKeywords": ["fashion", "stylish", "comfortable", "breathable", "summer", "casual", "trendy", "gift for her"],
+    "competitorSearch": "https://www.amazon.com/s?k={keywords}",
+    "exampleASINs": [],
+    "tips": "服装类Listing最关键的3个元素：尺码表（Size Chart）必须清晰、材质成分（Fabric Content）必须详细、模特实拍（Model Photo）必须有。退货率最高的原因是'尺码不符'。"
+  },
+  "beauty": {
+    "name": "美妆",
+    "adCopyPatterns": [
+      { "type": "标题钩子", "text": "The {benefit} Secret That Dermatologists Don't Tell You", "why": "权威暗示+信息差" },
+      { "type": "五点开头", "text": "Formulated with {ingredient} — the same active used in $200+ luxury serums.", "why": "价值锚定" },
+      { "type": "A+描述", "text": "We source {ingredient} from a family-owned farm in [Country]. Each batch is cold-pressed within 24 hours.", "why": "溯源故事+品质证明" },
+      { "type": "Trust", "text": "Dermatologist-tested. Hypoallergenic. Cruelty-free. Made without parabens, sulfates, or artificial fragrance.", "why": "安全信任背书" }
+    ],
+    "topKeywords": ["skincare", "anti aging", "moisturizer", "natural", "organic", "vitamin C", "retinol", "hyaluronic acid"],
+    "competitorSearch": "https://www.amazon.com/s?k={keywords}",
+    "exampleASINs": [],
+    "tips": "美妆Listing最重要的是成分+功效+安全认证。Amazon对美妆有严格的Claims审核——不能说'cure''treat''heal'等医疗词。使用'supports''promotes''helps with'等合规表达。"
+  },
+  "sports": {
+    "name": "运动",
+    "adCopyPatterns": [
+      { "type": "标题钩子", "text": "Train Like a Pro — Without the Pro Price Tag", "why": "价值锚定" },
+      { "type": "五点开头", "text": "Used by professional trainers at [Gym Name]. Now available for your home gym.", "why": "权威背书" },
+      { "type": "A+描述", "text": "Engineered for performance. Every weld, every stitch, every material choice — optimized for one thing: results.", "why": "工程级叙事" },
+      { "type": "Challenge", "text": "Don't settle for flimsy equipment that fails mid-workout. Your safety deserves better.", "why": "安全痛点" }
+    ],
+    "topKeywords": ["fitness", "workout", "exercise", "gym equipment", "outdoor", "camping", "training", "durable"],
+    "competitorSearch": "https://www.amazon.com/s?k={keywords}",
+    "exampleASINs": [],
+    "tips": "运动器材Listing必须包含：承重/尺寸/材质/适用人群。视频展示是关键——动态使用视频的转化率比静态图片高2倍以上。"
+  },
+  "toys": {
+    "name": "玩具",
+    "adCopyPatterns": [
+      { "type": "标题钩子", "text": "The {product} That Makes Kids Forget About Screens (For Hours)", "why": "家长最痛点" },
+      { "type": "五点开头", "text": "Winner of the {Year} Parents' Choice Award. Trusted by 10,000+ families.", "why": "奖项+社交证明" },
+      { "type": "A+描述", "text": "Designed by educators and tested by kids. The result? A toy that teaches without feeling like homework.", "why": "教育价值+趣味性平衡" },
+      { "type": "Safety", "text": "ASTM F963 certified. BPA-free. Rounded edges. Every material meets or exceeds US safety standards.", "why": "安全第一——家长最关心" }
+    ],
+    "topKeywords": ["educational toy", "STEM", "learning", "kids gift", "birthday", "puzzle", "creative", "preschool"],
+    "competitorSearch": "https://www.amazon.com/s?k={keywords}",
+    "exampleASINs": [],
+    "tips": "玩具Listing必须突出：年龄段（Age Range）、教育价值（Educational Value）、安全认证（Safety Certification）。Amazon要求所有玩具必须有CPC（Children's Product Certificate）。"
+  },
+  "general": {
+    "name": "通用",
+    "adCopyPatterns": [
+      { "type": "标题钩子", "text": "Finally — a {product} That Actually Delivers on Its Promises", "why": "共鸣" },
+      { "type": "五点开头", "text": "Built with {material}, designed for {target}. This isn't just another {product}.", "why": "差异化" }
+    ],
+    "topKeywords": ["premium", "quality", "gift", "new release", "best seller"],
+    "competitorSearch": "https://www.amazon.com/s?k={keywords}",
+    "exampleASINs": [],
+    "tips": "通用Listing模板。请根据具体类目补充专用关键词和认证信息。"
+  }
+}
