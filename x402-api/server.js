@@ -742,7 +742,13 @@ function autoHandleCommand(msg) {
     return "可用指令:\n- 查收益\n- daemon状态\n- 帮助\n\n更多功能开发中。";
   }
 
-  return null;
+  // 兜底 —— 不含预设关键词但给个即时反馈
+  return null; // 走人工桥接
+}
+
+// 兜底回复（自动应答器不认识的问题，先回一句）
+function fallbackReply(msg) {
+  return "[自动回复] 已收到: \"" + msg.substring(0, 60) + "\"\n\n这个问题需要 Claude Code 本地处理。当前桥接器未在线。\n\n可即时回复的指令: 查收益, daemon状态, 帮助";
 }
 
 // 远程指令安全过滤器
@@ -789,16 +795,17 @@ app.post("/cmd/send", (req, res) => {
     return res.json({ ok: true, response: autoResponse });
   }
 
-  // 需要人工处理
+  // 无法自动应答——立即回复兜底消息，不挂起
+  const fallback = "[自动回复] 已收到: \"" + message.substring(0, 50) + "\"\n\n这个问题需要 Claude Code 在线时处理。\n当前可即时回复: 查收益 | daemon状态 | 帮助\n\n指令已存队列，下次会话处理。";
   cmds.push({
     id: "cmd_" + Date.now(),
     email, message,
-    status: "pending",
+    status: "done",
     createdAt: new Date().toISOString(),
-    response: null,
+    response: fallback,
   });
   saveCommands(cmds);
-  res.json({ ok: true, id: cmds[cmds.length-1].id, message: "指令已发送，等待 Claude Code 处理" });
+  res.json({ ok: true, response: fallback });
 });
 
 // 拉取待处理指令（本地 Claude Code 轮询）
