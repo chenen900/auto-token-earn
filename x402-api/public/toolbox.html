@@ -207,8 +207,21 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div><label>售价 ($)</label><input type="text" id="prPrice" placeholder="19.99" onchange="updateShippingEstimate()"></div>
 </div>
 
+<div class="row"><div><label>运输方式</label>
+<select id="prMethod">
+  <option value="best">自动推荐（最省钱）</option>
+  <option value="sea_lcl">海运拼柜 30-45天</option>
+  <option value="sea_fcl">海运整柜 25-40天</option>
+  <option value="fba_sea">FBA海运 25-35天</option>
+  <option value="air_consolidated">空运集货 7-12天</option>
+  <option value="air_direct">空运直飞 5-8天</option>
+  <option value="fba_air">FBA空运 7-10天</option>
+  <option value="epacket">e邮宝 10-20天</option>
+  <option value="express_ups">UPS快递 5-8天</option>
+  <option value="express_fedex">FedEx快递 5-7天</option>
+</select></div></div>
 <div id="prEstimate" class="tip-box" style="display:none"></div>
-<button class="btn" onclick="calcProfit()">计算利润</button></button>
+<button class="btn" onclick="calcProfit()">计算利润</button>
 <div id="prResult" class="result" style="display:none"></div>
 </div>
 

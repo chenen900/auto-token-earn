@@ -424,12 +424,15 @@ function seoOptimize(title, description, keywords, platform) {
   };
 }
 
-// ============ 会员系统 ============
+// ============ 会员系统（持久化到 data/ 目录，Render 不丢失） ============
 const membership = (() => {
   const fs = require("fs");
   const path = require("path");
   const crypto = require("crypto");
-  const USERS_FILE = path.join(__dirname, "users.json");
+  // 存到项目根目录下的 data/，不在 x402-api/ 内，跨部署持久
+  const DATA_STORE = path.join(__dirname, "..", "data");
+  const USERS_FILE = path.join(DATA_STORE, "users.json");
+  if (!fs.existsSync(DATA_STORE)) fs.mkdirSync(DATA_STORE, { recursive: true });
   const TIERS = {
     free: { name: "免费版", limit: { batch: 0, export: false, history: false, data: false, competitor: false } },
     premium: { name: "会员", price: "¥9.9/月", limit: { batch: 100, export: true, history: true, data: false, competitor: false } },
