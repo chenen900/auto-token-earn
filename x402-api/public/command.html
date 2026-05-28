@@ -55,7 +55,7 @@ function doLogin(){
   password = document.getElementById('loginPw').value.trim();
   if(!email||!password) return;
   document.getElementById('loginMsg').textContent = '验证中...';
-  fetch(API+'/cmd/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password,message:'__ping__'})})
+  fetch(API+'/cmd/send',{method:'POST',headers:{'Content-Type':'application/json; charset=utf-8'},body:JSON.stringify({email,password,message:'__ping__'})})
     .then(r=>r.json())
     .then(d=>{
       if(d.error){document.getElementById('loginMsg').textContent=d.error;return;}
@@ -80,7 +80,7 @@ function sendCmd(){
   document.getElementById('cmdInput').value = '';
   addMessage(msg, 'user');
   addMessage('处理中...', 'pending', 'sending');
-  fetch(API+'/cmd/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password,message:msg})})
+  fetch(API+'/cmd/send',{method:'POST',headers:{'Content-Type':'application/json; charset=utf-8'},body:JSON.stringify({email,password,message:msg})})
     .then(r=>r.json())
     .then(d=>{
       if(d.error){document.querySelector('.pending').textContent='错误: '+d.error;return;}
