@@ -712,6 +712,23 @@ function saveCommands(cmds) { require("fs").writeFileSync(CMD_FILE, JSON.stringi
 // 常见指令自动应答（纯本地数据，无外部 HTTP 调用，立即返回）
 function autoHandleCommand(msg) { return null; }
 
+// 发送指令
+app.post("/cmd/send", (req, res) => {
+  const { email, password, message } = req.body || {};
+  if (!message) return res.status(400).json({ error: "需要 message" });
+  const safety = cmdSafetyCheck(message);
+  if (!safety.pass) return res.status(403).json({ error: "指令被安全策略拦截: " + safety.reason });
+  const users = membership.load();
+  const u = users[email];
+  if (!u || u.passwordHash !== membership.hash(password)) return res.status(401).json({ error: "验证失败" });
+  if (u.tier !== "pro") return res.status(403).json({ error: "仅专业版用户可使用远程指挥" });
+  // 所有消息走队列，无自动回复
+  const cmds = loadCommands();
+  cmds.push({ id: "cmd_" + Date.now(), email, message, status: "pending", createdAt: new Date().toISOString(), response: null });
+  saveCommands(cmds);
+  res.json({ ok: true, id: cmds[cmds.length-1].id, message: "已收到，等待处理..." });
+});
+
 // 拉取待处理指令（本地 Claude Code 轮询）
 app.get("/cmd/poll", (req, res) => {
   const cmds = loadCommands();
