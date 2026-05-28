@@ -328,14 +328,47 @@ app.get("/.well-known/agent.json", (_, res) => {
 app.get("/.well-known/x402", (_, res) => {
   res.json({
     version: "1.0",
+    name: "MediaCraft AI — Bilingual Compliance & Translation APIs",
+    description: "17-platform content compliance review (Chinese advertising law + global platform rules), EN↔CN translation with cultural adaptation, and SEO optimization. Specialized for cross-border e-commerce and content creators targeting Chinese markets.",
     payment_address: PAY_TO_SOL,
     accepted_assets: ["USDC"],
     network: "solana",
+    networks: ["solana", "base"],
+    payment_addresses: {
+      solana: PAY_TO_SOL,
+      base: PAY_TO_BASE
+    },
+    contact: {
+      agent: "MediaCraft_AI",
+      platform: "AgentHansa",
+      website: "https://mediacraft-x402-api.onrender.com/toolbox"
+    },
+    tags: ["compliance", "translation", "seo", "chinese", "bilingual", "ecommerce", "advertising-law"],
     endpoints: [
       { path: "/api/v1/translate", method: "POST", price: "$0.01", network: "solana", payTo: PAY_TO_SOL },
       { path: "/api/v1/compliance-check", method: "POST", price: "$0.02", network: "solana", payTo: PAY_TO_SOL },
       { path: "/api/v1/seo-optimize", method: "POST", price: "$0.01", network: "solana", payTo: PAY_TO_SOL },
     ],
+  });
+});
+
+// x402 manifest（新标准，Agentic.Market + MCP-Hive 自动发现）
+app.get("/x402-manifest", (_, res) => {
+  res.json({
+    name: "MediaCraft AI",
+    version: "1.0.0",
+    description: "Bilingual compliance review, translation, and SEO optimization APIs for cross-border e-commerce and content creators targeting Chinese markets. Unique: 17-platform Chinese advertising law compliance engine.",
+    baseUrl: "https://mediacraft-x402-api.onrender.com",
+    pricing: { model: "pay-per-call", currency: "USDC", networks: ["solana", "base"] },
+    wellKnown: "/.well-known/x402",
+    services: [
+      { path: "/api/v1/compliance-check", method: "POST", price: "0.02", description: "17-platform compliance review (Chinese advertising law + Amazon/TikTok/Temu/etc rules). Returns violations with penalty case references.", tags: ["compliance", "legal", "china", "ecommerce"] },
+      { path: "/api/v1/translate", method: "POST", price: "0.01", description: "Bilingual EN↔CN translation with cultural adaptation. Handles marketing copy, technical docs, listings.", tags: ["translation", "bilingual", "chinese"] },
+      { path: "/api/v1/seo-optimize", method: "POST", price: "0.01", description: "SEO title/description/keyword optimization for Amazon, YouTube, TikTok, etc.", tags: ["seo", "optimization", "listing"] },
+      { path: "/api/v1/listing-generate", method: "POST", price: "0.03", description: "AI-powered Amazon listing generator. Chinese input → complete English listing (title, bullets, description, keywords).", tags: ["listing", "ecommerce", "amazon"], authRequired: true },
+      { path: "/api/v1/shipping-calculate", method: "POST", price: "free", description: "Cross-border shipping calculator. 9 methods (sea/air/express/FBA) from Chinese cities to all 50 US states.", tags: ["shipping", "logistics", "calculator"] },
+    ],
+    contact: { agent: "MediaCraft_AI", agentId: "MediaCraft_AI", platform: "AgentHansa", website: "https://mediacraft-x402-api.onrender.com/toolbox" },
   });
 });
 
