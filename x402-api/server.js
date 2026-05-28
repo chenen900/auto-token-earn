@@ -568,6 +568,18 @@ app.post("/api/v1/auth/admin-upgrade", (req, res) => {
   res.json({ ok: true, user: membership.sanitize(users[email]) });
 });
 
+// 管理员重置密码
+app.post("/api/v1/auth/admin-reset-password", (req, res) => {
+  const { email, password, adminKey } = req.body || {};
+  if (adminKey !== "mediacraft-admin-2026") return res.status(403).json({ error: "无权限" });
+  if (!email || !password) return res.status(400).json({ error: "需要 email 和 password" });
+  const users = membership.load();
+  if (!users[email]) return res.json({ error: "用户不存在" });
+  users[email].passwordHash = membership.hash(password);
+  membership.save(users);
+  res.json({ ok: true, message: "密码已重置" });
+});
+
 // ============ 会员专属功能（加权限检查） ============
 
 // 批量审查（会员+专业版）
