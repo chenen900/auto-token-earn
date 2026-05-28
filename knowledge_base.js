@@ -50,6 +50,10 @@ const CATEGORIES = {
 // ====== 原子结构 ======
 // { id, time, work, category, source, pattern, confidence, tags, detail }
 
+let usageLog = {};
+function trackUsage(category) { usageLog[category] = (usageLog[category]||0)+1; }
+function getUsage() { return usageLog; }
+
 function ensureDir() { if (!fs.existsSync(KB_DIR)) fs.mkdirSync(KB_DIR, { recursive: true }); }
 
 // 追加一个原子
@@ -111,6 +115,7 @@ function search(query) {
       (a.source||"").toLowerCase().includes(q)
     ).map(a => ({ ...a, category: cat })));
   }
+  results.forEach(a => trackUsage(a.category));
   return results.sort((a,b) => new Date(b.time) - new Date(a.time));
 }
 
@@ -122,7 +127,9 @@ function getRelevantAtoms(workLine, topic, limit = 10) {
   // 去重
   const seen = new Set();
   const unique = combined.filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true; });
-  return unique.slice(0, limit);
+  const result = unique.slice(0, limit);
+  result.forEach(a => trackUsage(a.category));
+  return result;
 }
 
 // 统计
@@ -174,11 +181,12 @@ function dashboard() {
     'A: ' + (s.byWork['A']||0) + ' | B: ' + (s.byWork['B']||0) + ' | C: ' + (s.byWork['C']||0),
     'D: ' + (s.byWork['D']||0) + ' | E: ' + (s.byWork['E']||0) + ' | F: ' + (s.byWork['F']||0) + ' | G: ' + (s.byWork['G']||0),
     '',
+    'KB Called: ' + Object.values(usageLog).reduce((a,b)=>a+b,0) + ' times | ' + Object.keys(usageLog).length + ' categories used',
     'Top: ' + Object.entries(s.byCategory).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>k+':'+v).join(', ')
   ].join('\n');
 }
 
-module.exports = { CATEGORIES, addAtom, getAtoms, getByWork, search, getRelevantAtoms, stats, seed, dashboard };
+module.exports = { CATEGORIES, addAtom, getAtoms, getByWork, search, getRelevantAtoms, stats, seed, dashboard, getUsage };
 
 // CLI
 if (require.main === module) {
