@@ -712,9 +712,6 @@ function saveCommands(cmds) { require("fs").writeFileSync(CMD_FILE, JSON.stringi
 // 常见指令自动应答（纯本地数据，无外部 HTTP 调用，立即返回）
 function autoHandleCommand(msg) { return null; }
 
-// 走桥接器队列
-});
-
 // 拉取待处理指令（本地 Claude Code 轮询）
 app.get("/cmd/poll", (req, res) => {
   const cmds = loadCommands();
