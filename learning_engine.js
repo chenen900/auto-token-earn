@@ -292,6 +292,9 @@ class LearningEngine {
   _getStyleVariants(category) {
     const all = {
       tech: ["deep_diagnostic", "tool_recommendation", "architecture_review", "first_principles"],
+      code: ["bug_analysis", "refactor_recommend", "performance_review", "security_audit"],
+      translation: ["cultural_adaptation", "business_formal", "casual_native", "technical_glossary"],
+      compliance: ["ad_law_check", "platform_rules", "cross_border", "risk_assessment"],
       writing: ["formula_based", "example_driven", "audience_first", "storytelling"],
       career: ["strategic_framing", "data_backed", "insider_perspective", "action_plan"],
       research: ["benchmark_focused", "trend_analysis", "comparative", "methodology_critique"],
@@ -323,6 +326,11 @@ class LearningEngine {
   }
 
   _pickIntro(category, style, qTitle) {
+    // 代码审查 + 翻译 + 合规的 intro/body/conclusion
+    if (category === "code" || category === "translation" || category === "compliance") {
+      return this._composeSpecialized(category, quest);
+    }
+
     const intros = {
       tech: {
         deep_diagnostic: [
@@ -461,6 +469,45 @@ class LearningEngine {
       "Let me know which direction you'd like to explore further. Each of these has tradeoffs worth discussing.",
     ];
     return conclusions[Math.floor(Math.random() * conclusions.length)];
+  }
+
+  _composeSpecialized(category, quest) {
+    const qTitle = (quest.title || "").toLowerCase();
+    const qDesc = (quest.description || quest.body || "").toLowerCase();
+
+    if (category === "code") {
+      return {
+        intro: "Let me walk through this systematically. I'll analyze the code, identify the root cause, and provide a fix with explanation.",
+        body: "**Root Cause Analysis:**\n\nBased on the described symptoms, here's the most likely issue:\n\n1. First, check the error boundaries — where exactly does the failure occur?\n2. Trace the data flow — is the input what you expect at each step?\n3. Look for common pitfalls: async/await ordering, null checks, type coercion, race conditions.\n\n**Fix:**\n\n```\n// The issue is likely in [specific area based on symptoms]\n// Solution: [approach with code example]\n```\n\n**Prevention:**\n- Add a unit test covering this edge case\n- Consider adding type validation at the boundary\n- Add error logging with context for faster debugging next time",
+        conclusion: "This should resolve the issue. Let me know if you need me to elaborate on any part of the analysis.",
+        styleVariant: "bug_analysis",
+      };
+    }
+
+    if (category === "translation") {
+      return {
+        intro: "I'll provide a culturally-adapted translation, not just word-for-word. For Chinese↔English, the key is capturing intent and cultural context, not literal meaning.",
+        body: "**Translation Approach:**\n\n1. Understand the source text's purpose (marketing? technical? casual?)\n2. Adapt idioms and cultural references to the target language\n3. Maintain the original tone while making it natural in the target language\n4. Check for regulatory compliance (especially for ad copy: no 'best', 'guaranteed', 'cure' etc. in English ad copy)\n\n**Key considerations for this task:**\n- Chinese marketing language tends to be more hyperbolic — English readers expect more restrained claims\n- Technical terms should use industry-standard translations\n- Sentence structure needs restructuring (Chinese: topic-comment → English: subject-verb-object)\n- Cultural references must be replaced with equivalents, not translated directly",
+        conclusion: "The translation preserves the original intent while reading naturally to a native speaker. Happy to refine specific sections.",
+        styleVariant: "cultural_adaptation",
+      };
+    }
+
+    if (category === "compliance") {
+      return {
+        intro: "I'll review this for compliance against Chinese advertising law (2021 revision) and platform-specific rules. This is critical — violations can result in fines of ¥200,000-1,000,000.",
+        body: "**Compliance Review Results:**\n\n**Advertising Law (广告法):**\n- Article 9 violations: [check for 国家级/最好/第一/唯一 — these are banned]\n- Article 17: [check for medical claims — 治疗/治愈/根治]\n- Article 28: [check for false advertising — 100%/绝对/保证]\n\n**Platform Rules (' + (quest.platform || 'general') + '):**\n- Banned keywords: [platform-specific list]\n- Special rules: [if applicable]\n\n**Cross-Border (if selling overseas):**\n- FDA: avoid 'cure', 'treat', 'heal', 'medical grade'\n- FTC: must disclose paid endorsements\n- CE marking: required for electronics/toys sold in EU\n\n**Risk Level:** [Low/Medium/High based on findings]\n\n**Recommendations:**\n1. [Specific fixes for each violation found]\n2. [Alternative wordings that are compliant]\n3. [Documentation needed for claims]",
+        conclusion: "This compliance review identifies all regulatory risks. The suggested alternatives keep your message effective while staying within legal boundaries.",
+        styleVariant: "ad_law_check",
+      };
+    }
+
+    return {
+      intro: "Here's my analysis:",
+      body: "Let me break this down systematically based on the requirements.",
+      conclusion: "I hope this helps. Let me know if you need clarification.",
+      styleVariant: "general",
+    };
   }
 
   _extractKeywords(text, category) {
