@@ -33,6 +33,7 @@ app.use((req, res, next) => {
   next();
 });
 app.get("/toolbox", (_, res) => res.sendFile(require("path").join(__dirname, "public", "toolbox.html")));
+app.get("/command", (_, res) => res.sendFile(require("path").join(__dirname, "public", "command.html")));
 
 app.use("/.well-known", express.static(require("path").join(__dirname, ".well-known")));
 
@@ -701,6 +702,59 @@ app.get("/api/v1/feedback", (req, res) => {
     const lines = require("fs").readFileSync(FEEDBACK_FILE, "utf-8").trim().split("\n").slice(-50);
     res.json(lines.map((l) => JSON.parse(l)));
   } catch (e) { res.json([]); }
+});
+
+// ============ 远程指挥台 ============
+const CMD_FILE = require("path").join(__dirname, "..", "data", "command_queue.json");
+function loadCommands() { try { return JSON.parse(require("fs").readFileSync(CMD_FILE, "utf-8")); } catch(e) { return []; } }
+function saveCommands(cmds) { require("fs").writeFileSync(CMD_FILE, JSON.stringify(cmds, null, 2)); }
+
+// 发送指令
+app.post("/cmd/send", (req, res) => {
+  const { email, password, message } = req.body || {};
+  if (!message) return res.status(400).json({ error: "需要 message" });
+  const users = membership.load();
+  const u = users[email];
+  if (!u || u.passwordHash !== membership.hash(password)) return res.status(401).json({ error: "验证失败" });
+  if (u.tier !== "pro") return res.status(403).json({ error: "仅专业版用户可使用远程指挥" });
+
+  const cmds = loadCommands();
+  cmds.push({
+    id: "cmd_" + Date.now(),
+    email, message,
+    status: "pending",
+    createdAt: new Date().toISOString(),
+    response: null,
+  });
+  saveCommands(cmds);
+  res.json({ ok: true, id: cmds[cmds.length-1].id, message: "指令已发送，等待 Claude Code 处理" });
+});
+
+// 拉取待处理指令（本地 Claude Code 轮询）
+app.get("/cmd/poll", (req, res) => {
+  const cmds = loadCommands();
+  const pending = cmds.filter(c => c.status === "pending");
+  res.json(pending.slice(0, 1)); // 一次只给一条
+});
+
+// 写入响应（本地 Claude Code 回复）
+app.post("/cmd/respond", (req, res) => {
+  const { id, response, token } = req.body || {};
+  if (token !== "mediacraft-bridge-2026") return res.status(403).json({ error: "无效 token" });
+  const cmds = loadCommands();
+  const cmd = cmds.find(c => c.id === id);
+  if (!cmd) return res.json({ error: "指令不存在" });
+  cmd.status = "done";
+  cmd.response = response;
+  cmd.respondedAt = new Date().toISOString();
+  saveCommands(cmds);
+  res.json({ ok: true });
+});
+
+// 获取对话历史
+app.get("/cmd/history", (req, res) => {
+  const cmds = loadCommands();
+  res.json(cmds.slice(-50));
 });
 
 // ============ 守护进程状态 & 监控 ============

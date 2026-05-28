@@ -1,0 +1,128 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MediaCraft 指挥台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.container{max-width:700px;margin:0 auto;padding:16px}
+h1{font-size:1.3em;color:#60a5fa;margin-bottom:4px}
+.sub{color:#64748b;font-size:0.8em;margin-bottom:16px}
+.login-box{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;max-width:360px;margin:60px auto}
+input{width:100%;padding:10px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:0.9em;margin-bottom:8px}
+input:focus{outline:none;border-color:#60a5fa}
+.btn{width:100%;padding:10px;background:linear-gradient(135deg,#60a5fa,#34d399);color:#0f172a;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.9em}
+.btn:hover{opacity:0.9}
+.chat-area{display:flex;flex-direction:column;height:calc(100vh - 200px)}
+.messages{flex:1;overflow-y:auto;padding:8px 0}
+.msg{margin:8px 0;padding:10px 14px;border-radius:10px;max-width:85%;font-size:0.9em;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.msg.user{background:#1e3a5f;color:#93c5fd;margin-left:auto;border-bottom-right-radius:4px}
+.msg.bot{background:#1e293b;color:#cbd5e1;margin-right:auto;border-bottom-left-radius:4px;border:1px solid #334155}
+.msg.pending{background:#1e293b;color:#64748b;font-style:italic}
+.msg .time{font-size:0.7em;color:#64748b;margin-top:4px}
+.input-area{display:flex;gap:8px;padding:12px 0;border-top:1px solid #334155}
+.input-area input{flex:1;margin-bottom:0}
+.input-area button{width:auto;padding:10px 20px}
+.status{text-align:center;padding:4px;font-size:0.75em}
+.status.on{color:#34d399}.status.off{color:#64748b}
+</style></head><body>
+<div class=container>
+
+<div id=loginPage>
+<div class=login-box>
+<h2 style=color:#60a5fa;margin-bottom:16px>MediaCraft 远程指挥台</h2>
+<input id=loginEmail type=email placeholder="邮箱">
+<input id=loginPw type=password placeholder="密码">
+<button class=btn onclick=doLogin()>登录</button>
+<p id=loginMsg style=color:#f87171;font-size:0.8em;margin-top:8px;text-align:center></p>
+<p style=color:#64748b;font-size:0.7em;text-align:center;margin-top:12px>仅专业版用户可登录</p>
+</div></div>
+
+<div id=chatPage style=display:none>
+<h1>MediaCraft 指挥台</h1>
+<div class=sub><span id=connStatus class=status>等待连接...</span> | <a href=# onclick=doLogout() style=color:#60a5fa>退出</a></div>
+<div class=chat-area>
+<div class=messages id=messages></div>
+<div class=input-area>
+<input id=cmdInput type=text placeholder="输入指令，例如：查收益 / 部署工作1 / 分析AgentHansa任务" onkeydown="if(event.key==='Enter')sendCmd()">
+<button class=btn onclick=sendCmd()>发送</button>
+</div></div></div>
+
+</div>
+<script>
+var API = window.location.origin;
+var email = "", password = "", pollTimer = null;
+
+function doLogin(){
+  email = document.getElementById('loginEmail').value.trim();
+  password = document.getElementById('loginPw').value.trim();
+  if(!email||!password) return;
+  document.getElementById('loginMsg').textContent = '验证中...';
+  fetch(API+'/cmd/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password,message:'__ping__'})})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.error){document.getElementById('loginMsg').textContent=d.error;return;}
+      document.getElementById('loginPage').style.display='none';
+      document.getElementById('chatPage').style.display='block';
+      document.getElementById('connStatus').textContent='已连接';
+      document.getElementById('connStatus').className='status on';
+      loadHistory();
+      pollTimer = setInterval(checkNew, 5000);
+    });
+}
+
+function doLogout(){
+  clearInterval(pollTimer);
+  document.getElementById('loginPage').style.display='block';
+  document.getElementById('chatPage').style.display='none';
+}
+
+function sendCmd(){
+  var msg = document.getElementById('cmdInput').value.trim();
+  if(!msg) return;
+  document.getElementById('cmdInput').value = '';
+  addMessage(msg, 'user');
+  addMessage('处理中...', 'pending', 'sending');
+  fetch(API+'/cmd/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password,message:msg})})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.error){document.querySelector('.pending').textContent='错误: '+d.error;return;}
+      document.querySelector('.pending').id = 'cmd_'+d.id;
+    });
+}
+
+function checkNew(){
+  fetch(API+'/cmd/history')
+    .then(r=>r.json())
+    .then(cmds=>{
+      var container = document.getElementById('messages');
+      cmds.forEach(c=>{
+        if(c.status==='done' && c.response && !document.getElementById('resp_'+c.id)){
+          // Remove pending message
+          var pending = document.getElementById('cmd_'+c.id);
+          if(pending) pending.remove();
+          if(c.message !== '__ping__') addMessage(c.response, 'bot', 'resp_'+c.id);
+        }
+      });
+    });
+}
+
+function loadHistory(){
+  fetch(API+'/cmd/history')
+    .then(r=>r.json())
+    .then(cmds=>{
+      cmds.forEach(c=>{
+        if(c.message !== '__ping__'){
+          addMessage(c.message, 'user');
+          if(c.response) addMessage(c.response, 'bot');
+        }
+      });
+    });
+}
+
+function addMessage(text, role, id){
+  var div = document.createElement('div');
+  div.className = 'msg '+role;
+  if(id) div.id = id;
+  div.innerHTML = text + '<div class=time>'+new Date().toLocaleTimeString()+'</div>';
+  document.getElementById('messages').appendChild(div);
+  document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+}
+</script></body></html>
