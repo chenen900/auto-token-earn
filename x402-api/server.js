@@ -939,29 +939,22 @@ app.listen(PORT, () => {
   const startDaemon = process.env.DAEMON_ENABLED !== "false";
   if (startDaemon) {
     try {
-      const daemonPath = require("path").join(__dirname, "..", "..", "daemon.js");
-      console.log("[DAEMON] Loading from:", daemonPath);
-      const { runWorkerCycle } = require(daemonPath);
-      console.log("[DAEMON] Background worker starting...");
-      (async function daemonLoop() {
-        let cycle = 0;
-        while (true) {
-          cycle++;
-          try {
-            daemonStatus.running = true;
-            daemonStatus.lastCycle = new Date().toISOString();
-            await runWorkerCycle();
-            daemonStatus.cycles = cycle;
-            daemonStatus.errors = 0;
-          } catch (e) {
-            daemonStatus.errors++;
-            console.error(`[DAEMON] Cycle ${cycle} error:`, e.message?.substring(0, 120));
-            await new Promise((r) => setTimeout(r, 60000));
-          }
-          const delay = 7 * 60 * 1000 + Math.floor(Math.random() * 8 * 60 * 1000);
-          await new Promise((r) => setTimeout(r, delay));
-        }
-      })();
+      const daemonPath = require("path").join(__dirname, "..", "daemon_simple.js");
+      console.log("[DAEMON] Starting simple daemon:", daemonPath);
+      const { spawn } = require("child_process");
+      const child = spawn("node", [daemonPath], {
+        cwd: require("path").join(__dirname, ".."),
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, AGENTHANSA_API_KEY: process.env.AGENTHANSA_API_KEY || "tabb_RbsUoEipzInRhm2-D2QoH5WHjyYrKJeb9Ff5TUCmx8E" },
+      });
+      child.stdout.on("data", (d) => {
+        const line = d.toString().trim();
+        if (line.includes("Cycle")) { daemonStatus.cycles++; daemonStatus.running = true; daemonStatus.lastCycle = new Date().toISOString(); }
+        console.log("[DAEMON] " + line);
+      });
+      child.stderr.on("data", (d) => console.error("[DAEMON-ERR] " + d.toString().trim()));
+      child.on("exit", (code) => console.log("[DAEMON] Exited with code " + code));
+      console.log("[DAEMON] Simple daemon started as child process");
     } catch (e) {
       console.error("[DAEMON] Failed to start:", e.message);
     }
