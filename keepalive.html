@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Daemon Keepalive</title>
+<style>body{font-family:monospace;background:#0f172a;color:#34d399;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column}
+h1{font-size:1.2em}p{color:#94a3b8;font-size:0.8em}.count{font-size:3em;font-weight:700}</style></head><body>
+<h1>Daemon Keepalive</h1><div class=count id=c>0</div><p id=t></p><p id=s></p>
+<p style=margin-top:20px;color:#64748b;font-size:0.7em>每7分钟自动ping Render。打开这个页面别关就行。</p>
+<iframe id=f style=display:none></iframe>
+<script>
+let n=parseInt(localStorage.getItem('kc')||0);
+function ping(){
+  n++;localStorage.setItem('kc',n);
+  document.getElementById('c').textContent='已ping '+n+'次';
+  document.getElementById('t').textContent='上次: '+new Date().toLocaleTimeString();
+  fetch('https://mediacraft-x402-api.onrender.com/daemon/health')
+    .then(r=>r.json())
+    .then(d=>{document.getElementById('s').textContent='状态: OK | uptime: '+Math.floor(d.uptime||0)+'s';document.getElementById('s').style.color='#34d399'})
+    .catch(e=>{document.getElementById('s').textContent='状态: 错误';document.getElementById('s').style.color='#f87171'});
+}
+ping();setInterval(ping, 7*60*1000);
+</script></body></html>
