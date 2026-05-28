@@ -213,7 +213,7 @@ async function cycle() {
 
       try {
         // 生成响应
-        let response = isPersonalTask 
+        undefined 
         ? (cat.includes("tech")||cat.includes("code") ? RESPONSES.personal_task_tech
           : cat.includes("writ")||cat.includes("content") ? RESPONSES.personal_task_content
           : cat.includes("translat") ? RESPONSES.personal_task_translation
