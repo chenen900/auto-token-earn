@@ -89,7 +89,7 @@ async function checkAndProcess() {
       if (cmd.userReply) {
         if (cmd.userReply.includes("确认") || cmd.userReply.toLowerCase().includes("yes")) {
           try {
-            execSync("git add -A && git commit -m '[remote] auto-deploy' && git push", { cwd: __dirname, encoding: "utf8", timeout: 15000, windowsHide: true });
+            execSync("git add -u && git commit -m '[remote] auto-deploy' && git push", { cwd: __dirname, encoding: "utf8", timeout: 15000, windowsHide: true });
             await reply(cmd.id, "Done. Code pushed to GitHub.");
           } catch(e) {
             await reply(cmd.id, "Deploy failed: " + e.message.substring(0, 100));
