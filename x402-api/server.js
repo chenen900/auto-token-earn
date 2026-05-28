@@ -812,7 +812,43 @@ app.post("/cmd/send", (req, res) => {
 app.get("/cmd/poll", (req, res) => {
   const cmds = loadCommands();
   const pending = cmds.filter(c => c.status === "pending");
-  res.json(pending.slice(0, 1)); // 一次只给一条
+  res.json(pending.slice(0, 1));
+});
+
+// 拉取所有 pending（交互式桥接用）
+app.get("/cmd/pending", (req, res) => {
+  if (req.query.token !== "mediacraft-bridge-2026") return res.status(403).json({ error: "无权限" });
+  const cmds = loadCommands();
+  res.json(cmds.filter(c => c.status === "pending"));
+});
+
+// 远端确认请求：Claude Code 向用户提问
+app.post("/cmd/ask", (req, res) => {
+  const { id, question, token: t } = req.body || {};
+  if (t !== "mediacraft-bridge-2026") return res.status(403).json({ error: "无权限" });
+  const cmds = loadCommands();
+  const cmd = cmds.find(c => c.id === id);
+  if (!cmd) return res.json({ error: "指令不存在" });
+  cmd.question = question;
+  cmd.questionTime = new Date().toISOString();
+  saveCommands(cmds);
+  res.json({ ok: true, message: "等待用户回复" });
+});
+
+// 用户回复确认
+app.post("/cmd/reply", (req, res) => {
+  const { id, email, password, reply } = req.body || {};
+  if (!reply) return res.status(400).json({ error: "需要 reply" });
+  const users = membership.load();
+  const u = users[email];
+  if (!u || u.passwordHash !== membership.hash(password)) return res.status(401).json({ error: "验证失败" });
+  const cmds = loadCommands();
+  const cmd = cmds.find(c => c.id === id);
+  if (!cmd) return res.json({ error: "指令不存在" });
+  cmd.userReply = reply;
+  cmd.replyTime = new Date().toISOString();
+  saveCommands(cmds);
+  res.json({ ok: true, message: "回复已提交" });
 });
 
 // 写入响应（本地 Claude Code 回复）
