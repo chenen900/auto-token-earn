@@ -143,15 +143,72 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <!-- ====== 利润计算 ====== -->
 <div id="profit" class="panel hidden">
 <div class="back-link" onclick="goHome()">首页</div>
-<h3>跨境利润计算器</h3>
-<div class="tip-box"><b>新：</b>接入美国 50 州真实快递费率（USPS/UPS/FedEx 2026 价格）</div>
-<div class="row"><div><label>进货价(¥)</label><input type="text" id="prCost" placeholder="35"></div><div><label>重量(kg)</label><input type="text" id="prWeight" placeholder="0.3"></div></div>
+<h3>跨境物流 + 利润计算器</h3>
+<div class="tip-box"><b>真实跨境流程：</b>中国发货城市 → 国际运输 → 美国入境港 → 本地配送 → 你的客户手中。<br>这里按照 <b>USPS/UPS/FedEx 2026 真实费率</b> + <b>出发城市差异</b> 计算。</div>
+
 <div class="row">
-<div><label>目的地州</label><select id="prState"><option value="CA">California 加利福尼亚</option><option value="NY">New York 纽约</option><option value="TX">Texas 德克萨斯</option><option value="FL">Florida 佛罗里达</option><option value="WA">Washington 华盛顿</option><option value="IL">Illinois 伊利诺伊</option><option value="GA">Georgia 佐治亚</option><option value="NJ">New Jersey 新泽西</option><option value="PA">Pennsylvania 宾夕法尼亚</option><option value="OH">Ohio 俄亥俄</option></select></div>
-<div><label>平台</label><select id="prPlatform"><option value="amazon">Amazon 15%</option><option value="temu">Temu 免费</option><option value="shopify">Shopify 3%</option></select></div>
+<div><label>发货城市</label>
+<select id="prOrigin" onchange="updateShippingEstimate()">
+  <option value="yiwu">义乌 Yiwu · 华东</option>
+  <option value="shenzhen">深圳 Shenzhen · 华南</option>
+  <option value="guangzhou">广州 Guangzhou · 华南</option>
+  <option value="shanghai">上海 Shanghai · 华东</option>
+  <option value="ningbo">宁波 Ningbo · 华东</option>
+  <option value="hangzhou">杭州 Hangzhou · 华东</option>
+  <option value="xiamen">厦门 Xiamen · 东南</option>
+  <option value="beijing">北京 Beijing · 华北</option>
+  <option value="chengdu">成都 Chengdu · 西南</option>
+</select></div>
+<div><label>目的地州</label>
+<select id="prState" onchange="updateShippingEstimate()">
+  <option value="">— 选择美国州 —</option>
+  <optgroup label="西海岸 West Coast">
+    <option value="CA">California 加利福尼亚</option>
+    <option value="OR">Oregon 俄勒冈</option>
+    <option value="WA">Washington 华盛顿</option>
+    <option value="NV">Nevada 内华达</option>
+    <option value="AZ">Arizona 亚利桑那</option>
+  </optgroup>
+  <optgroup label="中部 Central">
+    <option value="TX">Texas 德克萨斯</option>
+    <option value="IL">Illinois 伊利诺伊</option>
+    <option value="OH">Ohio 俄亥俄</option>
+    <option value="MI">Michigan 密歇根</option>
+    <option value="MN">Minnesota 明尼苏达</option>
+    <option value="MO">Missouri 密苏里</option>
+    <option value="WI">Wisconsin 威斯康星</option>
+  </optgroup>
+  <optgroup label="东海岸 East Coast">
+    <option value="NY">New York 纽约</option>
+    <option value="NJ">New Jersey 新泽西</option>
+    <option value="FL">Florida 佛罗里达</option>
+    <option value="GA">Georgia 佐治亚</option>
+    <option value="PA">Pennsylvania 宾夕法尼亚</option>
+    <option value="MA">Massachusetts 马萨诸塞</option>
+    <option value="NC">North Carolina 北卡罗来纳</option>
+    <option value="VA">Virginia 弗吉尼亚</option>
+  </optgroup>
+</select></div>
 </div>
-<div><label>售价($)</label><input type="text" id="prPrice" placeholder="19.99"></div>
-<button class="btn" onclick="calcProfit()">计算利润（实时费率）</button>
+
+<div class="row">
+<div><label>进货价 (¥)</label><input type="text" id="prCost" placeholder="35" onchange="updateShippingEstimate()"></div>
+<div><label>重量 (kg)</label><input type="text" id="prWeight" placeholder="0.3" onchange="updateShippingEstimate()"></div>
+</div>
+
+<div class="row">
+<div><label>平台</label><select id="prPlatform" onchange="updateShippingEstimate()">
+  <option value="amazon">Amazon 佣金 15%</option>
+  <option value="temu">Temu 0% 佣金</option>
+  <option value="shopify">Shopify 佣金 3%</option>
+  <option value="etsy">Etsy 佣金 6.5%</option>
+  <option value="ebay">eBay 佣金 13%</option>
+</select></div>
+<div><label>售价 ($)</label><input type="text" id="prPrice" placeholder="19.99" onchange="updateShippingEstimate()"></div>
+</div>
+
+<div id="prEstimate" class="tip-box" style="display:none"></div>
+<button class="btn" onclick="calcProfit()">计算利润</button>
 <div id="prResult" class="result" style="display:none"></div>
 </div>
 

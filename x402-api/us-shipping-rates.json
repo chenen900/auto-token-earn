@@ -1,7 +1,19 @@
 {
-  "description": "美国各州国际快递费率参考 (USD/kg)，基于 USPS/UPS/FedEx 2026 公开费率",
-  "lastUpdated": "2026-05-27",
-  "source": "USPS Commercial Base, UPS Standard, FedEx International Economy",
+  "description": "中国→美国跨境电商物流费率 (USD/kg)，涵盖主要发货城市→各州的快递费用",
+  "lastUpdated": "2026-05-28",
+  "source": "USPS Commercial Base, UPS Standard, FedEx International Economy + 中国出口物流市场价",
+
+  "origins": {
+    "yiwu": { "name": "义乌", "enName": "Yiwu", "region": "华东", "portFactor": 1.0, "note": "小商品之都，全球最大小商品集散地" },
+    "shenzhen": { "name": "深圳", "enName": "Shenzhen", "region": "华南", "portFactor": 0.85, "note": "电子产品集散地，毗邻香港" },
+    "guangzhou": { "name": "广州", "enName": "Guangzhou", "region": "华南", "portFactor": 0.90, "note": "制造业重镇，南沙港直达" },
+    "shanghai": { "name": "上海", "enName": "Shanghai", "region": "华东", "portFactor": 0.95, "note": "最大港口，航线最密集" },
+    "ningbo": { "name": "宁波", "enName": "Ningbo", "region": "华东", "portFactor": 0.92, "note": "深水良港，跨境电商集货中心" },
+    "hangzhou": { "name": "杭州", "enName": "Hangzhou", "region": "华东", "portFactor": 1.05, "note": "电商之都，空运便捷" },
+    "xiamen": { "name": "厦门", "enName": "Xiamen", "region": "东南", "portFactor": 1.08, "note": "福建主要出口港" },
+    "beijing": { "name": "北京", "enName": "Beijing", "region": "华北", "portFactor": 1.15, "note": "首都机场国际货运" },
+    "chengdu": { "name": "成都", "enName": "Chengdu", "region": "西南", "portFactor": 1.20, "note": "中欧班列起点，空运增长快" }
+  },
   "carriers": {
     "usps": {
       "name": "USPS Priority Mail International",

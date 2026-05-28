@@ -472,24 +472,37 @@ const SHIPPING = JSON.parse(require("fs").readFileSync(require("path").join(__di
 app.get("/api/v1/shipping-rates", (_, res) => res.json(SHIPPING));
 
 app.post("/api/v1/shipping-calculate", (req, res) => {
-  const { weight, state, carrier } = req.body || {};
+  const { weight, state, carrier, origin } = req.body || {};
   if (!weight || !state) return res.status(400).json({ error: "需要 weight(kg) 和 state(州代码)" });
   const stateData = SHIPPING.stateMap[state.toUpperCase()];
   if (!stateData) return res.json({ error: `未找到 ${state} 的费率数据` });
   const zone = SHIPPING.zones[stateData.zone];
-  const perKg = carrier && SHIPPING.carriers[carrier] ? SHIPPING.carriers[carrier].perKg + SHIPPING.carriers[carrier].baseRate / Math.max(weight, 0.5)
-    : stateData.avgRate;
+
+  // 发货城市系数（不同城市到不同港口距离不同）
+  const originData = SHIPPING.origins[origin] || SHIPPING.origins["yiwu"];
+  const portFactor = originData.portFactor || 1.0;
+
+  const perKg = carrier && SHIPPING.carriers[carrier]
+    ? (SHIPPING.carriers[carrier].perKg + SHIPPING.carriers[carrier].baseRate / Math.max(weight, 0.5)) * portFactor
+    : stateData.avgRate * portFactor;
   const total = Math.round(perKg * weight * 100) / 100;
   res.json({
-    state: state.toUpperCase(), zone: stateData.zone, weight,
+    origin: { code: origin || "yiwu", name: originData.name, enName: originData.enName, region: originData.region },
+    destination: { state: state.toUpperCase(), zone: stateData.zone, zoneName: zone ? zone.majorPorts?.[0] : state, deliveryDays: zone?.deliveryDays },
+    weight,
     ratePerKg: Math.round(perKg * 100) / 100,
     totalUSD: total,
     totalCNY: Math.round(total * 7.2 * 100) / 100,
-    zoneInfo: zone,
+    exchangeRate: 7.2,
     allCarriers: {
-      usps: Math.round((SHIPPING.carriers.usps.baseRate + SHIPPING.carriers.usps.perKg * weight) * 100) / 100,
-      ups: Math.round((SHIPPING.carriers.ups.baseRate + SHIPPING.carriers.ups.perKg * weight) * 100) / 100,
-      fedex: Math.round((SHIPPING.carriers.fedex.baseRate + SHIPPING.carriers.fedex.perKg * weight) * 100) / 100,
+      usps: Math.round((SHIPPING.carriers.usps.baseRate + SHIPPING.carriers.usps.perKg * weight) * portFactor * 100) / 100,
+      ups: Math.round((SHIPPING.carriers.ups.baseRate + SHIPPING.carriers.ups.perKg * weight) * portFactor * 100) / 100,
+      fedex: Math.round((SHIPPING.carriers.fedex.baseRate + SHIPPING.carriers.fedex.perKg * weight) * portFactor * 100) / 100,
+    },
+    breakdown: {
+      internationalFreight: Math.round(total * 0.7 * 100) / 100,
+      usLastMile: Math.round(total * 0.2 * 100) / 100,
+      fuelSurcharge: Math.round(total * 0.1 * 100) / 100,
     },
   });
 });

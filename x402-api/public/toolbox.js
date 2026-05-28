@@ -112,7 +112,7 @@ async function generateListing() {
   el.innerHTML = "<h3>" + platNames[platform] + " 上架检查报告</h3><div style=display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px><div style=text-align:center><div class=score " + sc + ">" + overall + "</div><div style=color:#94a3b8>综合评分</div></div><div><div style=margin:4px 0>SEO: <b style=color:#60a5fa>" + seo.score + "/100</b></div><div style=margin:4px 0>合规: <b style=color:" + (comp.score > 80 ? "#34d399" : "#fbbf24") + ">" + comp.score + "/100</b></div></div></div>" + issuesHtml + tipsHtml;
 }
 
-// ========== 利润计算器（新版：使用真实快递数据） ==========
+// ========== 物流估价（选择发货地和目的地时实时更新） ==========
 var shippingRatesCache = null;
 
 async function loadShippingRates() {
@@ -121,23 +121,45 @@ async function loadShippingRates() {
   return shippingRatesCache;
 }
 
+async function updateShippingEstimate() {
+  var weight = parseFloat(document.getElementById("prWeight").value) || 0.5;
+  var state = document.getElementById("prState").value;
+  var origin = document.getElementById("prOrigin").value;
+  if (!state || !weight) return;
+
+  var el = document.getElementById("prEstimate");
+  try {
+    var shipRes = await fetch(API + "/api/v1/shipping-calculate", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ weight: weight, state: state, carrier: "ups", origin: origin })
+    });
+    var shipData = await shipRes.json();
+    if (shipData && !shipData.error) {
+      el.style.display = "block";
+      el.innerHTML = "<b>" + shipData.origin.name + " → " + shipData.destination.state + "</b> &nbsp;|&nbsp; 预计 " + shipData.destination.deliveryDays + " &nbsp;|&nbsp; 约 <b>$" + shipData.totalUSD + "</b> (¥" + shipData.totalCNY + ") &nbsp;|&nbsp; USPS $" + shipData.allCarriers.usps + " / UPS $" + shipData.allCarriers.ups + " / FedEx $" + shipData.allCarriers.fedex;
+    }
+  } catch (e) {}
+}
+
 async function calcProfit() {
   var cost = parseFloat(document.getElementById("prCost").value) || 0;
   var weight = parseFloat(document.getElementById("prWeight").value) || 0.5;
   var price = parseFloat(document.getElementById("prPrice").value) || 0;
-  var state = document.getElementById("prState").value || "CA";
+  var state = document.getElementById("prState").value;
+  var origin = document.getElementById("prOrigin").value;
   var platform = document.getElementById("prPlatform").value;
   var rate = 7.2;
   var el = document.getElementById("prResult");
   el.style.display = "block";
-  el.innerHTML = "<div class=loading>计算中（使用真实快递费率）...</div>";
+  el.innerHTML = "<div class=loading>查询 " + state + " 真实费率中...</div>";
 
-  // 调用后端真实快递费率
+  if (!state) { el.innerHTML = "<div style=color:#fbbf24>请先选择目的地州</div>"; return; }
+
   var shipData = null;
   try {
     var shipRes = await fetch(API + "/api/v1/shipping-calculate", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ weight: weight, state: state, carrier: "ups" })
+      body: JSON.stringify({ weight: weight, state: state, carrier: "ups", origin: origin })
     });
     shipData = await shipRes.json();
   } catch (e) {}
@@ -145,26 +167,30 @@ async function calcProfit() {
   var shippingUSD = shipData && !shipData.error ? shipData.totalUSD : (weight * 60 / rate);
   var shippingCNY = shipData && !shipData.error ? shipData.totalCNY : (weight * 60);
   var costUSD = cost / rate;
-  var platFee = { amazon: 0.15, temu: 0, shopify: 0.03 }[platform] || 0;
+  var platFee = { amazon: 0.15, temu: 0, shopify: 0.03, etsy: 0.065, ebay: 0.13 }[platform] || 0;
   var adBudget = price * 0.2;
   var totalCost = costUSD + shippingUSD + (price * platFee) + adBudget;
   var profit = price - totalCost;
   var margin = price > 0 ? (profit / price * 100) : 0;
 
+  var originName = shipData && shipData.origin ? shipData.origin.name : "义乌";
+  var destInfo = shipData && shipData.destination ? shipData.destination.zoneName + " · " + shipData.destination.deliveryDays : state;
   var carrierHtml = "";
   if (shipData && shipData.allCarriers) {
-    carrierHtml = "<div style='margin-top:8px;font-size:0.8em;color:#94a3b8'>USPS: $" + shipData.allCarriers.usps + " | UPS: $" + shipData.allCarriers.ups + " | FedEx: $" + shipData.allCarriers.fedex + "</div>";
+    carrierHtml = "<div style='margin-top:8px;font-size:0.8em;color:#94a3b8;text-align:center'>三大快递: USPS $" + shipData.allCarriers.usps + " | UPS $" + shipData.allCarriers.ups + " | FedEx $" + shipData.allCarriers.fedex + "</div>";
   }
-  var zoneInfo = shipData && shipData.zone ? "<div style='font-size:0.8em;color:#64748b'>发货区域: " + shipData.zone.replace("US_", "").replace("_", " ") + " (" + state.toUpperCase() + ")</div>" : "";
-  var stateNames = { CA: "加利福尼亚", NY: "纽约", TX: "德克萨斯", FL: "佛罗里达", WA: "华盛顿", IL: "伊利诺伊", GA: "佐治亚", NJ: "新泽西" };
+  var breakdownHtml = "";
+  if (shipData && shipData.breakdown) {
+    breakdownHtml = "<div style='margin-top:8px;font-size:0.75em;color:#64748b;text-align:center'>国际运费 $" + shipData.breakdown.internationalFreight + " + 美国本地 $" + shipData.breakdown.usLastMile + " + 燃油 $" + shipData.breakdown.fuelSurcharge + "</div>";
+  }
 
-  el.innerHTML = "<h3>利润分析 — " + (stateNames[state] || state) + "</h3>" + zoneInfo +
+  el.innerHTML = "<h3>" + originName + " → " + destInfo + "</h3>" +
     "<div style=display:grid;grid-template-columns:1fr 1fr;gap:12px>" +
     "<div class=item><div class=label>进货成本</div><div class=value>¥" + cost.toFixed(0) + " ($" + costUSD.toFixed(2) + ")</div></div>" +
     "<div class=item><div class=label>国际物流 (" + weight + "kg)</div><div class=value>¥" + shippingCNY.toFixed(2) + " ($" + shippingUSD.toFixed(2) + ")</div></div>" +
     "<div class=item><div class=label>平台佣金 (" + (platFee * 100).toFixed(0) + "%)</div><div class=value>$" + (price * platFee).toFixed(2) + "</div></div>" +
     "<div class=item><div class=label>广告预算 (20%)</div><div class=value>$" + adBudget.toFixed(2) + "</div></div>" +
-    carrierHtml +
+    carrierHtml + breakdownHtml +
     "<div style='margin-top:16px;text-align:center;background:#0f172a;border-radius:8px;padding:16px'>" +
     "<div style=display:grid;grid-template-columns:1fr 1fr;gap:16px>" +
     "<div><div class=label>总成本</div><div style='font-size:1.5em;color:#f87171'>$" + totalCost.toFixed(2) + "</div></div>" +
