@@ -84,7 +84,13 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 
 <div class="card" onclick="openTool('profit')" style="position:relative">
   <div class="icon">算钱</div><h2>跨境利润计算</h2>
-  <p>进货+物流+佣金+广告=真实利润。别卖一堆才发现亏了。</p>
+  <p>进货+物流+佣金+广告=真实利润。9种运输方式实时比价。</p>
+</div>
+
+<div class="card" onclick="openTool('shipping-guide')" style="position:relative">
+  <div class="icon">手册</div><h2>物流完全手册</h2>
+  <p>海运拼柜/e邮宝/FBA...每种方式多少钱、适合谁、怎么选。</p>
+  <div class="badge">免费</div>
 </div>
 
 <div class="card" onclick="openTool('feedback')" style="position:relative">
@@ -229,6 +235,88 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div id="prEstimate" class="tip-box" style="display:none"></div>
 <button class="btn" onclick="calcProfit()">计算利润</button>
 <div id="prResult" class="result" style="display:none"></div>
+</div>
+
+<!-- ====== 物流使用手册 ====== -->
+<div id="shipping-guide" class="panel hidden">
+<div class="back-link" onclick="goHome()">首页</div>
+<h3>跨境电商物流完全手册</h3>
+<div class="tip-box"><b>零基础也能看懂。</b>从中国发货到美国，到底有多少种方式？每种多少钱？哪种适合你？看完这篇就全明白了。</div>
+
+<div class="tool-box">
+<h4>1. 海运整柜 FCL（最省钱）</h4>
+<p style=color:#cbd5e1;font-size:0.85em;line-height:1.8>
+<b>是什么：</b>你租一整条集装箱（20尺/40尺），从中国港口（上海/宁波/深圳）直接运到美国港口（洛杉矶/纽约/休斯顿）。<br>
+<b>多少钱：</b>$3.5/kg 起步（最低消费 $200/票）。一个40尺柜约装 25吨货，总运费约 $3000-5000。<br>
+<b>多长时间：</b>25-40 天（海上航行 15-20 天 + 清关 5-7 天 + 内陆运输 3-5 天）<br>
+<b>适合谁：</b>大卖家，单次出货 100kg 以上。做 Amazon FBA 的主流方式。<br>
+<b>优缺点：</b>单价最低（几毛钱一件），但起运量高，资金占用时间长。
+</p></div>
+
+<div class="tool-box">
+<h4>2. 海运拼柜 LCL（中小卖家首选）</h4>
+<p style=color:#cbd5e1;font-size:0.85em;line-height:1.8>
+<b>是什么：</b>和其他货主的货共享一个集装箱。货代帮你拼柜，到港后拆板分拣。<br>
+<b>多少钱：</b>$5/kg 起步（最低消费 $50/票）。0.3kg 的小件约 $1.5 运费。<br>
+<b>多长时间：</b>30-45 天（比整柜慢 5-10 天，因为要等拼满+拆柜分拣）<br>
+<b>适合谁：</b>中小卖家试销、季节性补货、非紧急库存。<br>
+<b>优缺点：</b>性价比最高，但时效最慢。适合计划性强的卖家。
+</p></div>
+
+<div class="tool-box">
+<h4>3. 空运集货（时效与成本的平衡点）</h4>
+<p style=color:#cbd5e1;font-size:0.85em;line-height:1.8>
+<b>是什么：</b>货代把你的货和其他人的货拼在同一架飞机上。到美国后拆板分拣+本地配送。<br>
+<b>多少钱：</b>$12/kg 起步（最低消费 $30/票）。<br>
+<b>多长时间：</b>7-12 天。<br>
+<b>适合谁：</b>季节性热销品、急需补货、高价值小件。<br>
+<b>优缺点：</b>价格适中，速度比海运快 3 倍。大多数卖家的日常补货方式。
+</p></div>
+
+<div class="tool-box">
+<h4>4. 空运直飞（最紧急时用）</h4>
+<p style=color:#cbd5e1;font-size:0.85em;line-height:1.8>
+<b>是什么：</b>你的货独占舱位，直飞美国。不拼货。<br>
+<b>多少钱：</b>$18/kg 起步（最低消费 $60/票）。<br>
+<b>多长时间：</b>5-8 天。<br>
+<b>适合谁：</b>断货危机、Prime Day/Lightning Deal 备货、高价值电子产品。<br>
+<b>优缺点：</b>最快但最贵。仅用于紧急情况。
+</p></div>
+
+<div class="tool-box">
+<h4>5. e邮宝/ePacket（小件直发利器）</h4>
+<p style=color:#cbd5e1;font-size:0.85em;line-height:1.8>
+<b>是什么：</b>中国邮政 → 美国 USPS。门到门，你贴好面单投到邮局就行。<br>
+<b>多少钱：</b>$5 起步 + $15/kg。0.3kg 的小件约 $9.5。<br>
+<b>多长时间：</b>10-20 天。<br>
+<b>适合谁：</b>独立站/Shopify/eBay 卖家，小件直发（2kg 以内）。<br>
+<b>优缺点：</b>操作最简单——自己打包、贴单、投邮局。小卖家最常用的方式。但重量超过 2kg 就不划算了。
+</p></div>
+
+<div class="tool-box">
+<h4>6-7. UPS/FedEx 国际快递（样品和急单）</h4>
+<p style=color:#cbd5e1;font-size:0.85em;line-height:1.8>
+<b>是什么：</b>门到门国际快递。UPS/FedEx 上门取件，直接送到美国客户手中。<br>
+<b>多少钱：</b>UPS $38 起步 + $7.2/kg。FedEx $42 起步 + $7.8/kg。<br>
+<b>多长时间：</b>5-8 天。<br>
+<b>适合谁：</b>发样品给客户、高单价商品（$100+/件）、紧急补货。<br>
+<b>优缺点：</b>最快最省心（门到门），但也最贵。不适合日常销售——运费可能比货值还高。
+</p></div>
+
+<div class="tool-box">
+<h4>8-9. Amazon FBA 海运/空运（一条龙服务）</h4>
+<p style=color:#cbd5e1;font-size:0.85em;line-height:1.8>
+<b>是什么：</b>货代从中国提货 → 海运/空运 → 美国清关 → 贴 FBA 标签 → 直接送到 Amazon 仓库。<br>
+<b>多少钱：</b>海运 $4/kg，空运 $14/kg。<br>
+<b>多长时间：</b>海运 25-35 天，空运 7-10 天（到仓时间，不是到客户手中）。<br>
+<b>适合谁：</b>Amazon FBA 卖家。<br>
+<b>优缺点：</b>最省心——货代帮你处理清关、贴标、入仓。Amazon 负责后续的仓储+配送+客服。但需要提前备货到 FBA 仓库。
+</p></div>
+
+<div class="tip-box"><b>成本计算公式：</b>物流费用 = 基础费 + (货物重量 × 每公斤费率)。<br>
+<b>例如：</b>义乌 → 纽约，0.3kg 蓝牙音箱，走 e 邮宝。<br>
+物流费 = $5（基础费）+ 0.3 × $15 = <b>$9.5（约 ¥68）</b><br>
+<b>省成本建议：</b>集中发货（一次发 100 件走海运拼柜，单件运费降至 $0.5 以下），比用 e 邮宝一件件发省 90%。</div>
 </div>
 
 <!-- ====== AI Listing 生成器 ====== -->

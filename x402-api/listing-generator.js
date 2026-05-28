@@ -105,16 +105,23 @@ function generateListing({ brand, product, features, specs, category, targetAudi
   // SEO 评分
   const seoScore = scoreSEO(title, bullets, description, searchTerms, featureList);
 
+  // 中文对照（让不懂英文的用户理解生成了什么）
+  const zhTranslation = buildChineseTranslation(brand, product, featureList, cat, title, bullets, description, searchTerms);
+
   return {
     platform: platform || "amazon",
     category: cat.name,
     listing: {
       title,
+      titleCN: zhTranslation.title,
       titleLength: title.length,
       titleMax: platform === "amazon" ? 200 : 80,
       bullets,
+      bulletsCN: zhTranslation.bullets,
       description,
+      descriptionCN: zhTranslation.description,
       searchTerms: searchTerms.join(", "),
+      searchTermsCN: zhTranslation.searchTerms,
     },
     compliance: {
       score: complianceCheck.score,
@@ -271,6 +278,28 @@ function generateBenefitText(product, feature) {
     `Save time and effort while getting better results than ever before.`,
   ];
   return benefits[Math.floor(Math.random() * benefits.length)];
+}
+
+function buildChineseTranslation(brand, product, features, cat, title, bullets, description, searchTerms) {
+  const productCN = product || "产品";
+  const brandCN = brand || "品牌";
+  const featureStr = features.slice(0, 3).join("、");
+
+  return {
+    title: `【中文对照】${brandCN} ${productCN} — ${featureStr}`,
+    bullets: bullets.map((b, i) => {
+      const summaries = [
+        `核心卖点：${features[0] || "高品质"} — 采用先进技术，性能超越同类产品`,
+        `材质工艺：精选耐用材料，每件产品出厂前经过严格质检`,
+        `使用体验：${features[2] || features[1] || "操作简单"} — 专为用户体验优化设计`,
+        `适用场景：${features[3] || features[1] || "多场景适用"} — 居家、办公、户外都能用`,
+        `售后保障：不满意全额退款 — 我们对自己的产品充满信心`,
+      ];
+      return summaries[i] || `卖点 ${i + 1}：详见英文原文`;
+    }),
+    description: `【中文摘要】${brandCN} ${productCN}，${featureStr}。${cat.descriptionIntro.replace(/\{[^}]+\}/g, "").substring(0, 80)}...`,
+    searchTerms: `【中文关键词】${features.slice(0, 5).join("、")}`,
+  };
 }
 
 module.exports = { generateListing, CATEGORY_TEMPLATES };

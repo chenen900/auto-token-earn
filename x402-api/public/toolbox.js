@@ -341,17 +341,29 @@ async function generateAIListing() {
       "<div style=text-align:center><div class=score style=font-size:1.5em;color:#60a5fa>SEO " + seo.score + "</div></div>" +
       "</div>" +
 
-      "<div class=item style=margin-bottom:10px><div class=label>标题 (" + l.titleLength + "/" + l.titleMax + ")</div>" +
-      "<div style=background:#0f172a;padding:10px;border-radius:6px;color:#e2e8f0;font-size:0.95em>" + l.title + "</div></div>" +
+      // 标题 — 可编辑 EN + CN
+      "<div class=item style=margin-bottom:10px><div class=label>标题 EN（可编辑 · " + l.titleLength + "字/" + l.titleMax + "上限）</div>" +
+      "<textarea id='lsTitleEN' style='min-height:50px'>" + l.title + "</textarea></div>" +
+      "<div class=item style=margin-bottom:10px><div class=label>标题 中文对照</div>" +
+      "<textarea id='lsTitleCN' style='min-height:40px;color:#94a3b8'>" + (l.titleCN || "") + "</textarea></div>" +
 
-      "<div class=item style=margin-bottom:10px><div class=label>五点描述</div>" +
-      l.bullets.map(function(b, i) { return "<div style=background:#0f172a;padding:8px 10px;border-radius:6px;color:#cbd5e1;font-size:0.85em;margin:4px 0'><b style=color:#60a5fa>" + (i+1) + ".</b> " + b + "</div>"; }).join("") + "</div>" +
+      // 五点 — 可编辑
+      "<div class=item style=margin-bottom:10px><div class=label>五点描述 EN（可编辑）</div>" +
+      l.bullets.map(function(b, i) { return "<textarea id='lsBullet" + i + "' style='min-height:40px;margin-bottom:4px'>" + b + "</textarea>"; }).join("") + "</div>" +
+      "<div class=item style=margin-bottom:10px><div class=label>五点描述 中文对照</div>" +
+      (l.bulletsCN || []).map(function(b, i) { return "<textarea id='lsBulletCN" + i + "' style='min-height:35px;color:#94a3b8;margin-bottom:4px'>" + b + "</textarea>"; }).join("") + "</div>" +
 
-      "<div class=item style=margin-bottom:10px><div class=label>产品描述</div>" +
-      "<div style=background:#0f172a;padding:10px;border-radius:6px;color:#94a3b8;font-size:0.85em;max-height:200px;overflow-y:auto'>" + l.description + "</div></div>" +
+      // 描述 — 可编辑
+      "<div class=item style=margin-bottom:10px><div class=label>产品描述 EN（可编辑）</div>" +
+      "<textarea id='lsDescEN' style='min-height:120px'>" + l.description + "</textarea></div>" +
+      "<div class=item style=margin-bottom:10px><div class=label>产品描述 中文对照</div>" +
+      "<textarea id='lsDescCN' style='min-height:80px;color:#94a3b8'>" + (l.descriptionCN || "") + "</textarea></div>" +
 
-      "<div class=item><div class=label>后台搜索词</div>" +
-      "<div style=background:#0f172a;padding:8px;border-radius:6px;color:#64748b;font-size:0.8em'>" + l.searchTerms + "</div></div>" +
+      // 搜索词 — 可编辑
+      "<div class=item style=margin-bottom:10px><div class=label>后台搜索词 EN（可编辑）</div>" +
+      "<textarea id='lsTermsEN' style='min-height:40px'>" + l.searchTerms + "</textarea></div>" +
+      "<div class=item><div class=label>搜索词 中文</div>" +
+      "<textarea id='lsTermsCN' style='min-height:35px;color:#94a3b8'>" + (l.searchTermsCN || "") + "</textarea></div>" +
 
       (issuesHtml ? "<div style=margin-top:10px>" + issuesHtml + "</div>" : "");
 
