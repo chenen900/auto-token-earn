@@ -55,6 +55,19 @@ async function doRegister() {
 function updateUserBar(u) {
   document.getElementById("userStatus").textContent = u.email + " — " + u.tierName;
   document.getElementById("loginBtn").textContent = "账户";
+
+  // 根据等级显示/隐藏专业工具
+  var unlocked = document.getElementById("premiumUnlocked");
+  var cards = document.getElementById("premiumCards");
+  if (unlocked && cards) {
+    if (u.tier === "premium" || u.tier === "pro") {
+      unlocked.style.display = "block";
+      cards.style.display = "none";
+    } else {
+      unlocked.style.display = "none";
+      cards.style.display = "";
+    }
+  }
 }
 
 // ========== API 辅助 ==========
@@ -131,12 +144,14 @@ async function updateShippingEstimate() {
   try {
     var shipRes = await fetch(API + "/api/v1/shipping-calculate", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ weight: weight, state: state, carrier: "ups", origin: origin })
+      body: JSON.stringify({ weight: weight, state: state, origin: origin })
     });
     var shipData = await shipRes.json();
     if (shipData && !shipData.error) {
       el.style.display = "block";
-      el.innerHTML = "<b>" + shipData.origin.name + " → " + shipData.destination.state + "</b> &nbsp;|&nbsp; 预计 " + shipData.destination.deliveryDays + " &nbsp;|&nbsp; 约 <b>$" + shipData.totalUSD + "</b> (¥" + shipData.totalCNY + ") &nbsp;|&nbsp; USPS $" + shipData.allCarriers.usps + " / UPS $" + shipData.allCarriers.ups + " / FedEx $" + shipData.allCarriers.fedex;
+      var rec = shipData.recommended || [];
+      var best = shipData.methods[rec[0]];
+      el.innerHTML = "<b>" + shipData.origin.name + " → " + shipData.destination.state + "</b> &nbsp;|&nbsp; 推荐: <b style=color:#34d399>" + (best ? best.name : "—") + "</b> $" + (best ? best.totalUSD : "—") + " &nbsp;|&nbsp; 最快: " + shipData.methods["express_ups"]?.deliveryDays;
     }
   } catch (e) {}
 }
@@ -148,54 +163,43 @@ async function calcProfit() {
   var state = document.getElementById("prState").value;
   var origin = document.getElementById("prOrigin").value;
   var platform = document.getElementById("prPlatform").value;
-  var rate = 7.2;
   var el = document.getElementById("prResult");
   el.style.display = "block";
-  el.innerHTML = "<div class=loading>查询 " + state + " 真实费率中...</div>";
-
+  el.innerHTML = "<div class=loading>查询 " + state + " 所有物流方案中...</div>";
   if (!state) { el.innerHTML = "<div style=color:#fbbf24>请先选择目的地州</div>"; return; }
 
   var shipData = null;
   try {
     var shipRes = await fetch(API + "/api/v1/shipping-calculate", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ weight: weight, state: state, carrier: "ups", origin: origin })
+      body: JSON.stringify({ weight: weight, state: state, origin: origin })
     });
     shipData = await shipRes.json();
   } catch (e) {}
 
-  var shippingUSD = shipData && !shipData.error ? shipData.totalUSD : (weight * 60 / rate);
-  var shippingCNY = shipData && !shipData.error ? shipData.totalCNY : (weight * 60);
-  var costUSD = cost / rate;
+  if (!shipData || shipData.error) { el.innerHTML = "<div style=color:#f87171>" + (shipData?.error || "查询失败") + "</div>"; return; }
+
   var platFee = { amazon: 0.15, temu: 0, shopify: 0.03, etsy: 0.065, ebay: 0.13 }[platform] || 0;
-  var adBudget = price * 0.2;
-  var totalCost = costUSD + shippingUSD + (price * platFee) + adBudget;
-  var profit = price - totalCost;
-  var margin = price > 0 ? (profit / price * 100) : 0;
+  var rate = 7.2;
+  var costUSD = cost / rate;
 
-  var originName = shipData && shipData.origin ? shipData.origin.name : "义乌";
-  var destInfo = shipData && shipData.destination ? shipData.destination.zoneName + " · " + shipData.destination.deliveryDays : state;
-  var carrierHtml = "";
-  if (shipData && shipData.allCarriers) {
-    carrierHtml = "<div style='margin-top:8px;font-size:0.8em;color:#94a3b8;text-align:center'>三大快递: USPS $" + shipData.allCarriers.usps + " | UPS $" + shipData.allCarriers.ups + " | FedEx $" + shipData.allCarriers.fedex + "</div>";
-  }
-  var breakdownHtml = "";
-  if (shipData && shipData.breakdown) {
-    breakdownHtml = "<div style='margin-top:8px;font-size:0.75em;color:#64748b;text-align:center'>国际运费 $" + shipData.breakdown.internationalFreight + " + 美国本地 $" + shipData.breakdown.usLastMile + " + 燃油 $" + shipData.breakdown.fuelSurcharge + "</div>";
+  // Build shipping methods table
+  var typeLabels = { sea: "海运", air: "空运", postal: "邮政", express: "快递", fba: "FBA" };
+  var methodsHtml = "";
+  for (var key in shipData.methods) {
+    var m = shipData.methods[key];
+    var profitPer = price - costUSD - m.totalUSD - (price * platFee) - (price * 0.2);
+    var marginPer = price > 0 ? (profitPer / price * 100) : 0;
+    var profitColor = profitPer > 0 ? "#34d399" : "#f87171";
+    var rec = (shipData.recommended || []).includes(key) ? " ⭐推荐" : "";
+    methodsHtml += "<tr style='font-size:0.85em'><td style=color:#94a3b8>" + (typeLabels[m.type] || m.type) + "</td><td>" + m.name + rec + "</td><td style=color:#60a5fa>" + m.deliveryDays + "</td><td>$" + m.totalUSD + "</td><td style=color:" + profitColor + ">$" + profitPer.toFixed(2) + " (" + marginPer.toFixed(0) + "%)</td></tr>";
   }
 
-  el.innerHTML = "<h3>" + originName + " → " + destInfo + "</h3>" +
-    "<div style=display:grid;grid-template-columns:1fr 1fr;gap:12px>" +
-    "<div class=item><div class=label>进货成本</div><div class=value>¥" + cost.toFixed(0) + " ($" + costUSD.toFixed(2) + ")</div></div>" +
-    "<div class=item><div class=label>国际物流 (" + weight + "kg)</div><div class=value>¥" + shippingCNY.toFixed(2) + " ($" + shippingUSD.toFixed(2) + ")</div></div>" +
-    "<div class=item><div class=label>平台佣金 (" + (platFee * 100).toFixed(0) + "%)</div><div class=value>$" + (price * platFee).toFixed(2) + "</div></div>" +
-    "<div class=item><div class=label>广告预算 (20%)</div><div class=value>$" + adBudget.toFixed(2) + "</div></div>" +
-    carrierHtml + breakdownHtml +
-    "<div style='margin-top:16px;text-align:center;background:#0f172a;border-radius:8px;padding:16px'>" +
-    "<div style=display:grid;grid-template-columns:1fr 1fr;gap:16px>" +
-    "<div><div class=label>总成本</div><div style='font-size:1.5em;color:#f87171'>$" + totalCost.toFixed(2) + "</div></div>" +
-    "<div><div class=label>利润</div><div style='font-size:2em;font-weight:700;color:" + (profit > 0 ? "#34d399" : "#f87171") + "'>$" + profit.toFixed(2) + " (" + margin.toFixed(1) + "%)</div></div>" +
-    "</div></div>";
+  el.innerHTML = "<h3>" + shipData.origin.name + " → " + shipData.destination.state + " (" + weight + "kg)</h3>" +
+    "<div style='overflow-x:auto'><table style='width:100%;border-collapse:collapse'><tr style=color:#64748b;font-size:0.8em><th>类型</th><th>方式</th><th>时效</th><th>运费</th><th>利润</th></tr>" +
+    methodsHtml + "</table></div>" +
+    "<div style='margin-top:12px;text-align:center;color:#94a3b8;font-size:0.8em'>售价 $" + price + " | 进货 $" + costUSD.toFixed(2) + " | 佣金 $" + (price * platFee).toFixed(2) + " | 广告 $" + (price * 0.2).toFixed(2) + "</div>" +
+    "<div class=tip-box style='margin-top:12px'><b>跨境卖家真实操作：</b>90%的货走海运拼柜(最便宜)到Amazon FBA仓库，美国本地配送由Amazon负责。快递只用于样品或紧急补货。</div>";
 }
 
 // ========== 批量审查 ==========

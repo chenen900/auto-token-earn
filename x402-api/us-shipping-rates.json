@@ -14,24 +14,87 @@
     "beijing": { "name": "北京", "enName": "Beijing", "region": "华北", "portFactor": 1.15, "note": "首都机场国际货运" },
     "chengdu": { "name": "成都", "enName": "Chengdu", "region": "西南", "portFactor": 1.20, "note": "中欧班列起点，空运增长快" }
   },
-  "carriers": {
-    "usps": {
-      "name": "USPS Priority Mail International",
-      "baseRate": 45,
-      "perKg": 8.5,
-      "deliveryDays": "6-10 business days"
+  "methods": {
+    "sea_fcl": {
+      "name": "海运整柜 FCL",
+      "type": "sea",
+      "perKg": 3.5,
+      "minCharge": 200,
+      "deliveryDays": "25-40天",
+      "description": "整柜集装箱海运，适合大批量（100kg+）。到港后需自行清关+本地配送。",
+      "suitable": "大卖家·批量备货·Amazon FBA"
     },
-    "ups": {
-      "name": "UPS Standard",
-      "baseRate": 38,
+    "sea_lcl": {
+      "name": "海运拼柜 LCL",
+      "type": "sea",
+      "perKg": 5.0,
+      "minCharge": 50,
+      "deliveryDays": "30-45天",
+      "description": "拼柜海运，和其他货主共用一个集装箱。适合中小批量（20-100kg）。",
+      "suitable": "中小卖家·试销·补货"
+    },
+    "air_consolidated": {
+      "name": "空运集货",
+      "type": "air",
+      "perKg": 12.0,
+      "minCharge": 30,
+      "deliveryDays": "7-12天",
+      "description": "和别人的货拼机，到美国后拆板分拣配送。性价比最高的空运方式。",
+      "suitable": "中小件·季节性产品·快速补货"
+    },
+    "air_direct": {
+      "name": "空运直飞",
+      "type": "air",
+      "perKg": 18.0,
+      "minCharge": 60,
+      "deliveryDays": "5-8天",
+      "description": "直飞航班，不拼货。适合急需补货的高价值产品。",
+      "suitable": "高价值·紧急补货·时效敏感"
+    },
+    "epacket": {
+      "name": "e邮宝/ePacket",
+      "type": "postal",
+      "perKg": 15.0,
+      "baseRate": 5,
+      "deliveryDays": "10-20天",
+      "description": "中国邮政→USPS。适合2kg以内小件，门到门。小卖家首选。",
+      "suitable": "小件直发·独立站·eBay"
+    },
+    "express_ups": {
+      "name": "UPS 国际快递",
+      "type": "express",
       "perKg": 7.2,
-      "deliveryDays": "5-8 business days"
+      "baseRate": 38,
+      "deliveryDays": "5-8天",
+      "description": "门到门快递。最贵但最快。仅适合样品或高单价商品。",
+      "suitable": "样品·高单价·急单"
     },
-    "fedex": {
-      "name": "FedEx International Economy",
-      "baseRate": 42,
+    "express_fedex": {
+      "name": "FedEx 国际快递",
+      "type": "express",
       "perKg": 7.8,
-      "deliveryDays": "5-7 business days"
+      "baseRate": 42,
+      "deliveryDays": "5-7天",
+      "description": "同UPS，适合对时效要求极高的场景。",
+      "suitable": "样品·文件·急单"
+    },
+    "fba_sea": {
+      "name": "Amazon FBA 海运",
+      "type": "fba",
+      "perKg": 4.0,
+      "minCharge": 150,
+      "deliveryDays": "25-35天到仓",
+      "description": "从中国直达Amazon FBA仓库，含清关+贴标+入仓。一条龙服务。",
+      "suitable": "Amazon FBA 卖家·批量入仓"
+    },
+    "fba_air": {
+      "name": "Amazon FBA 空运",
+      "type": "fba",
+      "perKg": 14.0,
+      "minCharge": 80,
+      "deliveryDays": "7-10天到仓",
+      "description": "空运直发FBA仓库，比海运快3倍。适合热销品补货。",
+      "suitable": "FBA 卖家·热销补货·Prime Day备货"
     }
   },
   "zones": {
