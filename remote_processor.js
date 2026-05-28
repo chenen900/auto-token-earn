@@ -8,6 +8,7 @@ const path = require("path");
 const API = "https://mediacraft-x402-api.onrender.com";
 const TOKEN = "mediacraft-bridge-2026";
 const PROCESSED = path.join(__dirname, "data", "remote_processed.json");
+const { getRelevantAtoms } = require("./knowledge_base");
 
 function load() { try { return JSON.parse(fs.readFileSync(PROCESSED,"utf8")); } catch(e) { return []; } }
 function save(id) { const l=load(); l.push(id); if(l.length>500) l.splice(0,l.length-500); fs.writeFileSync(PROCESSED,JSON.stringify(l)); }
@@ -33,15 +34,18 @@ async function askQuestion(id, question) {
   return await api("POST", "/cmd/ask", { id, question, token: TOKEN });
 }
 
-// 智能回复引擎
+// 智能回复引擎（查询知识库）
 async function processMessage(cmd) {
   const msg = (cmd.message || "").toLowerCase();
+  // 查询知识库获取相关经验
+  const kbTips = getRelevantAtoms("*", msg, 3);
+  const kbBonus = kbTips.length > 0 ? "\n[知识库] " + kbTips.map(t=>t.pattern).join(" | ") : "";
 
   // 查收益
   if (/收益|赚了|余额|earn/.test(msg)) {
     try {
       const out = execSync("node unified_dashboard.js", { cwd: __dirname, encoding: "utf8", timeout: 8000, windowsHide: true });
-      return "收益报告:\n" + out.replace(/[╔═╗║╚╝╠╣]/g, "-").substring(0, 400);
+      return "收益报告:\n" + out.replace(/[╔═╗║╚╝╠╣]/g, "-").substring(0, 400) + kbBonus;
     } catch(e) { return "查询失败: " + e.message; }
   }
 
