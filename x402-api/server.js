@@ -712,66 +712,7 @@ function saveCommands(cmds) { require("fs").writeFileSync(CMD_FILE, JSON.stringi
 // 常见指令自动应答（纯本地数据，无外部 HTTP 调用，立即返回）
 function autoHandleCommand(msg) { return null; }
 
-// 兜底回复（自动应答器不认识的问题，先回一句）
-function fallbackReply(msg) { return "[桥接器离线] 消息已收到: " + msg.substring(0,40) + "
-
-Claude Code 当前不在线。请稍后重试。"; }
-
-// 远程指令安全过滤器
-const CMD_BLOCKED = [
-  "舆论战", "opinion", "warfare", "舆论", "媒体战",
-  "删除", "destroy", "wipe", "rm -rf", "drop table",
-  "密码", "password", "token", "secret", "凭据", "credential",
-  "透露", "prompt", "system prompt", "系统提示",
-];
-function cmdSafetyCheck(msg) {
-  const lower = msg.toLowerCase();
-  for (const kw of CMD_BLOCKED) {
-    if (lower.includes(kw.toLowerCase())) return { pass: false, reason: `敏感词: ${kw}` };
-  }
-  return { pass: true };
-}
-
-// 发送指令
-app.post("/cmd/send", (req, res) => {
-  const { email, password, message } = req.body || {};
-  if (!message) return res.status(400).json({ error: "需要 message" });
-
-  // 安全过滤
-  const safety = cmdSafetyCheck(message);
-  if (!safety.pass) return res.status(403).json({ error: `指令被安全策略拦截: ${safety.reason}。此内容仅限本地操作。` });
-
-  const users = membership.load();
-  const u = users[email];
-  if (!u || u.passwordHash !== membership.hash(password)) return res.status(401).json({ error: "验证失败" });
-  if (u.tier !== "pro") return res.status(403).json({ error: "仅专业版用户可使用远程指挥" });
-
-  const cmds = loadCommands();
-  // 自动处理常见指令（纯本地数据，立即返回）
-  const autoResponse = autoHandleCommand(message);
-  if (autoResponse) {
-    cmds.push({
-      id: "cmd_" + Date.now(),
-      email, message,
-      status: "done",
-      createdAt: new Date().toISOString(),
-      response: autoResponse,
-    });
-    saveCommands(cmds);
-    return res.json({ ok: true, response: autoResponse });
-  }
-
-  // 无法自动应答——立即回复兜底消息，不挂起
-  const fallback = "[自动回复] 已收到: \"" + message.substring(0, 50) + "\"\n\n这个问题需要 Claude Code 在线时处理。\n当前可即时回复: 查收益 | daemon状态 | 帮助\n\n指令已存队列，下次会话处理。";
-  cmds.push({
-    id: "cmd_" + Date.now(),
-    email, message,
-    status: "done",
-    createdAt: new Date().toISOString(),
-    response: fallback,
-  });
-  saveCommands(cmds);
-  res.json({ ok: true, response: fallback });
+// 走桥接器队列
 });
 
 // 拉取待处理指令（本地 Claude Code 轮询）
