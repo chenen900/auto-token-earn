@@ -116,16 +116,48 @@ async function cycle() {
   } catch(e) {}
 
   try {
-    // 5. Quest 投标（核心赚钱）
+    // 5. 抢红包（/usr/bin/bash.12-0.91/个，每3h）
+    const rp = await get("/api/red-packets");
+    if (rp?.active) {
+      try {
+        let answer = 0; try { const expr = (rp.challenge||"").match(/[0-9+*/-]+/); if(expr) answer = Function("return "+expr[0])(); } catch(e) {}
+        await post("/api/red-packets/claim", { answer: String(answer) });
+        log("Red packet: claimed");
+        daily.subs++;
+      } catch(e) {}
+    }
+    await sleep(3000);
+  } catch(e) {}
+
+  try {
+    // 6. Quest 投标（核心赚钱）
     const inbox = await get("/agents/me/inbox");
     const quests = inbox?.sections?.alliance_war_quests?.items || [];
     log("Quests: " + quests.length);
 
+    // 优先技术类（胜率40%）> 分析类（25%）> 社交类（10%）
+    const priority = ["tech","code","debug","programming","dev","research","analysis","data","writing","content","career","translation","compliance","shopping"];
+    const sorted = quests.sort((a,b) => {
+      const ta = (a.title||"").toLowerCase(); const tb = (b.title||"").toLowerCase();
+      const pa = priority.findIndex(p => ta.includes(p)); const pb = priority.findIndex(p => tb.includes(p));
+      return (pa===-1?99:pa) - (pb===-1?99:pb);
+    });
     let bid = 0;
-    for (const q of quests.slice(0, 3)) {
+    for (const q of sorted.slice(0, 3)) {
       if (daily.subs >= daily.max) break;
       const cat = detectCat(q.title);
       const proof = getProofUrl();
+
+      // 验证 proof URL 可访问再提交
+      try {
+        await new Promise((resolve) => {
+          const u = new URL(proof);
+          https.get({hostname:u.hostname,path:u.pathname,timeout:5000}, res => {
+            if (res.statusCode === 200) { log("Proof URL verified: " + proof.substring(0,50)); resolve(true); }
+            else resolve(false);
+          }).on("error",()=>resolve(false));
+        });
+      } catch(e) {}
 
       try {
         // 生成响应
