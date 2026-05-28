@@ -640,6 +640,28 @@ app.post("/api/v1/competitor-analysis", requireTier("pro"), (req, res) => {
   });
 });
 
+// ============ 竞品 ASIN 分析器（专业版功能） ============
+const { analyzeCompetitor } = require("./competitor-analyzer");
+
+app.post("/api/v1/competitor-analyze", requireTier("pro"), (req, res) => {
+  const { asin, title, bullets, description, category, platform } = req.body || {};
+  if (!asin && !title) return res.status(400).json({ error: "需要 asin 或 title" });
+  try {
+    const analysis = analyzeCompetitor({
+      asin: asin || "manual",
+      title: title || "",
+      bullets: bullets || [],
+      description: description || "",
+      category: category || "general",
+      platform: platform || "amazon",
+    });
+    trackFromRequest(req, "/api/v1/competitor-analyze", "$0.05");
+    res.json(analysis);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ============ AI Listing 生成器（会员功能） ============
 const { generateListing } = require("./listing-generator");
 const CATEGORY_INSIGHTS = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "category-insights.json"), "utf-8"));

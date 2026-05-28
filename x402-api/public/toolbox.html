@@ -94,7 +94,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
   <div class="badge">免费</div>
 </div>
 
-<div class="card" onclick="openTool('feedback')" style="position:relative">
+<div class="card" onclick="openTool('competitor')"><div class="icon">竞品</div><h2>竞品ASIN分析</h2><p>输入竞品Listing，AI拆解关键词策略+弱点+差异化机会。</p><div class="badge">专业版</div></div><div class="card" onclick="openTool('feedback')" style="position:relative">
   <div class="icon">反馈</div><h2>建议 & Bug</h2>
   <p>功能建议？数据纠错？发现 Bug？直接告诉我们。</p>
   <div class="badge">需要你</div>
@@ -340,6 +340,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 <div id="lsResult" class="result" style="display:none"></div>
 </div>
 
+<!-- ====== 竞品分析 ====== --><div id="competitor" class="panel hidden"><div class="back-link" onclick="goHome()">首页</div><h3>竞品 ASIN 分析 <span class="help-icon" onclick="toggleHelp('competitor')">?</span></h3><div class="help-box" id="help-competitor"><b>怎么用：</b>粘贴竞品标题+五点+描述，选类目，点分析。<br><b>给你什么：</b>Listing质量评分、合规风险、关键词策略、差异化建议。<br><b>专业版功能（¥29.9/月）。</b></div><div class="tip-box">专业版功能。输入竞品Listing信息，AI分析关键词策略+弱点+差异化机会。</div><div><label>竞品 ASIN（可选）</label><input type="text" id="caAsin" placeholder="B0XXXXXXX"></div><div><label>竞品标题</label><input type="text" id="caTitle" placeholder="粘贴竞品的完整标题"></div><div><label>竞品五点描述（一行一个）</label><textarea id="caBullets" rows="5" placeholder="粘贴竞品五点描述的每一行"></textarea></div><div><label>竞品描述（可选）</label><textarea id="caDescription" rows="3" placeholder="粘贴竞品的产品描述"></textarea></div><div class="row"><div><label>类目</label><select id="caCategory"><option value="electronics">电子</option><option value="home">家居</option><option value="fashion">服装</option><option value="beauty">美妆</option><option value="sports">运动</option><option value="toys">玩具</option><option value="general">通用</option></select></div><div><label>平台</label><select id="caPlatform"><option value="amazon">Amazon</option><option value="shopify">Shopify</option></select></div></div><button class="btn btn-gold" onclick="runCompetitorAnalysis()">分析竞品</button><div id="caResult" class="result" style="display:none"></div></div>
 <!-- ====== 反馈 & Bug 通道 ====== -->
 <div id="feedback" class="panel hidden">
 <div class="back-link" onclick="goHome()">首页</div>

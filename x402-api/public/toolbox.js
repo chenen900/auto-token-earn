@@ -302,6 +302,57 @@ async function analyzeCompetitor() {
     "</div><div style=margin-top:12px><div class=label>建议策略</div>" + strategies + "</div>";
 }
 
+// ========== 竞品分析 ==========
+async function runCompetitorAnalysis() {
+  var asin = document.getElementById("caAsin").value.trim();
+  var title = document.getElementById("caTitle").value.trim();
+  if (!asin && !title) return alert("请填写ASIN或竞品标题");
+
+  var el = document.getElementById("caResult");
+  el.style.display = "block";
+  el.innerHTML = "<div class=loading>分析竞品中...</div>";
+
+  var bullets = document.getElementById("caBullets").value.trim().split("\n").filter(Boolean);
+  try {
+    var r = await fetch(API + "/api/v1/competitor-analyze", {
+      method: "POST", headers: { "Content-Type": "application/json", "x-user-email": userEmail },
+      body: JSON.stringify({
+        asin, title,
+        bullets: bullets,
+        description: document.getElementById("caDescription").value.trim(),
+        category: document.getElementById("caCategory").value,
+        platform: document.getElementById("caPlatform").value,
+      })
+    });
+    var data = await r.json();
+    if (data.error) { el.innerHTML = "<div style=color:#f87171>" + data.error + "</div>"; return; }
+
+    var q = data.listingQuality;
+    var cs = data.compliance;
+    var ks = data.keywordStrategy;
+    var diff = data.differentiation;
+
+    var qColor = q.overallScore >= 80 ? "#34d399" : q.overallScore >= 60 ? "#fbbf24" : "#f87171";
+
+    el.innerHTML = "<h3>竞品分析 — " + (data.asin || "手动输入") + "</h3>" +
+      "<div style=display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px>" +
+      "<div style=text-align:center;background:#0f172a;border-radius:8px;padding:12px><div style=font-size:2em;font-weight:700;color:" + qColor + ">" + q.overallScore + "</div><div style=color:#64748b>Listing质量</div></div>" +
+      "<div style=text-align:center;background:#0f172a;border-radius:8px;padding:12px><div style=font-size:2em;font-weight:700;color:" + (cs.score>=90?"#34d399":"#fbbf24") + ">" + cs.score + "</div><div style=color:#64748b>合规评分</div></div>" +
+      "<div style=text-align:center;background:#0f172a;border-radius:8px;padding:12px><div style=font-size:1.5em;font-weight:700;color:#fbbf24>" + data.listingQuality.verdict + "</div><div style=color:#64748b>综合评级</div></div>" +
+      "</div>" +
+
+      "<div class=item style=margin-bottom:10px><div class=label>竞品优势</div>" + q.strengths.map(function(s){return "<div style=color:#34d399;font-size:0.85em;margin:3px 0>+ " + s + "</div>";}).join("") + "</div>" +
+      "<div class=item style=margin-bottom:10px><div class=label>竞品弱点</div>" + q.weaknesses.map(function(w){return "<div style=color:#f87171;font-size:0.85em;margin:3px 0>- " + w + "</div>";}).join("") + "</div>" +
+
+      "<div class=item style=margin-bottom:10px><div class=label>关键词策略</div><div style=font-size:0.85em>已覆盖: " + ks.found.slice(0,8).map(function(k){return "<span style='display:inline-block;background:#1e293b;padding:2px 6px;border-radius:8px;margin:2px;color:#94a3b8'>" + k + "</span>";}).join(" ") + "</div>" +
+      "<div style='font-size:0.85em;margin-top:6px'>竞品未覆盖: " + diff.quickWins.map(function(k){return "<span style='display:inline-block;background:#1e3a5f;padding:2px 6px;border-radius:8px;margin:2px;color:#60a5fa'>" + k.keyword + "</span>";}).join(" ") + "</div></div>" +
+
+      "<div class=tip-box><b>行动建议：</b>" + (data.actionPlan || []).map(function(a,i){return "<div style=margin:4px 0>" + (i+1) + ". <b style=color:" + (a.priority==="高"?"#f87171":"#fbbf24") + ">" + a.priority + "</b> — " + a.action + "：" + a.detail + "</div>";}).join("") + "</div>";
+  } catch(e) {
+    el.innerHTML = "<div style=color:#f87171>分析失败：" + e.message + "</div>";
+  }
+}
+
 // ========== AI Listing 生成器 ==========
 async function generateAIListing() {
   var product = document.getElementById("lsProduct").value.trim();
