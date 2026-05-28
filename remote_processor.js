@@ -40,7 +40,7 @@ async function processMessage(cmd) {
   // 查收益
   if (/收益|赚了|余额|earn/.test(msg)) {
     try {
-      const out = execSync("node unified_dashboard.js", { cwd: __dirname, encoding: "utf8", timeout: 8000 });
+      const out = execSync("node unified_dashboard.js", { cwd: __dirname, encoding: "utf8", timeout: 8000, windowsHide: true });
       return "收益报告:\n" + out.replace(/[╔═╗║╚╝╠╣]/g, "-").substring(0, 400);
     } catch(e) { return "查询失败: " + e.message; }
   }
@@ -60,7 +60,7 @@ async function processMessage(cmd) {
   // DeFi
   if (/defi|模拟/.test(msg)) {
     try {
-      const out = execSync("node defi_simulator.js report", { cwd: __dirname, encoding: "utf8", timeout: 8000 });
+      const out = execSync("node defi_simulator.js report", { cwd: __dirname, encoding: "utf8", timeout: 8000, windowsHide: true });
       return "DeFi模拟:\n" + out.substring(0, 400);
     } catch(e) { return "DeFi查询失败"; }
   }
@@ -89,7 +89,7 @@ async function checkAndProcess() {
       if (cmd.userReply) {
         if (cmd.userReply.includes("确认") || cmd.userReply.toLowerCase().includes("yes")) {
           try {
-            execSync("git add -A && git commit -m '[remote] auto-deploy' && git push", { cwd: __dirname, encoding: "utf8", timeout: 15000 });
+            execSync("git add -A && git commit -m '[remote] auto-deploy' && git push", { cwd: __dirname, encoding: "utf8", timeout: 15000, windowsHide: true });
             await reply(cmd.id, "Done. Code pushed to GitHub.");
           } catch(e) {
             await reply(cmd.id, "Deploy failed: " + e.message.substring(0, 100));

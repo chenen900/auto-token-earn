@@ -13,8 +13,8 @@ function getIdleMs() {
   try {
     // PowerShell: 获取最后一次用户输入距今的毫秒数
     const result = execSync(
-      'powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SystemInformation]::IdleTime.TotalMilliseconds"',
-      { encoding: "utf8", timeout: 5000 }
+      'powershell -WindowStyle Hidden -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SystemInformation]::IdleTime.TotalMilliseconds"',
+      { encoding: "utf8", timeout: 5000, windowsHide: true }
     );
     return parseInt(result) || 0;
   } catch(e) {
