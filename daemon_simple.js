@@ -76,6 +76,11 @@ function getProofUrl() {
 // ====== 核心循环 ======
 async function cycle() {
   log("======== Cycle Start ========");
+  // 热缓存:注入最近5条相关经验
+  try {
+    const hotAtoms = getRelevantAtoms("A", "quest strategy", 5);
+    if (hotAtoms.length > 0) log("KB: " + hotAtoms.map(a=>a.pattern?.substring(0,40)).join(" | "));
+  } catch(e) {}
   loadMem();
   const daily = { subs: 0, max: 8 };
 
@@ -252,7 +257,12 @@ async function main() {
   while (true) {
     n++;
     try { await cycle(); } catch(e) { log("CRASH: " + e.message); }
-    const delay = 7*60*1000 + Math.floor(Math.random()*8*60*1000);
+    // 时段化调度:高峰(7-11,16-21 UTC)每7-10分钟,低谷每15-20分钟
+    const hour = new Date().getUTCHours();
+    const isPeak = (hour>=7&&hour<=11) || (hour>=16&&hour<=21);
+    const delay = isPeak
+      ? 7*60*1000 + Math.floor(Math.random()*4*60*1000)   // 高峰7-11min
+      : 15*60*1000 + Math.floor(Math.random()*5*60*1000); // 低谷15-20min
     log("Sleeping " + Math.floor(delay/60000) + "min...");
     await sleep(delay);
   }

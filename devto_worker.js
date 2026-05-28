@@ -8,6 +8,7 @@ const DEVTO_API = "https://dev.to/api";
 const path = require("path");
 const fs = require("fs");
 const LOG_DIR = path.join(__dirname, "logs");
+const { geoOptimize } = require("./geo_optimizer");
 const DATA_DIR = path.join(__dirname, "data");
 const PROOF_FILE = path.join(DATA_DIR, "published_articles.json");
 
@@ -54,12 +55,12 @@ async function publishDraft(article) {
   var result = await api("POST", "/articles", {
     article: {
       title: article.title,
-      body_markdown: article.body,
+      body_markdown: geoOptimize(article).geoBody,
       published: false,
       tags: (article.tags || []).slice(0, 4),
     },
   });
-  log("DRAFT: " + article.title + " — " + (result.url || "created"));
+  log("DRAFT+GEO: " + article.title + " — " + (result.url || "created"));
 
   // 保存发布记录 → 供 AgentHansa 用作 proof URL
   savePublishedArticle(result, article);
