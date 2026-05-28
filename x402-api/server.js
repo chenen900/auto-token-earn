@@ -710,46 +710,12 @@ function loadCommands() { try { return JSON.parse(require("fs").readFileSync(CMD
 function saveCommands(cmds) { require("fs").writeFileSync(CMD_FILE, JSON.stringify(cmds, null, 2)); }
 
 // 常见指令自动应答（纯本地数据，无外部 HTTP 调用，立即返回）
-function autoHandleCommand(msg) {
-  const m = msg.replace(/\s+/g, "");
-
-  if (m.includes("查收益") || m.includes("收益")) {
-    const d = daemonStatus;
-    return "MediaCraft AI 收益报告\n\n" +
-      "Daemon: " + d.cycles + " 循环 | 在线 " + Math.floor(process.uptime() / 60) + "分钟\n" +
-      "今日提交: " + d.submissionsToday + " | 今日收益: $" + d.earnedToday + "\n" +
-      "错误: " + d.errors + "\n\n" +
-      "钱包: Solana 8ZqmcW... | Base 0x4445...\n" +
-      "AgentHansa: $0.26 | 声誉22 | 排名13059/89863\n" +
-      "dealwork: $0 | x402 API: 0调用 | Dev.to: 0阅读";
-  }
-
-  if (m.includes("daemon") || m.includes("监控") || m.includes("循环")) {
-    const d = daemonStatus;
-    let hist = "";
-    if (d.cycleHistory && d.cycleHistory.length > 0) {
-      hist = "\n最近循环:\n" + d.cycleHistory.slice(-3).map(function(c) {
-        return c.time + " | " + c.duration + "s | " + c.submitted + "提交 | " + (c.error || "OK");
-      }).join("\n");
-    }
-    return "Daemon: " + d.cycles + "轮 | 在线" + Math.floor(process.uptime()/60) + "分钟 | " +
-      (d.running ? "运行中" : "空闲") + "\n" +
-      "今日: " + d.submissionsToday + "提交 | $" + d.earnedToday + "收益 | " + d.errors + "错误" +
-      (hist || "\n尚无循环记录") + "\n\n上次签到: " + (d.lastCheckin || "无");
-  }
-
-  if (m.includes("帮助") || m.includes("help") || m.includes("指令")) {
-    return "可用指令:\n- 查收益\n- daemon状态\n- 帮助\n\n更多功能开发中。";
-  }
-
-  // 兜底 —— 不含预设关键词但给个即时反馈
-  return null; // 走人工桥接
-}
+function autoHandleCommand(msg) { return null; }
 
 // 兜底回复（自动应答器不认识的问题，先回一句）
-function fallbackReply(msg) {
-  return "[自动回复] 已收到: \"" + msg.substring(0, 60) + "\"\n\n这个问题需要 Claude Code 本地处理。当前桥接器未在线。\n\n可即时回复的指令: 查收益, daemon状态, 帮助";
-}
+function fallbackReply(msg) { return "[桥接器离线] 消息已收到: " + msg.substring(0,40) + "
+
+Claude Code 当前不在线。请稍后重试。"; }
 
 // 远程指令安全过滤器
 const CMD_BLOCKED = [
