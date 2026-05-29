@@ -271,7 +271,7 @@ app.post("/api/v1/translate", async (req, res) => {
       model: "claude",
     });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("API ERROR:", e.message); res.status(500).json({ error: "服务器内部错误，请稍后重试" });
   }
 });
 
@@ -347,7 +347,7 @@ app.post("/api/v1/compliance-batch", async (req, res) => {
     trackFromRequest(req, "/api/v1/compliance-batch", "$0.05");
     res.json({ total: results.length, results });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("API ERROR:", e.message); res.status(500).json({ error: "服务器内部错误，请稍后重试" });
   }
 });
 
@@ -370,7 +370,7 @@ app.post("/api/v1/compliance-report", async (req, res) => {
     trackFromRequest(req, "/api/v1/compliance-report", "$0.05");
     res.json({ result, report });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("API ERROR:", e.message); res.status(500).json({ error: "服务器内部错误，请稍后重试" });
   }
 });
 
@@ -387,7 +387,7 @@ app.post("/api/v1/seo-optimize", async (req, res) => {
     trackFromRequest(req, "/api/v1/seo-optimize", "$0.01");
     res.json(result);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("API ERROR:", e.message); res.status(500).json({ error: "服务器内部错误，请稍后重试" });
   }
 });
 
@@ -861,7 +861,7 @@ app.post("/api/v1/competitor-analyze", requireTier("pro"), (req, res) => {
     trackFromRequest(req, "/api/v1/competitor-analyze", "$0.05");
     res.json(analysis);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("API ERROR:", e.message); res.status(500).json({ error: "服务器内部错误，请稍后重试" });
   }
 });
 
@@ -894,7 +894,7 @@ app.post("/api/v1/listing-generate", requireTier("premium", "pro"), (req, res) =
     trackFromRequest(req, "/api/v1/listing-generate", req.user.tier === "pro" ? "$0.03" : "$0.05");
     res.json(listing);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("API ERROR:", e.message); res.status(500).json({ error: "服务器内部错误，请稍后重试" });
   }
 });
 
