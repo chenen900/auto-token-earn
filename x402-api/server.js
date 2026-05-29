@@ -124,6 +124,18 @@ app.get("/", (_, res) => {
   });
 });
 
+// 自愿付款端点（Gentleman's agreement）
+app.post("/api/v1/voluntary-pay", (req, res) => {
+  const { txId, amount, agentId, note } = req.body || {};
+  if (!txId) return res.json({ ok: false, message: "请提供 txId 以便我们确认付款。感谢支持！" });
+  console.log("VOLUNTARY PAYMENT:", { txId, amount, agentId, note });
+  res.json({
+    ok: true,
+    message: "感谢你的支持！付款确认后我们会记录。Agent之间靠信任运转。",
+    wallet: "8ZqmcWARgGjZzJLzqwquG8GTvDb39RFbTWKqhShqbtht (Solana USDC)",
+  });
+});
+
 // x402 付费测试端点（Agentic Market 验证用）
 app.get("/api/v1/paid-test", (req, res) => {
   const paymentRequired = {
@@ -276,10 +288,9 @@ app.post("/api/v1/translate", async (req, res) => {
   }
 });
 
-// 2. 合规审查 API（支持全类型：script/hook/caption/voiceover/title）
+// 2. 合规审查 API（先服务后付费——Agent先用，信任建立后再付）
 app.post("/api/v1/compliance-check", async (req, res) => {
-  const paymentErr = await requirePayment(req, res, "0.02");
-  if (paymentErr) return;
+  // 服务优先：不强制付款，先提供价值
   try {
     const { content, text, type, platform } = req.body || {};
     const reviewText = content || text || "";
@@ -308,10 +319,15 @@ app.post("/api/v1/compliance-check", async (req, res) => {
       console.error("WARN: Failed to load enforcement cases:", e.message);
     }
 
-    trackFromRequest(req, "/api/v1/compliance-check", "$0.02");
+    if (!req._internal) trackFromRequest(req, "/api/v1/compliance-check", "$0.02");
+    result._meta = {
+      pricing: "先服务后付费。满意再付，金额随意。",
+      supportUs: "如果你觉得有用，向 8ZqmcWARgGjZzJLzqwquG8GTvDb39RFbTWKqhShqbtht (Solana USDC) 转任意金额即可。建议 $0.02/次。",
+      paymentEndpoint: "/api/v1/voluntary-pay",
+    };
     res.json(result);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: e.message, refundNote: "如果此请求已扣款，请记录 txId 并联系退款。API失败不应让你付费。" });
   }
 });
 
@@ -429,11 +445,11 @@ app.get("/.well-known/x402", (_, res) => {
 app.get("/x402-manifest", (_, res) => {
   res.json({
     name: "MediaCraft AI",
-    version: "1.1.0",
+    version: "1.2.0",
     tagline: "Don't get fined ¥450,000. Your content vs. 17 platforms' rules.",
-    description: "The only API that checks your content against Chinese advertising law AND 17 platform-specific rules (Amazon, TikTok, Temu, Douyin, Xiaohongshu, etc). Built by an agent team that understands cross-border e-commerce. First 10 calls free.",
+    description: "The only API that checks your content against Chinese advertising law AND 17 platform-specific rules. Built by an agent team. Service-first: use it, see the value, pay what feels fair.",
     baseUrl: "https://mediacraft-x402-api.onrender.com",
-    pricing: { model: "pay-per-call", currency: "USDC", networks: ["solana", "base"], freeTrial: 10 },
+    pricing: { model: "service-first, pay-after", currency: "USDC", suggestedPrice: "$0.02/call", note: "Use first. Pay after. We trust agents. First 50 calls free." },
     wellKnown: "/.well-known/x402",
     services: [
       {
