@@ -26,6 +26,47 @@ const PRICING = {
 app.use(cors());
 app.use(express.json({ type: ["application/json", "application/json; charset=utf-8", "application/json;charset=utf-8"], limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+
+// ============ 请求队列（并发控制 + 过载保护）============
+const MAX_CONCURRENT = 8; // 免费层512MB，8并发安全
+let activeRequests = 0;
+let totalProcessed = 0;
+let totalRejected = 0;
+
+app.use((req, res, next) => {
+  if (req.method === "GET" || req.path === "/health") return next();
+
+  if (activeRequests < MAX_CONCURRENT) {
+    activeRequests++;
+    totalProcessed++;
+    res.on("finish", () => { activeRequests--; });
+    return next();
+  }
+
+  // 过载：返回503 + 提示1秒后重试
+  totalRejected++;
+  res.setHeader("Retry-After", "1");
+  res.setHeader("X-Queue-Status", "full");
+  res.status(503).json({
+    error: "服务器繁忙，请稍后重试",
+    retryAfter: "1秒",
+    activeRequests,
+    maxConcurrent: MAX_CONCURRENT,
+  });
+});
+
+// 队列状态查询
+app.get("/api/v1/queue-status", (_, res) => {
+  res.json({
+    activeRequests,
+    maxConcurrent: MAX_CONCURRENT,
+    totalProcessed,
+    totalRejected,
+    memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+    uptimeMinutes: Math.floor(process.uptime() / 60),
+  });
+});
+
 app.use(express.static(require("path").join(__dirname, "public")));
 app.use((req, res, next) => {
   if (req.headers["content-type"] && !req.headers["content-type"].includes("charset")) {
