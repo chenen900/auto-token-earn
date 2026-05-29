@@ -39,7 +39,7 @@ app.get("/command", (_, res) => res.sendFile(require("path").join(__dirname, "pu
 app.use("/.well-known", express.static(require("path").join(__dirname, ".well-known")));
 
 // API 黄页查询（免费，无需认证）
-var apiDir = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "..", "api-directory", "directory.json"), "utf-8"));
+var apiDir = (()=>{ try { return JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "..", "api-directory", "directory.json"), "utf-8")); } catch(e) { console.error("WARN: api-directory not loaded:",e.message); return { apis:[] }; } })();
 app.get("/api/v1/directory/search", function (req, res) {
   var q = (req.query.q || "").toLowerCase();
   var cat = req.query.category;
@@ -247,11 +247,16 @@ app.post("/api/v1/compliance-check", async (req, res) => {
       platform: platform || "douyin",
     });
 
-    // 附加真实处罚案例（护城河）
-    const RULES_DB = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "platform-rules.json"), "utf-8"));
-    result.enforcementCases = (RULES_DB.enforcementCases || []).filter(c => {
-      return c.platform === (platform || "douyin") || !platform;
-    }).slice(0, 3);
+    // 附加真实处罚案例（防护加载，失败不阻塞API）
+    try {
+      const RULES_DB = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "platform-rules.json"), "utf-8"));
+      result.enforcementCases = (RULES_DB.enforcementCases || []).filter(c => {
+        return c.platform === (platform || "douyin") || !platform;
+      }).slice(0, 3);
+    } catch(e) {
+      result.enforcementCases = [];
+      console.error("WARN: Failed to load enforcement cases:", e.message);
+    }
 
     trackFromRequest(req, "/api/v1/compliance-check", "$0.02");
     res.json(result);
@@ -513,7 +518,7 @@ app.post("/api/v1/auth/login", (req, res) => {
 });
 
 // ============ 美国快递费率 ============
-const SHIPPING = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "us-shipping-rates.json"), "utf-8"));
+const SHIPPING = (()=>{ try { return JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "us-shipping-rates.json"), "utf-8")); } catch(e) { console.error("WARN: shipping data not loaded:",e.message); return { stateMap:{}, methods:{}, origins:{} }; } })();
 
 app.get("/api/v1/shipping-rates", (_, res) => res.json(SHIPPING));
 
@@ -708,7 +713,7 @@ app.post("/api/v1/competitor-analyze", requireTier("pro"), (req, res) => {
 
 // ============ AI Listing 生成器（会员功能） ============
 const { generateListing } = require("./listing-generator");
-const CATEGORY_INSIGHTS = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "category-insights.json"), "utf-8"));
+const CATEGORY_INSIGHTS = (()=>{ try { return JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "category-insights.json"), "utf-8")); } catch(e) { console.error("WARN: category insights not loaded:",e.message); return { general:{ adCopyPatterns:[], topKeywords:[], tips:"" } }; } })();
 
 app.post("/api/v1/listing-generate", requireTier("premium", "pro"), (req, res) => {
   const { brand, product, features, specs, category, targetAudience, platform } = req.body || {};

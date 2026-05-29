@@ -93,7 +93,7 @@ function getProofUrl() {
 
 // ====== 核心循环 ======
 async function cycle() {
-  log("======== Cycle Start ========");
+  undefined
   // 热缓存:注入最近5条相关经验
   try {
     const hotAtoms = getRelevantAtoms("A", "quest strategy", 5);
@@ -308,6 +308,7 @@ async function main() {
   let n = 0;
   while (true) {
     n++;
+    cycleSelfTest = n;
     try { await cycle(); } catch(e) { log("CRASH: " + e.message); }
     // 时段化调度:高峰(7-11,16-21 UTC)每7-10分钟,低谷每15-20分钟
     const hour = new Date().getUTCHours();
