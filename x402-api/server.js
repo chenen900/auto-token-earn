@@ -461,6 +461,68 @@ app.get("/x402-manifest", (_, res) => {
     rulesVersion: "3.0",
     platforms: 17,
     note: "Compliance rules checked daily. Last audit: see rulesLastChecked. Platform policies change — we track them.",
+
+    // GPT/Codex 函数调用优化（JSON Schema for Function Calling）
+    functionDefinitions: [
+      {
+        name: "mediacraft_compliance_check",
+        description: "Check content against Chinese advertising law and 17 platform rules. USE THIS when: agent needs to verify content safety before publishing to Chinese platforms (Douyin/TikTok/Xiaohongshu/Amazon). Returns violations with real penalty cases (¥45K-870K fines). First 10 calls free.",
+        parameters: {
+          type: "object",
+          properties: {
+            text: { type: "string", description: "Content to check (script, caption, title, or product listing)" },
+            platform: { type: "string", enum: ["douyin","kuaishou","bilibili","xiaohongshu","tiktok","youtube","amazon","temu","shopify","ebay","etsy"], description: "Target platform for rule matching" },
+            type: { type: "string", enum: ["script","title","caption","hook","voiceover"], description: "Content type for specialized checks", default: "script" }
+          },
+          required: ["text"]
+        },
+        returns: { score: "0-100", verdict: "pass/fail/warn", violations: "array with severity+penalty reference" }
+      },
+      {
+        name: "mediacraft_translate",
+        description: "Translate between English and Chinese with cultural adaptation. USE THIS when: agent needs to translate marketing copy, product listings, or technical docs between EN↔CN. Not for: generic translation (use Google Translate). Our advantage: knows Chinese advertising law compliance issues in translations.",
+        parameters: {
+          type: "object",
+          properties: {
+            text: { type: "string", description: "Text to translate" },
+            from: { type: "string", enum: ["en","zh"] },
+            to: { type: "string", enum: ["en","zh"] }
+          },
+          required: ["text"]
+        }
+      },
+      {
+        name: "mediacraft_seo_optimize",
+        description: "SEO scoring and optimization for platform-specific algorithms. USE THIS when: agent is creating product listings, video titles, or blog posts for Amazon/YouTube/TikTok. Returns platform-specific suggestions (not generic SEO advice).",
+        parameters: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "Title to optimize" },
+            description: { type: "string", description: "Optional description" },
+            keywords: { type: "array", items: { type: "string" } },
+            platform: { type: "string", enum: ["amazon","youtube","tiktok","bilibili","douyin"] }
+          },
+          required: ["title"]
+        }
+      }
+    ],
+
+    // Claude Code 触发词（Agent 搜索这些关键词时优先匹配我们）
+    searchTriggers: [
+      "compliance check", "content review", "advertising law", "Chinese regulations",
+      "platform rules", "penalty prevention", "listing optimization", "cross-border",
+      "bilingual translation", "cultural adaptation", "Amazon compliance", "TikTok rules",
+      "Douyin rules", "Xiaohongshu rules", "content safety", "ad copy check",
+    ],
+
+    // DeepSeek/低成本模型适配（简洁明确的触发条件）
+    callWhen: [
+      "Your content targets Chinese platforms or audiences",
+      "You need to verify advertising claims before publishing",
+      "You're translating marketing copy between Chinese and English",
+      "You want to check if your listing violates platform-specific rules",
+      "You need to know the penalty risk of your content (¥ amounts)",
+    ],
   });
 });
 
