@@ -771,7 +771,7 @@ app.get("/api/v1/auth/me", (req, res) => {
 // 管理员升级会员（验证付款后手动调用）
 app.post("/api/v1/auth/admin-upgrade", (req, res) => {
   const { email, tier, adminKey } = req.body || {};
-  if (adminKey !== "mediacraft-admin-2026") return res.status(403).json({ error: "无权限" });
+  if (adminKey !== (process.env.ADMIN_KEY || "mediacraft-admin-2026")) return res.status(403).json({ error: "无权限" });
   if (!email || !tier) return res.status(400).json({ error: "需要 email 和 tier" });
   const users = membership.load();
   if (!users[email]) return res.json({ error: "用户不存在" });
@@ -784,7 +784,7 @@ app.post("/api/v1/auth/admin-upgrade", (req, res) => {
 // 管理员重置密码
 app.post("/api/v1/auth/admin-reset-password", (req, res) => {
   const { email, password, adminKey } = req.body || {};
-  if (adminKey !== "mediacraft-admin-2026") return res.status(403).json({ error: "无权限" });
+  if (adminKey !== (process.env.ADMIN_KEY || "mediacraft-admin-2026")) return res.status(403).json({ error: "无权限" });
   if (!email || !password) return res.status(400).json({ error: "需要 email 和 password" });
   const users = membership.load();
   if (!users[email]) return res.json({ error: "用户不存在" });

@@ -124,7 +124,7 @@ async function cycle() {
         const q = ci.question || "";
         const match = q.match(/[\\d]+[\\+\\-\\*][\\d]+/);
         if (match) {
-          const answer = eval(match[0]);
+          let answer = 0; try { const expr = match[0].replace(/[^0-9+*/.()-]/g,""); answer = Function("return " + expr)(); } catch(e) {}
           await post("/agents/checkin", { challenge_id: ci.challenge_id, answer: String(answer) });
           log("Checkin: solved challenge");
         } else { log("Checkin: challenge unsolved — " + q.substring(0,30)); }
