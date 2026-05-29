@@ -33,6 +33,15 @@ let activeRequests = 0;
 let totalProcessed = 0;
 let totalRejected = 0;
 
+// 自检流量不计入统计
+app.use((req, res, next) => {
+  const ua = req.headers["user-agent"] || "";
+  if (ua.includes("MediaCraft-HealthCheck") || ua.includes("MediaCraft-StressTest")) {
+    req._internal = true; // 标记为内部请求
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   if (req.method === "GET" || req.path === "/health") return next();
 

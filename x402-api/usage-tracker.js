@@ -51,6 +51,7 @@ function getStats() {
 
 // 只在 body 里提供了 x-agent-id 时才记录（非隐私信息）
 function trackFromRequest(req, endpoint, price) {
+  if (req._internal) return; // 跳过自检流量
   const agentId =
     req.headers["x-agent-id"] ||
     req.headers["x-forwarded-for"] ||
