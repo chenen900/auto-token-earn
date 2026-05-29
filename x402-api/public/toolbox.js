@@ -56,26 +56,7 @@ async function doRegister() {
   } else { el.textContent = r.error || "注册失败"; }
 }
 
-function updateUserBar(u) {
-  document.getElementById("userStatus").textContent = u.email + " — " + u.tierName;
-  document.getElementById("loginBtn").textContent = "账户";
-
-  var unlocked = document.getElementById("premiumUnlocked");
-  var cards = document.getElementById("premiumCards");
-  var locked = document.getElementById("premiumLocked");
-
-  if (u.tier === "premium" || u.tier === "pro") {
-    // 付费用户：显示工具，隐藏价格卡和"请登录"提示
-    if (unlocked) unlocked.style.display = "block";
-    if (cards) cards.style.display = "none";
-    if (locked) locked.style.display = "none";
-  } else {
-    // 免费用户：显示价格卡，如果有登录则隐藏"请登录"提示
-    if (unlocked) unlocked.style.display = "none";
-    if (cards) cards.style.display = "";
-    if (locked && userEmail) locked.style.display = "none";
-  }
-}
+function updateUserBar(u){ document.getElementById("userStatus").textContent=u.email; document.getElementById("loginBtn").textContent="账户"; }
 
 // ========== API 辅助 ==========
 async function apiPost(path, body) {
@@ -465,51 +446,3 @@ async function generateAIListing() {
   }
 }
 
-// ========== 支付流程 ==========
-var paymentTier = "premium";
-function showPayment(tier) {
-  paymentTier = tier;
-  document.getElementById("paymentModal").style.display = "flex";
-  document.getElementById("paymentAmount").textContent = tier === "pro" ? "29.9" : "9.9";
-  document.getElementById("paymentTierName").textContent = tier === "pro" ? "专业版" : "会员";
-  document.getElementById("paymentEmail").value = userEmail || "";
-}
-function hidePayment() { document.getElementById("paymentModal").style.display = "none"; }
-
-async function confirmPayment() {
-  var email = document.getElementById("paymentEmail").value.trim();
-  if (!email) { document.getElementById("paymentMsg").textContent = "请填写注册邮箱"; return; }
-  var el = document.getElementById("paymentMsg");
-  el.textContent = "提交中...";
-  try {
-    var r = await fetch(API + "/api/v1/feedback", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "payment", message: "用户申请开通 " + (paymentTier === "pro" ? "专业版(29.9)" : "会员(9.9)"), email: email, page: "payment" })
-    });
-    var data = await r.json();
-    if (data.ok) {
-      el.innerHTML = "<span style=color:#34d399>申请已提交！我们将在24小时内核实并开通。如有问题会邮件联系你。</span>";
-    }
-  } catch (e) {
-    el.textContent = "网络错误，请重试";
-  }
-}
-
-// ========== 反馈 / Bug 提交 ==========
-async function submitFeedback() {
-  var type = document.getElementById("fbType").value;
-  var msg = document.getElementById("fbMessage").value.trim();
-  var email = document.getElementById("fbEmail").value.trim() || userEmail;
-  if (!msg) return alert("请填写反馈内容");
-  var el = document.getElementById("fbResult");
-  el.style.display = "block";
-  el.innerHTML = "<div class=loading>提交中...</div>";
-  try {
-    var r = await apiPost("/api/v1/feedback", { type: type, message: msg, email: email, page: window.location.href });
-    el.innerHTML = r.ok ? "<div style=color:#34d399;text-align:center;padding:10px>✅ 感谢反馈！我们会尽快处理。</div>"
-      : "<div style=color:#f87171>" + (r.error || "提交失败") + "</div>";
-    if (r.ok) { document.getElementById("fbMessage").value = ""; }
-  } catch (e) {
-    el.innerHTML = "<div style=color:#f87171>网络错误，请稍后重试</div>";
-  }
-}

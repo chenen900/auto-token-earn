@@ -750,8 +750,7 @@ function requireTier(...tiers) {
         error: "需要升级会员",
         currentTier: u.tier,
         requiredTiers: tiers,
-        upgradeUrl: "/toolbox#premium",
-      });
+        message: "免费使用" });
     }
     req.user = u;
     next();
@@ -796,7 +795,7 @@ app.post("/api/v1/auth/admin-reset-password", (req, res) => {
 // ============ 会员专属功能（加权限检查） ============
 
 // 批量审查（会员+专业版）
-app.post("/api/v1/compliance-batch", requireTier("premium", "pro"), async (req, res) => {
+app.post("/api/v1/compliance-batch", (req, res) => {
   const { items } = req.body || {};
   if (!items || !Array.isArray(items)) return res.status(400).json({ error: "需要 items 数组" });
   const limited = items.slice(0, req.user.tier === "pro" ? 1000 : 100);
@@ -869,7 +868,7 @@ app.post("/api/v1/competitor-analyze", requireTier("pro"), (req, res) => {
 const { generateListing } = require("./listing-generator");
 const CATEGORY_INSIGHTS = (()=>{ try { return JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "category-insights.json"), "utf-8")); } catch(e) { console.error("WARN: category insights not loaded:",e.message); return { general:{ adCopyPatterns:[], topKeywords:[], tips:"" } }; } })();
 
-app.post("/api/v1/listing-generate", requireTier("premium", "pro"), (req, res) => {
+app.post("/api/v1/listing-generate", (req, res) => {
   const { brand, product, features, specs, category, targetAudience, platform } = req.body || {};
   if (!product) return res.status(400).json({ error: "需要 product（产品名称）" });
   try {
