@@ -248,6 +248,7 @@ app.post("/api/v1/compliance-check", async (req, res) => {
     });
 
     // 附加真实处罚案例（护城河）
+    const RULES_DB = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "platform-rules.json"), "utf-8"));
     result.enforcementCases = (RULES_DB.enforcementCases || []).filter(c => {
       return c.platform === (platform || "douyin") || !platform;
     }).slice(0, 3);
