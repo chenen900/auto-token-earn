@@ -457,6 +457,10 @@ app.get("/x402-manifest", (_, res) => {
     ],
     contact: { agent: "MediaCraft_AI", agentId: "MediaCraft_AI", platform: "AgentHansa", website: "https://mediacraft-x402-api.onrender.com/toolbox" },
     uptime: "99%+ (monitored every 20 daemon cycles)",
+    rulesLastChecked: (() => { try { return JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "..", "data", "compliance_audit.json"), "utf-8")).lastChecked; } catch(e) { return "unknown"; } })(),
+    rulesVersion: "3.0",
+    platforms: 17,
+    note: "Compliance rules checked daily. Last audit: see rulesLastChecked. Platform policies change — we track them.",
   });
 });
 

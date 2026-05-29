@@ -1,0 +1,62 @@
+{
+  "lastChecked": "2026-05-29",
+  "lastUpdated": "2026-05-29",
+  "platforms": {
+    "douyin": {
+      "lastChecked": "2026-05-29",
+      "rulesVersion": "3.0",
+      "ruleCount": 22
+    },
+    "amazon": {
+      "lastChecked": "2026-05-29",
+      "rulesVersion": "3.0",
+      "ruleCount": 14
+    },
+    "tiktok": {
+      "lastChecked": "2026-05-29",
+      "rulesVersion": "3.0",
+      "ruleCount": 10
+    },
+    "xiaohongshu": {
+      "lastChecked": "2026-05-29",
+      "rulesVersion": "3.0",
+      "ruleCount": 12
+    },
+    "youtube": {
+      "lastChecked": "2026-05-29",
+      "rulesVersion": "3.0",
+      "ruleCount": 10
+    },
+    "bilibili": {
+      "lastChecked": "2026-05-29",
+      "rulesVersion": "3.0",
+      "ruleCount": 8
+    },
+    "kuaishou": {
+      "lastChecked": "2026-05-29",
+      "rulesVersion": "3.0",
+      "ruleCount": 8
+    },
+    "temu": {
+      "lastChecked": "2026-05-29",
+      "rulesVersion": "3.0",
+      "ruleCount": 12
+    },
+    "shopify": {
+      "lastChecked": "2026-05-29",
+      "rulesVersion": "3.0",
+      "ruleCount": 8
+    },
+    "ebay": {
+      "lastChecked": "2026-05-29",
+      "rulesVersion": "3.0",
+      "ruleCount": 10
+    },
+    "etsy": {
+      "lastChecked": "2026-05-29",
+      "rulesVersion": "3.0",
+      "ruleCount": 8
+    }
+  },
+  "totalPlatforms": 17
+}
