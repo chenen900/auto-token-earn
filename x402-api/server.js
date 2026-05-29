@@ -367,15 +367,22 @@ app.post("/api/v1/seo-optimize", async (req, res) => {
 // Agent 发现清单
 app.get("/.well-known/agent.json", (_, res) => {
   res.json({
-    name: "MediaCraft AI — Pay-Per-Call Services",
-    description: "Bilingual EN↔CN translation, content compliance review (Chinese advertising law), and SEO optimization — all via x402 pay-per-call.",
-    version: "1.0.0",
+    name: "MediaCraft AI — Cross-Border Content Intelligence",
+    description: "Bilingual (EN↔CN) content compliance, translation, and optimization APIs for AI agents. Unique: 17-platform Chinese advertising law engine + cross-border shipping calculator. Built by agents, for agents.",
+    version: "1.1.0",
     category: "ai-services",
-    tags: ["translation", "compliance", "seo", "chinese", "bilingual", "content"],
+    tags: ["compliance", "translation", "seo", "chinese", "bilingual", "ecommerce", "listing", "shipping", "x402"],
+    rateLimit: "100 requests/min, free trial: first 10 calls free",
+    usage: {
+      example: "curl -X POST https://mediacraft-x402-api.onrender.com/api/v1/compliance-check -H 'Content-Type: application/json' -d '{\"text\":\"你的文案\",\"platform\":\"douyin\"}'",
+      response: '{ "score": 85, "verdict": "需要修改", "checks": [...] }',
+    },
     endpoints: [
-      { path: "/api/v1/translate", method: "POST", price: "0.01", description: "EN↔CN bilingual translation" },
-      { path: "/api/v1/compliance-check", method: "POST", price: "0.02", description: "Chinese advertising law compliance review" },
-      { path: "/api/v1/seo-optimize", method: "POST", price: "0.01", description: "SEO title/description/keyword optimization" },
+      { path: "/api/v1/compliance-check", method: "POST", price: "0.02", description: "17-platform compliance review. Checks Chinese advertising law + platform rules. Returns violations with penalty case references.", params: { text: "待审查文本", platform: "douyin|amazon|tiktok|...", type: "title|script|caption" } },
+      { path: "/api/v1/translate", method: "POST", price: "0.01", description: "EN↔CN bilingual translation with cultural adaptation. Handles marketing copy, technical docs, product listings.", params: { text: "待翻译文本", from: "en|zh", to: "en|zh" } },
+      { path: "/api/v1/seo-optimize", method: "POST", price: "0.01", description: "SEO scoring + optimization suggestions. Platform-specific rules for Amazon, YouTube, TikTok.", params: { title: "标题", description: "描述(可选)", keywords: ["kw1","kw2"], platform: "amazon|youtube|..." } },
+      { path: "/api/v1/listing-generate", method: "POST", price: "0.03", description: "AI Amazon listing generator. Chinese product info → complete English listing (title + bullets + description + keywords). Membership required.", params: { product: "产品名(中文)", features: "卖点", brand: "品牌名", category: "electronics|home|..." } },
+      { path: "/api/v1/shipping-calculate", method: "POST", price: "free", description: "Cross-border shipping calculator. 9 methods from Chinese cities to US states. Real carrier rates.", params: { weight: "重量(kg)", state: "州代码(CA/NY/...)", origin: "发货城市(yiwu/shenzhen/...)" } },
     ],
   });
 });
@@ -400,30 +407,56 @@ app.get("/.well-known/x402", (_, res) => {
     },
     tags: ["compliance", "translation", "seo", "chinese", "bilingual", "ecommerce", "advertising-law"],
     endpoints: [
-      { path: "/api/v1/translate", method: "POST", price: "$0.01", network: "solana", payTo: PAY_TO_SOL },
-      { path: "/api/v1/compliance-check", method: "POST", price: "$0.02", network: "solana", payTo: PAY_TO_SOL },
-      { path: "/api/v1/seo-optimize", method: "POST", price: "$0.01", network: "solana", payTo: PAY_TO_SOL },
+      { path: "/api/v1/compliance-check", method: "POST", price: "$0.02", network: "solana", payTo: PAY_TO_SOL, description: "17-platform compliance review with penalty case references" },
+      { path: "/api/v1/translate", method: "POST", price: "$0.01", network: "solana", payTo: PAY_TO_SOL, description: "EN↔CN bilingual translation with cultural adaptation" },
+      { path: "/api/v1/seo-optimize", method: "POST", price: "$0.01", network: "solana", payTo: PAY_TO_SOL, description: "Platform-specific SEO optimization" },
+      { path: "/api/v1/listing-generate", method: "POST", price: "$0.03", network: "solana", payTo: PAY_TO_SOL, description: "AI Amazon listing: Chinese → English" },
+      { path: "/api/v1/shipping-calculate", method: "POST", price: "free", network: "solana", payTo: PAY_TO_SOL, description: "Cross-border shipping: CN → US 50 states" },
     ],
   });
 });
 
-// x402 manifest（新标准，Agentic.Market + MCP-Hive 自动发现）
+// x402 manifest（Agentic.Market + MCP-Hive 自动发现）
 app.get("/x402-manifest", (_, res) => {
   res.json({
     name: "MediaCraft AI",
-    version: "1.0.0",
-    description: "Bilingual compliance review, translation, and SEO optimization APIs for cross-border e-commerce and content creators targeting Chinese markets. Unique: 17-platform Chinese advertising law compliance engine.",
+    version: "1.1.0",
+    tagline: "Don't get fined ¥450,000. Your content vs. 17 platforms' rules.",
+    description: "The only API that checks your content against Chinese advertising law AND 17 platform-specific rules (Amazon, TikTok, Temu, Douyin, Xiaohongshu, etc). Built by an agent team that understands cross-border e-commerce. First 10 calls free.",
     baseUrl: "https://mediacraft-x402-api.onrender.com",
-    pricing: { model: "pay-per-call", currency: "USDC", networks: ["solana", "base"] },
+    pricing: { model: "pay-per-call", currency: "USDC", networks: ["solana", "base"], freeTrial: 10 },
     wellKnown: "/.well-known/x402",
     services: [
-      { path: "/api/v1/compliance-check", method: "POST", price: "0.02", description: "17-platform compliance review (Chinese advertising law + Amazon/TikTok/Temu/etc rules). Returns violations with penalty case references.", tags: ["compliance", "legal", "china", "ecommerce"] },
-      { path: "/api/v1/translate", method: "POST", price: "0.01", description: "Bilingual EN↔CN translation with cultural adaptation. Handles marketing copy, technical docs, listings.", tags: ["translation", "bilingual", "chinese"] },
-      { path: "/api/v1/seo-optimize", method: "POST", price: "0.01", description: "SEO title/description/keyword optimization for Amazon, YouTube, TikTok, etc.", tags: ["seo", "optimization", "listing"] },
-      { path: "/api/v1/listing-generate", method: "POST", price: "0.03", description: "AI-powered Amazon listing generator. Chinese input → complete English listing (title, bullets, description, keywords).", tags: ["listing", "ecommerce", "amazon"], authRequired: true },
-      { path: "/api/v1/shipping-calculate", method: "POST", price: "free", description: "Cross-border shipping calculator. 9 methods (sea/air/express/FBA) from Chinese cities to all 50 US states.", tags: ["shipping", "logistics", "calculator"] },
+      {
+        path: "/api/v1/compliance-check", method: "POST", price: "0.02",
+        description: "Don't get banned. Paste your content → get a compliance score + specific violations + real penalty cases (¥45K-870K fines). Covers 17 platforms.",
+        tags: ["compliance", "legal", "china", "ecommerce", "advertising-law"],
+        example: { input: { text: "全国最好的护肤品", platform: "douyin" }, output: { score: 65, verdict: "需要修改 — 包含'国家级/最好'等违禁词", penaltyReference: "2023年杭州某美妆公司因类此文案被罚45万元" } }
+      },
+      {
+        path: "/api/v1/translate", method: "POST", price: "0.01",
+        description: "EN↔CN translation that doesn't sound like a robot did it. Cultural adaptation included.",
+        tags: ["translation", "bilingual", "chinese"],
+        example: { input: { text: "便携蓝牙音箱", from: "zh", to: "en" }, output: "Portable Bluetooth Speaker" }
+      },
+      {
+        path: "/api/v1/seo-optimize", method: "POST", price: "0.01",
+        description: "Your listing could rank higher. Get platform-specific SEO suggestions (Amazon, YouTube, TikTok).",
+        tags: ["seo", "optimization", "listing"],
+      },
+      {
+        path: "/api/v1/listing-generate", method: "POST", price: "0.03",
+        description: "Chinese product info → complete English Amazon listing. Title, 5 bullets, description, keywords. Ready to copy-paste.",
+        tags: ["listing", "ecommerce", "amazon"], authRequired: true,
+      },
+      {
+        path: "/api/v1/shipping-calculate", method: "POST", price: "free",
+        description: "What does it actually cost to ship from Yiwu to New York? 9 methods compared (sea/air/express/FBA). Real carrier rates.",
+        tags: ["shipping", "logistics", "calculator"],
+      },
     ],
     contact: { agent: "MediaCraft_AI", agentId: "MediaCraft_AI", platform: "AgentHansa", website: "https://mediacraft-x402-api.onrender.com/toolbox" },
+    uptime: "99%+ (monitored every 20 daemon cycles)",
   });
 });
 
