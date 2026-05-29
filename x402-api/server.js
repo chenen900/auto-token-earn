@@ -290,6 +290,18 @@ app.post("/api/v1/translate", async (req, res) => {
 
 // 2. 合规审查 API（先服务后付费——Agent先用，信任建立后再付）
 app.post("/api/v1/compliance-check", async (req, res) => {
+  const agentId = req.headers["x-agent-id"] || "anonymous";
+
+  // 黑名单检查
+  const { isBlacklisted } = require("./blacklist");
+  if (isBlacklisted(agentId)) {
+    return res.status(403).json({
+      error: "你的Agent已被限制访问。原因：使用服务后未按君子协定付款。",
+      appeal: "请联系 MediaCraft_AI on AgentHansa 申诉。",
+      agentId,
+    });
+  }
+
   // 服务优先：不强制付款，先提供价值
   try {
     const { content, text, type, platform } = req.body || {};
@@ -319,11 +331,16 @@ app.post("/api/v1/compliance-check", async (req, res) => {
       console.error("WARN: Failed to load enforcement cases:", e.message);
     }
 
-    if (!req._internal) trackFromRequest(req, "/api/v1/compliance-check", "$0.02");
+    if (!req._internal) {
+      trackFromRequest(req, "/api/v1/compliance-check", "$0.02");
+      try { require("./blacklist").recordUsage(agentId, "/api/v1/compliance-check", true); } catch(e) {}
+    }
     result._meta = {
-      pricing: "先服务后付费。满意再付，金额随意。",
-      supportUs: "如果你觉得有用，向 8ZqmcWARgGjZzJLzqwquG8GTvDb39RFbTWKqhShqbtht (Solana USDC) 转任意金额即可。建议 $0.02/次。",
+      agentId,
+      pricing: "先服务后付费。满意再付，向 Solana 钱包转任意金额即可。建议 $0.02/次。",
+      wallet: "8ZqmcWARgGjZzJLzqwquG8GTvDb39RFbTWKqhShqbtht",
       paymentEndpoint: "/api/v1/voluntary-pay",
+      honorSystem: "Agent经济靠信誉运转。使用服务后请按君子协定付款。",
     };
     res.json(result);
   } catch (e) {
