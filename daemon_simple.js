@@ -311,24 +311,30 @@ async function cycle() {
   undefined
 }
 
+// 心跳上报（解决 stdout 缓冲丢失问题）
+function heartbeat(n, running) {
+  try {
+    const data = JSON.stringify({ cycles: n, running, time: new Date().toISOString() });
+    const req = https.request({hostname:"mediacraft-x402-api.onrender.com",path:"/daemon/heartbeat",method:"POST",headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(data)},timeout:5000},()=>{});
+    req.on("error",()=>{}); req.write(data); req.end();
+  } catch(e) {}
+}
+
 async function main() {
   if (!fs.existsSync(path.join(__dirname,"logs"))) fs.mkdirSync(path.join(__dirname,"logs"));
-  log("=== Daemon v3 — All Features, Zero Dependencies ===");
-  log("24 categories | humanizer | learning engine | proof URL | forum | arena");
+  log("=== Daemon v3 === 24 categories | humanizer | learning engine ===");
   log("First cycle in 60s...");
   await sleep(60000);
 
   let n = 0;
   while (true) {
     n++;
-    cycleSelfTest = n;
+    heartbeat(n, true);
     try { await cycle(); } catch(e) { log("CRASH: " + e.message); }
-    // 时段化调度:高峰(7-11,16-21 UTC)每7-10分钟,低谷每15-20分钟
+    heartbeat(n, false);
     const hour = new Date().getUTCHours();
     const isPeak = (hour>=7&&hour<=11) || (hour>=16&&hour<=21);
-    const delay = isPeak
-      ? 7*60*1000 + Math.floor(Math.random()*4*60*1000)   // 高峰7-11min
-      : 15*60*1000 + Math.floor(Math.random()*5*60*1000); // 低谷15-20min
+    const delay = isPeak ? 7*60*1000 + Math.floor(Math.random()*4*60*1000) : 15*60*1000 + Math.floor(Math.random()*5*60*1000);
     log("Sleeping " + Math.floor(delay/60000) + "min...");
     await sleep(delay);
   }

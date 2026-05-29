@@ -1024,6 +1024,13 @@ app.get("/daemon/status", (_, res) => {
 });
 
 app.get("/daemon/health", (_, res) => res.json({ ok: true, time: new Date().toISOString() }));
+app.post("/daemon/heartbeat", (req, res) => {
+  const { cycles, running, time } = req.body || {};
+  if (cycles !== undefined) daemonStatus.cycles = cycles;
+  if (running !== undefined) daemonStatus.running = running;
+  if (time) daemonStatus.lastCycle = time;
+  res.json({ ok: true });
+});
 
 // 监控面板（人类可读）
 app.get("/daemon/monitor", (_, res) => {
