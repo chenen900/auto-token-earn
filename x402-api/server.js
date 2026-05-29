@@ -185,24 +185,11 @@ app.get("/api/v1/paid-test", (req, res) => {
 });
 
 // 健康检查 + 调试
-app.get("/health", (_, res) => {
-  const { AD_LAW_CHECKS } = require("./compliance-engine");
-  const testText = "国家级最好的产品，100%有效！加微信私聊购买。";
-  const check = AD_LAW_CHECKS[1]; // 绝对化用语
-  const debug = {
-    text: testText,
-    textHex: Buffer.from(testText, "utf8").toString("hex").substring(0, 40),
-    keyword: check?.keywords?.[0],
-    kwHex: Buffer.from(check?.keywords?.[0] || "", "utf8").toString("hex").substring(0, 20),
-    includes: testText.includes(check?.keywords?.[0] || "N/A"),
-    normalized: testText.normalize("NFC").includes((check?.keywords?.[0] || "").normalize("NFC")),
-  };
+app.all("/health", (_, res) => {
   res.json({
     status: "ok",
     version: "2.1.0",
     timestamp: new Date().toISOString(),
-    engine: { adLawChecks: AD_LAW_CHECKS.length },
-    debug,
   });
 });
 
@@ -1075,14 +1062,12 @@ app.get("/daemon/paused", (_, res) => {
 });
 
 // ============ the402 webhook（job dispatch + health check）============
-app.post("/webhook/the402", (req, res) => {
-  const job = req.body || {};
-  console.log("[the402] Job received:", JSON.stringify(job).substring(0, 200));
-  const jobId = job.jobId || job.id || "unknown";
-  res.json({ ok: true, received: jobId, message: "Job accepted. Will process and return results." });
-});
-app.get("/webhook/the402", (_, res) => {
-  res.json({ ok: true, status: "ready", service: "MediaCraft AI" });
+app.all("/webhook/the402", (req, res) => {
+  if (req.method === "POST") {
+    const job = req.body || {};
+    console.log("[the402] Job received:", JSON.stringify(job).substring(0, 200));
+  }
+  res.json({ status: "ok", service: "MediaCraft AI", ready: true });
 });
 
 // ============ 启动 ============
