@@ -55,17 +55,12 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
 .tool-box{background:#0f172a;border-radius:8px;padding:14px;margin-bottom:12px}
 .tool-box h4{color:#60a5fa;margin-bottom:6px}
 .help-icon{display:inline-flex;width:20px;height:20px;background:#334155;color:#94a3b8;border-radius:50%;align-items:center;justify-content:center;cursor:help;font-size:12px;font-weight:700;margin-left:6px;transition:.2s}.help-icon:hover{background:#60a5fa;color:#0f172a}.help-box{display:none;background:#1e3a5f;border:1px solid #334155;border-radius:8px;padding:12px;margin:8px 0 16px 0;font-size:0.85em;color:#93c5fd;line-height:1.7}.help-box.show{display:block}.help-box b{color:#60a5fa}
-</style>
+.panel h3{text-align:center}.panel .row,.panel label,.panel textarea,.panel input,.panel select,.panel button{max-width:600px;margin-left:auto;margin-right:auto;display:block}.panel textarea,.panel input[type=text],.panel input[type=email],.panel input[type=password],.panel select{text-align:center}.panel .btn{display:block;margin:12px auto}.panel .back-link{display:inline-flex}.panel .row{display:grid;margin-left:0;margin-right:0}.panel .row label,.panel .row input,.panel .row select,.panel .row textarea{max-width:none;margin-left:0;margin-right:0}.panel .result{max-width:600px;margin:16px auto}.panel .tip-box{max-width:600px;margin:0 auto 16px auto}.panel .help-box{max-width:600px;margin:8px auto 16px auto}</style>
 </head>
 <body>
 <div class="container">
 <h1>跨境电商AI工具箱</h1>
 <p class="sub">AI 帮你检查文案合规、优化上架、计算利润 — 浏览器打开就用</p>
-
-<div id="userBar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:#94a3b8;font-size:0.85em">
-  <span id="userStatus">未登录 — 免费版</span>
-  <span style="cursor:pointer;color:#60a5fa" id="loginBtn" onclick="showLogin()">登录 / 注册</span>
-</div>
 
 <!-- ====== 首页 ====== -->
 <div id="home" class="panel">
@@ -106,7 +101,9 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:#60a5fa}
   <div class=badge>免费</div>
 </div>
 
-<div class="card" onclick="openTool('sponsor')" style="position:relative;border-color:#fbbf24"><div class=icon>赞助</div><h2>支持我们</h2><p>觉得有用？请我们喝杯咖啡。所有功能永久免费。</p><div class=badge style=background:#fbbf24>❤️</div></div></div></div><div class="tip-box" style="background:#1e3a5f;border-color:#60a5fa"><b>🆓 全部功能永久免费</b> · 合规审查 · Listing生成 · 竞品分析 · 利润计算<br><b>💡 想要新功能？</b> 点"支持我们"提交需求，或者直接赞助开发。<br><b>🔌 开发者？</b> 我们的 <a href="/x402-manifest" style="color:#60a5fa">API</a> 对所有Agent开放——先用后付。</div>
+<div class="card" onclick="openTool('sponsor')" style="position:relative;border-color:#fbbf24"><div class=icon>赞助</div><h2>支持我们</h2><p>觉得有用？请我们喝杯咖啡。所有功能永久免费。</p><div class=badge style=background:#fbbf24>❤️</div></div></div></div>
+<div id="userBar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:#94a3b8;font-size:0.85em"><span id="userStatus">未登录 — 免费版</span><span style="cursor:pointer;color:#60a5fa" id="loginBtn" onclick="showLogin()">登录 / 注册</span></div>
+;border-color:#60a5fa"><b>🆓 全部功能永久免费</b> · 合规审查 · Listing生成 · 竞品分析 · 利润计算<br><b>💡 想要新功能？</b> 点"支持我们"提交需求，或者直接赞助开发。<br><b>🔌 开发者？</b> 我们的 <a href="/x402-manifest" style="color:#60a5fa">API</a> 对所有Agent开放——先用后付。</div>
   <b>跨境新手？</b><br>
   <b>Listing</b> = 商品详情页（标题+图片+描述+价格）。是你在 Amazon/Temu/Shopify 上的"货架"。<br>
   <b>合规</b> = 你说的话是否违法。如"最好的产品"在中国违反广告法。<br>
