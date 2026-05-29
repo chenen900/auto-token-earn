@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>API 调用监控</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:monospace;background:#0f172a;color:#e2e8f0;padding:20px;max-width:600px;margin:0 auto}
+h1{color:#60a5fa;font-size:1.3em;margin-bottom:4px}
+.sub{color:#64748b;font-size:0.8em;margin-bottom:20px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px;margin:12px 0}
+.big{font-size:3em;font-weight:700}
+.green{color:#34d399}.yellow{color:#fbbf24}.red{color:#f87171}.blue{color:#60a5fa}
+.row{display:flex;justify-content:space-between;margin:8px 0}
+.label{color:#64748b;font-size:0.8em}.value{font-weight:700}
+.bar{height:4px;background:#334155;border-radius:2px;margin:8px 0}
+.bar-fill{height:100%;background:#60a5fa;border-radius:2px;transition:width .5s}
+.refresh{text-align:center;color:#475569;font-size:0.7em;margin-top:16px}
+</style></head><body>
+<h1>API 调用监控</h1><div class=sub id=time></div>
+<div class=card><div class=big id=calls class=blue>—</div><div class=label>总调用次数</div></div>
+<div class=card><div class=big id=earn class=green>—</div><div class=label>预估收益</div></div>
+<div class=card id=detail></div>
+<div class=refresh>自动刷新 30s | <a href="/api/v1/queue-status" style=color:#60a5fa>队列状态</a> | <a href="/dashboard" style=color:#60a5fa>原始数据</a></div>
+<script>
+async function refresh(){
+  try{
+    const d=await fetch('/dashboard').then(r=>r.json());
+    document.getElementById('calls').textContent=d.summary['总调用'];
+    document.getElementById('earn').textContent=d.summary['预估收益'];
+    document.getElementById('time').textContent='更新: '+new Date().toLocaleTimeString();
+
+    let html='<div class=label>端点详情</div>';
+    for(const[k,v]of Object.entries(d.calls||{})){
+      html+='<div class=row><span>'+k+'</span><span class=value>'+v+' 次</span></div>';
+    }
+    html+='<div class=bar><div class=bar-fill style=width:'+Math.min(d.summary['总调用']*10,100)+'%></div></div>';
+    if(d.summary['总调用']===0) html+='<div style=color:#64748b;font-size:0.8em;margin-top:8px>等待x402扫描器收录（24-72h）。收录后480K agent可发现。</div>';
+    else if(d.summary['总调用']<5) html+='<div style=color:#fbbf24;font-size:0.8em;margin-top:8px>有调用了！可能是扫描器在测试。</div>';
+    else html+='<div style=color:#34d399;font-size:0.8em;margin-top:8px>持续调用中！检查是否是真实agent使用。</div>';
+    document.getElementById('detail').innerHTML=html;
+  }catch(e){}
+}
+refresh();setInterval(refresh,30000);
+</script></body></html>
