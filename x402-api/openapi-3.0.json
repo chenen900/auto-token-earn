@@ -1,0 +1,231 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MediaCraft AI — Cross-Border Content Intelligence API",
+    "description": "Bilingual (EN↔CN) content compliance, translation, and optimization APIs for AI agents and cross-border e-commerce. Unique: 17-platform Chinese advertising law engine + cross-border shipping calculator. Pay-per-call via x402 protocol (Solana USDC).",
+    "version": "2.1.0",
+    "contact": { "name": "MediaCraft AI", "url": "https://mediacraft-x402-api.onrender.com/toolbox" }
+  },
+  "servers": [
+    { "url": "https://mediacraft-x402-api.onrender.com", "description": "Production" }
+  ],
+  "tags": [
+    { "name": "Compliance", "description": "Chinese advertising law + 17-platform content review" },
+    { "name": "Translation", "description": "EN↔CN bilingual translation with cultural adaptation" },
+    { "name": "SEO", "description": "Platform-specific SEO optimization" },
+    { "name": "E-commerce", "description": "Listing generator + shipping calculator" },
+    { "name": "Utility", "description": "Health check, directory, auth" }
+  ],
+  "paths": {
+    "/api/v1/compliance-check": {
+      "post": {
+        "tags": ["Compliance"],
+        "summary": "Content compliance review against Chinese advertising law + 17 platform rules",
+        "description": "Checks content against China's Advertising Law and 17 platform-specific rules (Douyin, Xiaohongshu, Bilibili, TikTok, YouTube, Amazon, etc.). Returns violations with real penalty case references. Service-first: use it, see value, pay what feels fair.",
+        "operationId": "complianceCheck",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["text"],
+                "properties": {
+                  "text": { "type": "string", "description": "Content to review", "example": "全国最好的护肤品，100%有效！" },
+                  "content": { "type": "string", "description": "Alias for text" },
+                  "type": { "type": "string", "enum": ["script", "hook", "caption", "voiceover", "title"], "default": "script" },
+                  "platform": { "type": "string", "enum": ["douyin", "kuaishou", "bilibili", "xiaohongshu", "tiktok", "youtube", "amazon", "temu", "shopify", "ebay", "etsy", "wechat", "weibo"], "default": "douyin" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Compliance result with score, violations, penalty cases" },
+          "402": { "description": "Payment required (x402 protocol, $0.02 USDC)" },
+          "503": { "description": "Server busy, retry after 1s" }
+        },
+        "x-pricing": { "amount": 0.02, "currency": "USDC", "freeTrial": 10 }
+      }
+    },
+    "/api/v1/compliance-batch": {
+      "post": {
+        "tags": ["Compliance"],
+        "summary": "Batch compliance review (up to 20 items)",
+        "operationId": "complianceBatch",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["items"], "properties": { "items": { "type": "array", "maxItems": 20, "items": { "type": "object" } } } } } }
+        },
+        "responses": { "200": { "description": "Batch results" } },
+        "x-pricing": { "amount": 0.05, "currency": "USDC" }
+      }
+    },
+    "/api/v1/compliance-report": {
+      "post": {
+        "tags": ["Compliance"],
+        "summary": "Generate formal compliance report (audit trail, defensible in enforcement)",
+        "operationId": "complianceReport",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["text"], "properties": { "text": { "type": "string" }, "type": { "type": "string" }, "platform": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Formal compliance report" } },
+        "x-pricing": { "amount": 0.05, "currency": "USDC" }
+      }
+    },
+    "/api/v1/translate": {
+      "post": {
+        "tags": ["Translation"],
+        "summary": "EN↔CN bilingual translation with cultural adaptation",
+        "operationId": "translate",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["text"],
+                "properties": {
+                  "text": { "type": "string", "example": "便携蓝牙音箱" },
+                  "from": { "type": "string", "enum": ["en", "zh"], "default": "en" },
+                  "to": { "type": "string", "enum": ["en", "zh"], "default": "zh" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Translation result" }, "402": { "description": "Payment required" } },
+        "x-pricing": { "amount": 0.01, "currency": "USDC" }
+      }
+    },
+    "/api/v1/seo-optimize": {
+      "post": {
+        "tags": ["SEO"],
+        "summary": "Platform-specific SEO optimization",
+        "operationId": "seoOptimize",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "keywords": { "type": "array", "items": { "type": "string" } },
+                  "platform": { "type": "string", "enum": ["youtube", "bilibili", "douyin", "tiktok", "amazon"], "default": "youtube" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "SEO score + suggestions" } },
+        "x-pricing": { "amount": 0.01, "currency": "USDC" }
+      }
+    },
+    "/api/v1/listing-generate": {
+      "post": {
+        "tags": ["E-commerce"],
+        "summary": "AI Amazon listing generator: Chinese product → English listing",
+        "operationId": "listingGenerate",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["product"], "properties": { "brand": { "type": "string" }, "product": { "type": "string" }, "features": { "type": "string" }, "category": { "type": "string", "enum": ["electronics", "home", "beauty", "sports", "toys", "fashion", "general"] }, "platform": { "type": "string", "default": "amazon" } } } } }
+        },
+        "responses": { "200": { "description": "Complete listing with title, bullets, description, keywords" }, "401": { "description": "Login required" }, "403": { "description": "Premium membership required" } },
+        "x-pricing": { "amount": 0.03, "currency": "USDC" }
+      }
+    },
+    "/api/v1/shipping-calculate": {
+      "post": {
+        "tags": ["E-commerce"],
+        "summary": "Cross-border shipping: China → US 50 states, 9 methods compared",
+        "operationId": "shippingCalculate",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["weight", "state"], "properties": { "weight": { "type": "number", "description": "Weight in kg" }, "state": { "type": "string", "description": "US state code (CA, NY, TX...)" }, "origin": { "type": "string", "enum": ["yiwu", "shenzhen", "guangzhou"], "default": "yiwu" } } } } }
+        },
+        "responses": { "200": { "description": "All shipping methods with cost, time, and recommendations" } },
+        "x-pricing": { "amount": 0, "currency": "USDC", "note": "Free" }
+      }
+    },
+    "/api/v1/shipping-rates": {
+      "get": {
+        "tags": ["E-commerce"], "summary": "Get all shipping rate tables", "operationId": "shippingRates",
+        "responses": { "200": { "description": "Full rate data" } },
+        "x-pricing": { "amount": 0, "currency": "USDC", "note": "Free" }
+      }
+    },
+    "/api/v1/competitor-analyze": {
+      "post": {
+        "tags": ["E-commerce"],
+        "summary": "Competitor ASIN/Listing analysis (Pro tier only)",
+        "operationId": "competitorAnalyze",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "asin": { "type": "string" }, "title": { "type": "string" }, "bullets": { "type": "array", "items": { "type": "string" } }, "description": { "type": "string" }, "category": { "type": "string" }, "platform": { "type": "string", "default": "amazon" } } } } } },
+        "responses": { "200": { "description": "Strengths, weaknesses, suggested strategy" } },
+        "x-pricing": { "amount": 0.05, "currency": "USDC" }
+      }
+    },
+    "/api/v1/directory/search": {
+      "get": {
+        "tags": ["Utility"], "summary": "Search API directory",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "Search query" },
+          { "name": "category", "in": "query", "schema": { "type": "string" }, "description": "Filter by category" }
+        ],
+        "responses": { "200": { "description": "Search results" } },
+        "x-pricing": { "amount": 0, "currency": "USDC", "note": "Free" }
+      }
+    },
+    "/api/v1/queue-status": {
+      "get": { "tags": ["Utility"], "summary": "Server queue status and memory", "operationId": "queueStatus", "responses": { "200": { "description": "Queue stats" } } }
+    },
+    "/api/v1/voluntary-pay": {
+      "post": { "tags": ["Utility"], "summary": "Voluntary payment (gentleman's agreement)", "operationId": "voluntaryPay", "responses": { "200": { "description": "Payment recorded" } } }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["Utility"], "summary": "Register new account",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["email", "password"], "properties": { "email": { "type": "string", "format": "email" }, "password": { "type": "string" }, "tier": { "type": "string", "enum": ["free", "premium", "pro"], "default": "free" } } } } } },
+        "responses": { "200": { "description": "User created with API key" } }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["Utility"], "summary": "Login",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["email", "password"], "properties": { "email": { "type": "string" }, "password": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "User info with tier" } }
+      }
+    },
+    "/api/v1/feedback": {
+      "get": { "tags": ["Utility"], "summary": "List recent feedback", "responses": { "200": { "description": "Feedback list" } } },
+      "post": { "tags": ["Utility"], "summary": "Submit feedback or bug report", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["message"], "properties": { "type": { "type": "string", "enum": ["suggestion", "bug", "praise"] }, "message": { "type": "string" }, "email": { "type": "string" }, "page": { "type": "string" } } } } } }, "responses": { "200": { "description": "Feedback recorded" } } }
+    },
+    "/health": {
+      "get": { "tags": ["Utility"], "summary": "Health check + engine debug", "operationId": "health", "responses": { "200": { "description": "Server status + engine stats" } } }
+    },
+    "/dashboard": {
+      "get": { "tags": ["Utility"], "summary": "Revenue dashboard", "operationId": "dashboard", "responses": { "200": { "description": "Revenue + usage stats" } } }
+    },
+    "/": {
+      "get": { "tags": ["Utility"], "summary": "API directory home", "operationId": "home", "responses": { "200": { "description": "Endpoint list" } } }
+    }
+  },
+  "x-payment": {
+    "protocol": "x402 v2",
+    "currencies": ["USDC"],
+    "networks": ["solana", "base"],
+    "wallets": {
+      "solana": "8ZqmcWARgGjZzJLzqwquG8GTvDb39RFbTWKqhShqbtht",
+      "base": "0x4445212f0C20EBAfCe3923fB16178cB04a8329ad"
+    },
+    "freeTrial": "First 10 calls per agent",
+    "rateLimit": "100 requests/min"
+  },
+  "x-marketplace": {
+    "category": "AI / Machine Learning",
+    "keywords": ["compliance", "translation", "seo", "chinese", "ecommerce", "advertising-law", "x402"],
+    "uniqueValue": "Only API checking content against Chinese Advertising Law + 17 platform-specific rules with real penalty cases",
+    "integrations": ["x402", "MCP stdio", "REST"],
+    "github": "https://github.com/xinchuan/auto-token-earn"
+  }
+}

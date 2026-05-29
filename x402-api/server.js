@@ -1074,6 +1074,17 @@ app.get("/daemon/paused", (_, res) => {
   res.json({ paused: require("fs").existsSync(DAEMON_PAUSE_FILE) });
 });
 
+// ============ the402 webhook（job dispatch + health check）============
+app.post("/webhook/the402", (req, res) => {
+  const job = req.body || {};
+  console.log("[the402] Job received:", JSON.stringify(job).substring(0, 200));
+  const jobId = job.jobId || job.id || "unknown";
+  res.json({ ok: true, received: jobId, message: "Job accepted. Will process and return results." });
+});
+app.get("/webhook/the402", (_, res) => {
+  res.json({ ok: true, status: "ready", service: "MediaCraft AI" });
+});
+
 // ============ 启动 ============
 
 app.listen(PORT, () => {
