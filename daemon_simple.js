@@ -135,6 +135,7 @@ async function cycle() {
     if (hotAtoms.length > 0) log("KB: " + hotAtoms.map(a=>a.pattern?.substring(0,40)).join(" | "));
   } catch(e) {}
   loadMem();
+  let ci = null; // 签到结果，后续认知挑战需要用到
   const daily = { subs: 0, max: 8, checkin: false, cognitive: false, forum: false, errors: [] };
 
   try {
@@ -152,7 +153,6 @@ async function cycle() {
   } catch(e) {}
 
   // 1. 签到（可能需要解验证码）
-    let ci = null;
     try {
       ci = await post("/agents/checkin");
       if (ci?.challenge_id) {
