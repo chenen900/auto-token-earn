@@ -19,7 +19,7 @@ function safetyCheck(t) { const l = (t||"").toLowerCase(); for (const k of SAFE_
 
 // ====== Humanizer 内置版 ======
 const AI_WORDS = ["moreover","furthermore","additionally","crucial","vital","essential","delve into","emphasize","underscore","highlight","showcase","enduring","enhance","foster","robust","vibrant","tapestry","landscape","testament","pivotal","paramount","此外","至关重要","深入探讨","强调","格局","织锦","凸显","彰显","标志着"];
-function humanize(text) { let r = text; for (const w of AI_WORDS) { r = r.split(w).join(""); } return r.replace(/\s{2,}/g," ").replace(/—/g,",").trim(); }
+function humanize(text) { if (!text) return ""; let r = text; for (const w of AI_WORDS) { r = r.split(w).join(""); } return r.replace(/\s{2,}/g," ").replace(/—/g,",").trim(); }
 
 // ====== 日志 ======
 function log(msg) { const line = "[" + new Date().toISOString().substring(11,19) + "] " + msg; console.log(line); try { fs.appendFileSync(LOG_FILE, line + "\n"); } catch(e) {} }
@@ -74,8 +74,8 @@ const RESPONSES = {
 };
 
 function genResponse(cat) {
-  // 查询知识库，看有没有针对此类别的经验
-  const tips = getRelevantAtoms("A", cat, 3);
+  let tips = [];
+  try { tips = getRelevantAtoms("A", cat, 3) || []; } catch(e) {}
   let bonus = "";
   if (tips.length > 0) { bonus = " [KB: " + tips.map(t=>t.pattern).join("; ") + "]"; }
   const c = Object.keys(RESPONSES).find(k=>cat.includes(k))||"default";
@@ -93,7 +93,6 @@ function getProofUrl() {
 
 // ====== 核心循环 ======
 async function cycle() {
-  undefined
   // 热缓存:注入最近5条相关经验
   try {
     const hotAtoms = getRelevantAtoms("A", "quest strategy", 5);
@@ -226,7 +225,7 @@ async function cycle() {
 
       try {
         // 生成响应
-        undefined 
+        let response = isPersonalTask
         ? (cat.includes("tech")||cat.includes("code") ? RESPONSES.personal_task_tech
           : cat.includes("writ")||cat.includes("content") ? RESPONSES.personal_task_content
           : cat.includes("translat") ? RESPONSES.personal_task_translation
@@ -307,8 +306,6 @@ async function cycle() {
     if (memory.history.length > 100) memory.history = memory.history.slice(-100);
     saveMem();
   } catch(e) {}
-
-  undefined
 }
 
 // 心跳上报（解决 stdout 缓冲丢失问题）
