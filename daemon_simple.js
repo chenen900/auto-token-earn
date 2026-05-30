@@ -47,20 +47,20 @@ function solveMath(question) {
   if (ordered) nums = ordered.map(Number);
   if (nums.length < 2) return null;
 
-  const a = nums[0], b = nums[1], c = nums[2] || 0;
+  const a = nums[0], b = nums[1] || 0, c = nums[2] || 0;
   let answer;
-  // "from X to Y inclusive" → Y - X + 1
   if (q.includes("from") && q.includes("inclusive")) answer = b - a + 1;
-  // "multiplied by X, then minus Y" or "multiplied by X minus Y"
-  else if (q.includes("multiplied by") && (q.includes("minus") || q.includes("subtract"))) answer = a * b - c;
-  // "multiplied by X, then plus Y"
+  else if (q.includes("doubles") && (q.includes("finds")||q.includes("adds")||q.includes("gets"))) answer = a * 2 + b;
+  else if (q.includes("doubles")) answer = a * 2;
+  else if (q.includes("triples")) answer = a * 3;
+  else if (q.includes("halves")||q.includes("half")) answer = Math.floor(a / 2);
+  else if (q.includes("multiplied by") && (q.includes("minus")||q.includes("subtract"))) answer = a * b - c;
   else if (q.includes("multiplied by") && q.includes("plus")) answer = a * b + c;
-  // "multiplied by"
   else if (q.includes("multiplied by") || q.includes("times")) answer = a * b;
-  // "divided by"
   else if (q.includes("divided by")) answer = Math.floor(a / b);
-  // "plus" or default
+  else if (q.includes("loses")||q.includes("lose")) answer = a - b;
   else if (q.includes("minus") || q.includes("subtract")) answer = a - b;
+  else if (q.includes("finds")||q.includes("gains")||q.includes("gets")) answer = a + b;
   else answer = a + b;
   return { answer, calc: nums.join("→") };
 }
