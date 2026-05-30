@@ -26,8 +26,44 @@ function log(msg) { const line = "[" + new Date().toISOString().substring(11,19)
 
 // ====== HTTP ======
 function get(p) { return new Promise(r => { https.get({hostname:"agenthansa.com",path:p,headers:{Authorization:"Bearer "+KEY}}, res => { let d=""; res.on("data",c=>d+=c); res.on("end",()=>{ try { r(JSON.parse(d)); } catch(e) { r(null); } }); }).on("error",()=>r(null)); }); }
-function post(p,b) { return new Promise(r => { const d=JSON.stringify(b); const req=https.request({hostname:"agenthansa.com",path:p,method:"POST",headers:{Authorization:"Bearer "+KEY,"Content-Type":"application/json","Content-Length":d.length}}, res => { let o=""; res.on("data",c=>o+=c); res.on("end",()=>{ try { r(JSON.parse(o)); } catch(e) { r(null); } }); }); req.on("error",()=>r(null)); req.write(d); req.end(); }); }
+function post(p,b) { return new Promise(r => { const d=b!==undefined?JSON.stringify(b):"{}"; const req=https.request({hostname:"agenthansa.com",path:p,method:"POST",headers:{Authorization:"Bearer "+KEY,"Content-Type":"application/json","Content-Length":d.length}}, res => { let o=""; res.on("data",c=>o+=c); res.on("end",()=>{ try { r(JSON.parse(o)); } catch(e) { r(null); } }); }); req.on("error",()=>r(null)); req.write(d); req.end(); }); }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// 通用数学题解析器 — 支持多种格式
+const WORD_NUMS = { zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15, sixteen:16, seventeen:17, eighteen:18, nineteen:19, twenty:20, thirty:30, forty:40, fifty:50, sixty:60, seventy:70, eighty:80, ninety:90, hundred:100 };
+function solveMath(question) {
+  const q = (question || "").toLowerCase();
+  // 提取所有数字（含英文词和阿拉伯数字）
+  let nums = [];
+  const arabic = q.match(/\b\d+\b/g);
+  if (arabic) nums = arabic.map(Number);
+  // 替换英文数字词为阿拉伯
+  let replaced = q;
+  for (const [word, val] of Object.entries(WORD_NUMS)) {
+    if (replaced.includes(word)) { nums.push(val); replaced = replaced.replace(new RegExp(word,"g"), String(val)); }
+  }
+  // 按出现顺序排序（用 replaced 版本中的数字）
+  const ordered = replaced.match(/\b\d+\b/g);
+  if (ordered) nums = ordered.map(Number);
+  if (nums.length < 2) return null;
+
+  const a = nums[0], b = nums[1], c = nums[2] || 0;
+  let answer;
+  // "from X to Y inclusive" → Y - X + 1
+  if (q.includes("from") && q.includes("inclusive")) answer = b - a + 1;
+  // "multiplied by X, then minus Y" or "multiplied by X minus Y"
+  else if (q.includes("multiplied by") && (q.includes("minus") || q.includes("subtract"))) answer = a * b - c;
+  // "multiplied by X, then plus Y"
+  else if (q.includes("multiplied by") && q.includes("plus")) answer = a * b + c;
+  // "multiplied by"
+  else if (q.includes("multiplied by") || q.includes("times")) answer = a * b;
+  // "divided by"
+  else if (q.includes("divided by")) answer = Math.floor(a / b);
+  // "plus" or default
+  else if (q.includes("minus") || q.includes("subtract")) answer = a - b;
+  else answer = a + b;
+  return { answer, calc: nums.join("→") };
+}
 
 // ====== 学习引擎内置 ======
 let memory = { categories: {}, submissions: 0, wins: 0, earned: 0, history: [] };
@@ -120,20 +156,13 @@ async function cycle() {
     try {
       ci = await post("/agents/checkin");
       if (ci?.challenge_id) {
-        // 需要解数学验证码 — 题目是文本如 "What is 20 plus 19 coins?"
-        const q = (ci.question || "").toLowerCase();
-        const nums = q.match(/\d+/g);
-        if (nums && nums.length >= 2) {
-          const a = parseInt(nums[0]), b = parseInt(nums[1]);
-          let answer = a + b;
-          if (q.includes("minus") || q.includes("subtract")) answer = a - b;
-          else if (q.includes("times") || q.includes("multipl")) answer = a * b;
-          else if (q.includes("divid")) answer = Math.floor(a / b);
-          const cr = await post("/agents/checkin/verify", { challenge_id: ci.challenge_id, challenge_answer: answer });
+        const solved = solveMath(ci.question);
+        if (solved) {
+          const cr = await post("/agents/checkin/verify", { challenge_id: ci.challenge_id, challenge_answer: solved.answer });
           daily.checkin = !!cr;
-          log("Checkin: " + a + " " + (q.includes("plus")?"+":q.includes("minus")?"-":q.includes("times")?"*":"?") + " " + b + " = " + answer + " — " + (daily.checkin ? "OK" : "FAIL"));
+          log("Checkin: " + ci.question?.substring(0,50) + " => " + solved.answer + " (" + solved.calc + ") — " + (daily.checkin ? "OK" : "FAIL"));
         } else {
-          log("Checkin: could not parse question — " + q.substring(0,50));
+          log("Checkin: parse failed — " + (ci.question||"").substring(0,50));
         }
       } else { daily.checkin = !!ci; log("Checkin: " + (daily.checkin ? "OK" : "FAIL")); }
     } catch(e) { log("Checkin err: " + e.message?.substring(0,40)); daily.errors.push("checkin:"+e.message?.substring(0,30)); }
@@ -146,25 +175,12 @@ async function cycle() {
       log("SPAM FLAGGED — attempting cognitive challenge...");
       const chal = await get("/agents/cognitive-challenge");
       if (chal?.question) {
-        const q = (chal.question || "").toLowerCase();
-        const nums = q.match(/\d+/g);
-        if (nums && nums.length >= 2) {
-          let answer = 0;
-          if (q.includes("multiplied by") && q.includes("minus")) {
-            answer = parseInt(nums[0]) * parseInt(nums[1]) - parseInt(nums[2] || 0);
-          } else if (q.includes("multiplied by")) {
-            answer = parseInt(nums[0]) * parseInt(nums[1]);
-          } else if (q.includes("divided by")) {
-            answer = Math.floor(parseInt(nums[0]) / parseInt(nums[1]));
-          } else if (q.includes("plus")) {
-            answer = parseInt(nums[0]) + parseInt(nums[1]);
-          } else if (q.includes("minus") || q.includes("subtract")) {
-            answer = parseInt(nums[0]) - parseInt(nums[1]);
-          }
-          const ar = await post("/agents/cognitive-challenge/answer", { answer: String(answer) });
+        const solved = solveMath(chal.question);
+        if (solved) {
+          const ar = await post("/agents/cognitive-challenge/answer", { answer: String(solved.answer) });
           daily.cognitive = !!ar?.passed;
-          log("Cognitive: " + q.substring(0,60) + " => " + answer + " — " + (daily.cognitive ? "PASSED (24h XP)" : "FAILED"));
-        } else { log("Cognitive: could not parse — " + (chal.question||"").substring(0,50)); }
+          log("Cognitive: " + chal.question?.substring(0,50) + " => " + solved.answer + " — " + (daily.cognitive ? "PASSED (24h XP)" : "FAILED"));
+        } else { log("Cognitive: parse failed — " + (chal.question||"").substring(0,50)); }
       } else { log("Cognitive: no challenge available"); }
     } else { daily.cognitive = true; /* not flagged, no challenge needed */ }
     await sleep(4000);
