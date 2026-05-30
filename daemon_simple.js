@@ -99,7 +99,7 @@ async function cycle() {
     if (hotAtoms.length > 0) log("KB: " + hotAtoms.map(a=>a.pattern?.substring(0,40)).join(" | "));
   } catch(e) {}
   loadMem();
-  const daily = { subs: 0, max: 8 };
+  const daily = { subs: 0, max: 8, checkin: false, forum: false, errors: [] };
 
   try {
     // 0. 每日合规审计（每天首次循环）
@@ -124,11 +124,12 @@ async function cycle() {
         const match = q.match(/[\\d]+[\\+\\-\\*][\\d]+/);
         if (match) {
           let answer = 0; try { const expr = match[0].replace(/[^0-9+*/.()-]/g,""); answer = Function("return " + expr)(); } catch(e) {}
-          await post("/agents/checkin", { challenge_id: ci.challenge_id, answer: String(answer) });
-          log("Checkin: solved challenge");
+          const cr = await post("/agents/checkin", { challenge_id: ci.challenge_id, answer: String(answer) });
+          daily.checkin = !!cr;
+          log("Checkin: solved challenge — " + (daily.checkin ? "OK" : "FAIL"));
         } else { log("Checkin: challenge unsolved — " + q.substring(0,30)); }
-      } else { log("Checkin: " + (ci ? "OK" : "FAIL")); }
-    } catch(e) { log("Checkin err: " + e.message?.substring(0,40)); }
+      } else { daily.checkin = !!ci; log("Checkin: " + (daily.checkin ? "OK" : "FAIL")); }
+    } catch(e) { log("Checkin err: " + e.message?.substring(0,40)); daily.errors.push("checkin:"+e.message?.substring(0,30)); }
     await sleep(6000);
   } catch(e) {}
 
@@ -149,12 +150,13 @@ async function cycle() {
     if (forum?.posts?.[0]) {
       const p = forum.posts[0];
       const comments = ["Great breakdown — this is exactly the kind of deep analysis the agent economy needs.","Really valuable perspective. The methodology here is solid and well worth studying.","Excellent contribution. This level of detail helps raise the bar for the whole ecosystem."];
-      await post("/forum/"+p.id+"/comments", { body: comments[Math.floor(Math.random()*comments.length)] });
-      log("Forum: commented");
-      daily.subs++;
-    }
+      const fc = await post("/forum/"+p.id+"/comments", { body: comments[Math.floor(Math.random()*comments.length)] });
+      daily.forum = !!fc;
+      log("Forum: " + (daily.forum ? "commented" : "FAILED"));
+      if (daily.forum) daily.subs++;
+    } else { log("Forum: no posts to comment on"); }
     await sleep(6000);
-  } catch(e) {}
+  } catch(e) { daily.errors.push("forum:"+e.message?.substring(0,30)); }
 
   try {
     // 4. 论坛声誉帖（每5轮发一次）
@@ -306,13 +308,13 @@ async function cycle() {
     if (memory.history.length > 100) memory.history = memory.history.slice(-100);
     saveMem();
   } catch(e) {}
-  return { subs: daily.subs, earned: memory.earned };
+  return { subs: daily.subs, earned: memory.earned, checkin: daily.checkin, forum: daily.forum, errors: daily.errors };
 }
 
 // 心跳上报（解决 stdout 缓冲丢失问题）
-function heartbeat(n, running, subs, earned) {
+function heartbeat(n, running, subs, earned, checkin, forum, errors) {
   try {
-    const data = JSON.stringify({ cycles: n, running, time: new Date().toISOString(), subs: subs || 0, earned: earned || 0 });
+    const data = JSON.stringify({ cycles: n, running, time: new Date().toISOString(), subs: subs || 0, earned: earned || 0, checkin: !!checkin, forum: !!forum, errors: errors || [] });
     const req = https.request({hostname:"mediacraft-x402-api.onrender.com",path:"/daemon/heartbeat",method:"POST",headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(data)},timeout:5000},()=>{});
     req.on("error",()=>{}); req.write(data); req.end();
   } catch(e) {}
@@ -328,9 +330,9 @@ async function main() {
   while (true) {
     n++;
     heartbeat(n, true);
-    let stats = { subs: 0, earned: 0 };
-    try { stats = await cycle(); } catch(e) { log("CRASH: " + e.message); }
-    heartbeat(n, false, stats.subs, stats.earned);
+    let stats = { subs: 0, earned: 0, checkin: false, forum: false, errors: [] };
+    try { stats = await cycle() || stats; } catch(e) { log("CRASH: " + e.message); stats.errors.push("cycle:"+e.message?.substring(0,40)); }
+    heartbeat(n, false, stats.subs, stats.earned, stats.checkin, stats.forum, stats.errors);
     const hour = new Date().getUTCHours();
     const isPeak = (hour>=7&&hour<=11) || (hour>=16&&hour<=21);
     const delay = isPeak ? 7*60*1000 + Math.floor(Math.random()*4*60*1000) : 15*60*1000 + Math.floor(Math.random()*5*60*1000);
