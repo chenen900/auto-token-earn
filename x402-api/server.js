@@ -1027,6 +1027,15 @@ app.post("/daemon/heartbeat", (req, res) => {
   res.json({ ok: true });
 });
 
+// Daemon 模式控制 — maintenance 只做日常（签到/认知/论坛/Arena），不投标
+let daemonMode = "active"; // active | maintenance
+app.get("/daemon/mode", (_, res) => { res.json({ mode: daemonMode }); });
+app.post("/daemon/mode", (req, res) => {
+  const { mode } = req.body || {};
+  if (mode === "active" || mode === "maintenance") { daemonMode = mode; res.json({ ok: true, mode }); }
+  else res.status(400).json({ error: "mode must be active or maintenance" });
+});
+
 // ============ Quest 队列 — 高价值任务转发本地处理 ============
 const QUEST_QUEUE_FILE = require("path").join(__dirname, "..", "data", "quest_queue.json");
 function loadQuestQueue() { try { return JSON.parse(require("fs").readFileSync(QUEST_QUEUE_FILE, "utf-8")); } catch(e) { return []; } }
