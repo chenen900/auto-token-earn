@@ -92,30 +92,74 @@ function scoreDifficulty(q) {
 
 function detectCat(title) { const t=(title||"").toLowerCase(); for (const c of CATEGORIES) { if (t.includes(c)) return c; } return "tech"; }
 
-// ====== 响应模板 ======
+// ====== 响应模板 V2 — 多模版 + 随机化 ======
 const RESPONSES = {
-  tech: "Let me break this down systematically. Based on the symptoms, there are typically 3 layers to investigate: infrastructure (timeouts, connection pools), application (middleware chain, error handling), and data (query performance, caching). Start from the bottom and work up. Each layer has distinct failure signatures once you know what to look for.",
-  code: "I'll analyze this step by step. First, check the error boundaries. Second, trace the data flow. Third, look for common pitfalls: async ordering, null checks, race conditions. The fix likely involves adding validation at the boundary and a unit test to prevent regression.",
-  translation: "Professional bilingual translation with cultural adaptation. Chinese-English translation requires more than word mapping: it needs restructuring from topic-comment to subject-verb-object patterns, replacing hyperbolic Chinese marketing language with restrained English claims, and adapting cultural references to Western equivalents.",
-  compliance: "Compliance review against Chinese Advertising Law (2021 revision) and platform rules. Key checks: Article 9 (no 最好/第一/国家级), Article 17 (no medical claims), Article 28 (no false advertising). Platform-specific banned keywords checked. Cross-border: FTC endorsement disclosure, FDA claim restrictions, CE marking requirements.",
-  writing: "Here's a structured approach: lead with the reader's pain point, introduce your solution naturally, use specific numbers for credibility, keep the CTA simple and time-boxed. Social proof works better than feature lists. One clear ask beats three.",
-  career: "Frame career transitions around skills gained, not gaps. Freelance work counts as consulting. Startups value capability over chronology. Lead with what you built, not what you missed. One confident sentence about the gap, then pivot to results.",
-  research: "Multi-source data collection with cross-reference verification. Structure: executive summary, detailed findings with data points, actionable recommendations, source citations. Trend analysis comparing Q1-Q2 2026 data where available.",
-  shopping: "Evaluate against your specific use case, not generic reviews. Break down by: feature matching, total cost of ownership, warranty/support, and real user experiences. The best value is often in refurbished premium products, not new budget ones.",
-  default: "Systematic analysis with attention to detail. Breaking this down into specific, actionable components with verifiable references.",
-  personal_task_tech: "Root Cause Analysis: [diagnostic steps]. Fix: [specific solution with code]. Verification: [how to confirm fix works]. Prevention: [avoid recurrence]. Full technical report with reproduction steps and benchmarks.",
-  personal_task_content: "[Hook: one compelling sentence]. Key findings: [3-5 data-backed points]. Deep dive: [800+ word analysis with H2/H3 structure]. Actionable takeaway: [what reader should do next]. SEO-optimized with FAQ section for AI search visibility.",
-  personal_task_translation: "Translation approach: cultural adaptation over literal mapping. Source text purpose: [context]. Key adaptations made: [structural changes, idiom replacements, tone adjustments]. Glossary of technical terms used. Compliance check: Chinese Advertising Law + platform rules.",
-  personal_task_data: "Executive Summary: [one-paragraph overview]. Methodology: [data sources, sample size, time period]. Key Findings: [numbered, each with data point and source]. Recommendations: [prioritized by impact]. Full dataset: [external link]. Confidence level: [high/medium/low per finding]."
+  tech: [
+    "Let me break this down systematically. There are typically 3 layers to investigate: (1) Infrastructure — check timeouts, connection pools, DNS resolution. (2) Application — middleware chain order, error handler placement, memory pressure. (3) Data — query plans, index usage, cache hit rates. Start from the bottom layer and work up. Each layer has distinct failure signatures: intermittent timeouts point to pool exhaustion, consistent slowness to missing indexes, random crashes to uncaught promises. Fix the root cause, not the symptom.",
+    "Here's my approach: First, isolate the failure domain — is it network, compute, or storage? Second, reproduce with minimal inputs to eliminate confounding variables. Third, apply the simplest fix that addresses the root cause, with a regression test. Common pitfalls to avoid: swallowing errors in try-catch without logging, assuming async operations complete in order, not setting connection timeouts. The fix should include both the code change and the monitoring to catch it early next time.",
+    "I'd approach this in three phases. Phase 1 — Diagnosis: collect error logs, reproduction steps, and affected request traces. Phase 2 — Root cause: trace the failure through the full call chain, identify the exact line/boundary where it breaks. Phase 3 — Fix + Prevention: minimal code change, comprehensive test, and a monitoring alert. The most common issues I see: race conditions in promise chains, unvalidated input at API boundaries, and missing circuit breakers on external calls."
+  ],
+  code: [
+    "Let me trace through the logic. The issue likely involves one of: async ordering (promises resolving in unexpected sequence), null/undefined propagation (optional chaining missing at a boundary), or race conditions (shared mutable state across async contexts). The fix pattern: add validation at the input boundary, wrap unsafe access in optional chaining, and add a unit test that reproduces the exact failure before applying the fix.",
+    "I'll analyze this step by step. (1) Check error boundaries — are errors caught and handled at every async boundary? (2) Trace the data flow — does the data shape change unexpectedly between functions? (3) Look for common pitfalls: Promise.all without catch, forEach with async callbacks, array methods on potentially-null values. The fix likely involves adding validation at the boundary where data enters the system and a unit test to prevent regression.",
+    "Code analysis approach: (1) Static analysis first — look for unhandled promise rejections, missing null checks, type coercion bugs. (2) Dynamic analysis second — trace the execution path with sample inputs. (3) Fix: Add guard clauses at boundaries, explicit error handling, and types/validation. (4) Prevention: Unit test that reproduces the issue, lint rule to catch the pattern."
+  ],
+  translation: [
+    "Professional bilingual translation with cultural adaptation. Key considerations: (1) Structural transformation — Chinese uses topic-comment structure, English uses subject-verb-object. Restructure sentences accordingly. (2) Cultural equivalents — replace Chinese idioms with Western equivalents, not literal translations. (3) Marketing tone — Chinese marketing tends toward hyperbole (全网最好 'best in the whole network'), English prefers restrained claims with evidence. (4) Keyword preservation — keep brand names, product specs, and technical terms as-is. Final review against Chinese Advertising Law for compliance.",
+    "EN↔CN translation approach: Beyond word-for-word mapping, I handle: (1) Syntax restructuring — Chinese to English requires adding articles, adjusting tense, and reordering clauses. (2) Idiom handling — Chinese chengyu and proverbs need cultural equivalents, not literal translation. (3) Register matching — formal business Chinese → formal business English, casual social → casual social. (4) Compliance review — check translated content against platform-specific rules (Douyin/TikTok/Amazon listing requirements)."
+  ],
+  compliance: [
+    "Compliance review against Chinese Advertising Law (2021 revision). Key violation categories: Article 9 — banned superlatives (最好/第一/国家级/最高级); Article 17 — prohibited medical/disease claims for non-medical products; Article 28 — false or misleading advertising. Platform-specific rules: Douyin bans 'guaranteed results' language; Xiaohongshu restricts before/after claims in beauty; Amazon requires truthful product descriptions with evidence. Cross-border implications: FTC requires disclosure of material connections; FDA restricts disease claims on supplements. Each violation is flagged with the specific law/article reference and a real penalty case for context.",
+    "Content compliance audit covering: (1) Chinese Advertising Law — 9 articles with specific banned keywords and claim restrictions. (2) Platform rules — 17 platforms including Douyin (55-char title limit, banned words), Xiaohongshu (community guidelines), TikTok (branded content policy), Amazon (listing requirements), YouTube (disclosure rules). (3) Cross-border — FTC endorsement guidelines, EU consumer protection directives. I provide a risk score per violation, the exact text that triggers it, and a suggested compliant alternative. Historical penalty cases (¥45K-870K fines) included for enforcement context.",
+    "Three-layer compliance check: Layer 1 — Auto-flag exact banned keywords (国家级, 最好, 第一, 100%, guaranteed, cure). Layer 2 — Context-sensitive patterns (before/after claims in beauty, earnings claims in finance, medical implications). Layer 3 — Platform-specific quirks (Douyin hates 'guaranteed', Amazon hates 'best', Temu rejects unsubstantiated comparisons). Each finding includes: the flagged text, the rule it violates, the penalty range, and a compliant rewrite."
+  ],
+  writing: [
+    "Content strategy: Lead with the reader's specific pain point — name it in their words. Follow with a concrete solution framed around outcomes, not features. Use a single data point for credibility (one strong number beats three weak ones). Keep the CTA singular and time-boxed. Structure: Problem → Why it matters → How to solve it → Proof it works → One action to take now. Social proof (testimonials, case studies) converts better than feature lists.",
+    "Writing approach: Hook in the first 3 seconds — use a question, contradiction, or surprising stat. Body delivers value in scannable chunks (short paragraphs, bold takeaways). Close with one clear action. SEO: primary keyword in title/H2, semantic variations in body, 150-300 word sections. For AI discovery: FAQ section at bottom with natural-language Q&A pairs. Platform-specific: YouTube descriptions need front-loaded keywords; Medium needs compelling subtitle; LinkedIn needs professional tone with a conversation prompt.",
+    "Here's a structured writing framework: (1) Hook — one sentence that makes the reader need to know more. (2) Context — why this matters now, with a data point. (3) Solution — the specific approach, broken into 3-5 actionable steps. (4) Evidence — results, case study, or logical proof. (5) Objection handling — address the most common doubt. (6) CTA — specific, urgent, low-friction next step. This structure works across blog posts, social media, email, and landing pages."
+  ],
+  career: [
+    "Career strategy: Lead with capability, not chronology. Structure: (1) What you can deliver today — concrete skills and outcomes. (2) How you got there — connect the dots across roles, including freelance/consulting/projects. (3) Why it matters — the unique combination of experiences that makes you the right fit. Handle gaps confidently: 'I took time to [learn X/build Y/support Z] and here's what came out of it.' Startups value velocity and ownership — emphasize both. Corporate values scalability and process — emphasize those.",
+    "Frame transitions around skills gained, not titles held. Freelance work IS professional experience — list it confidently. Three rules: (1) Lead every bullet with an outcome, not a responsibility. (2) Numbers beat adjectives — 'grew revenue 30%' beats 'successfully grew revenue.' (3) Customize the top 3 experiences for each role — generic applications get filtered first."
+  ],
+  research: [
+    "Research methodology: (1) Define scope — what question are we answering, with what constraints (time period, geography, data sources). (2) Multi-source triangulation — cross-reference at least 3 independent sources per finding. (3) Structure: Executive summary (1 paragraph for decision-makers), Methodology (data sources, sample size, limitations), Findings (numbered, each with data point + source), Recommendations (prioritized by impact/effort), Appendices (raw data, calculations). Confidence level per finding: High (3+ sources agree), Medium (2 sources, some conflict), Low (single source or extrapolation)."
+  ],
+  shopping: [
+    "Product evaluation framework: (1) Feature matching — map your specific needs to product capabilities, not marketing claims. (2) Total cost of ownership — purchase price + setup + training + subscription + switching cost. (3) Support quality — check real user reviews for support responsiveness, not the marketing SLA. (4) Longevity signals — update frequency, community size, financial health of the vendor. The best value often lies in refurbished premium products or open-source alternatives with commercial support."
+  ],
+  default: [
+    "I'll approach this systematically: First, understand the core requirements and constraints. Second, evaluate the available options against those criteria — not against generic 'best' lists. Third, provide a recommendation with specific reasoning, trade-offs acknowledged, and an implementation path. Every recommendation includes: what to do, why it's the right choice for THIS situation, and what to watch out for.",
+    "My approach: Break the problem into its smallest components, solve each one independently, then verify the solutions work together. I prioritize correctness over speed, clarity over cleverness. Each step includes: the goal, the method, the expected outcome, and how to verify it worked."
+  ],
+  personal_task_tech: [
+    "## Root Cause Analysis\n\n### Symptoms\n- [Primary symptom with reproduction steps]\n- [Secondary symptom with frequency]\n\n### Investigation\n1. Checked [infrastructure layer] — found [specific finding]\n2. Traced [application code path] — discovered [specific bug pattern]\n3. Analyzed [data/query] — identified [performance or correctness issue]\n\n### Root Cause\n[Specific line or pattern] causes [specific failure] because [technical explanation].\n\n### Fix\n```\n[Code change with before/after]\n```\n\n### Verification\n- [Test that confirms fix works]\n- [Regression test to prevent recurrence]\n\n### Prevention\n- [Monitoring alert]\n- [Code review checklist item]\n- [Documentation update]"
+  ],
+  personal_task_content: [
+    "## Executive Summary\n\n[One paragraph overview — what this content achieves and why it matters]\n\n## Key Findings\n\n1. **[Finding 1]**: [Data point with source]. Implication: [what this means for the reader].\n2. **[Finding 2]**: [Data point with source]. Counterpoint: [acknowledge limitations].\n3. **[Finding 3]**: [Data point with source]. Action: [what to do about it].\n\n## Deep Dive\n\n### [H2: First major topic]\n[300+ word analysis with specific examples, data citations, and practical takeaways]\n\n### [H2: Second major topic]\n[300+ word analysis — connects to first topic, adds new dimension]\n\n## What To Do Next\n\n[Prioritized, actionable recommendations with timelines]\n\n## FAQ\n\n**Q: [Common question about this topic]?**\nA: [Concise answer with data or example]\n\n**Q: [Common objection]?**\nA: [Direct response acknowledging the concern with evidence]"
+  ],
+  personal_task_translation: [
+    "## Translation Brief\n\n### Source Context\n[Purpose of the original text, target audience, platform]\n\n### Key Adaptations\n1. **Structural**: [Chinese topic-comment → English SVO example]\n2. **Cultural**: [Idiom/expression → English equivalent, with reasoning]\n3. **Tonal**: [Source tone → adjusted target tone — e.g., hyperbolic → restrained]\n\n### Technical Glossary\n| Source Term | Target Translation | Notes |\n|---|---|---|\n| [Term 1] | [Translation] | [Context/domain] |\n\n### Compliance Check\n- Chinese Advertising Law: [Pass/Fail — specific articles checked]\n- Platform Rules: [Platform-specific requirements verified]\n- Cross-border: [FTC/FDA/EU requirements addressed]"
+  ],
+  personal_task_data: [
+    "## Executive Summary\n[One-paragraph overview of findings, methodology, and confidence]\n\n## Methodology\n- Data sources: [List with URLs and access dates]\n- Sample size: [N] records covering [time period]\n- Analysis method: [Statistical approach, tools used]\n- Limitations: [Honest assessment of what this CAN'T tell us]\n\n## Key Findings\n\n1. **[Finding Name]** (Confidence: High)\n   - Data: [Specific numbers with context]\n   - Source: [Citation]\n   - Implication: [What to do]\n\n2. **[Finding Name]** (Confidence: Medium)\n   - Data: [Numbers]\n   - Source: [Citation]\n   - Caveat: [Limitation]\n\n## Recommendations (Prioritized)\n1. **[Action]**: [Expected impact], [Effort/ cost], [Timeline]\n2. **[Action]**: [Expected impact], [Effort/cost], [Timeline]\n\n## Appendix\n- Full dataset: [Link or note about availability]\n- Calculation methodology: [Detailed steps]"
+  ]
 };
 
-function genResponse(cat) {
+// 多模板选择器 — 随机 + 类别匹配
+function genResponse(cat, questTitle) {
+  const templates = RESPONSES[cat] || RESPONSES.default;
+  const idx = Math.floor(Math.random() * templates.length);
+  let response = templates[idx];
+
+  // 融入知识库经验
   let tips = [];
   try { tips = getRelevantAtoms("A", cat, 3) || []; } catch(e) {}
-  let bonus = "";
-  if (tips.length > 0) { bonus = " [KB: " + tips.map(t=>t.pattern).join("; ") + "]"; }
-  const c = Object.keys(RESPONSES).find(k=>cat.includes(k))||"default";
-  return (RESPONSES[c]||RESPONSES.default) + bonus;
+  if (tips.length > 0) {
+    response += "\n\n> *Knowledge base insight: " + tips.map(t=>t.pattern).join("; ") + "*";
+  }
+
+  return response;
 }
 
 // ====== Proof URL 系统 ======
@@ -270,12 +314,12 @@ async function cycle() {
       try {
         // 生成响应
         let response = isPersonalTask
-        ? (cat.includes("tech")||cat.includes("code") ? RESPONSES.personal_task_tech
-          : cat.includes("writ")||cat.includes("content") ? RESPONSES.personal_task_content
-          : cat.includes("translat") ? RESPONSES.personal_task_translation
-          : cat.includes("data")||cat.includes("research") ? RESPONSES.personal_task_data
-          : RESPONSES.personal_task_content)
-        : genResponse(cat);
+        ? (cat.includes("tech")||cat.includes("code") ? RESPONSES.personal_task_tech[0]
+          : cat.includes("writ")||cat.includes("content") ? RESPONSES.personal_task_content[0]
+          : cat.includes("translat") ? RESPONSES.personal_task_translation[0]
+          : cat.includes("data")||cat.includes("research") ? RESPONSES.personal_task_data[0]
+          : RESPONSES.personal_task_content[0])
+        : genResponse(cat, q.title);
         response = humanize(response);
         if (!safetyCheck(response)) continue;
         response += "\n\n---\n*MediaCraft AI — bilingual compliance review included. Proof: " + proof + "*";
