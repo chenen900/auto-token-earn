@@ -1011,10 +1011,12 @@ app.get("/daemon/status", (_, res) => {
 
 app.get("/daemon/health", (_, res) => res.json({ ok: true, time: new Date().toISOString() }));
 app.post("/daemon/heartbeat", (req, res) => {
-  const { cycles, running, time } = req.body || {};
+  const { cycles, running, time, subs, earned } = req.body || {};
   if (cycles !== undefined) daemonStatus.cycles = cycles;
   if (running !== undefined) daemonStatus.running = running;
   if (time) daemonStatus.lastCycle = time;
+  if (subs !== undefined) daemonStatus.submissionsToday = (daemonStatus.submissionsToday || 0) + subs;
+  if (earned !== undefined) daemonStatus.earnedToday = earned;
   res.json({ ok: true });
 });
 

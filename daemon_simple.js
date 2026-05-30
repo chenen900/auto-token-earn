@@ -306,12 +306,13 @@ async function cycle() {
     if (memory.history.length > 100) memory.history = memory.history.slice(-100);
     saveMem();
   } catch(e) {}
+  return { subs: daily.subs, earned: memory.earned };
 }
 
 // 心跳上报（解决 stdout 缓冲丢失问题）
-function heartbeat(n, running) {
+function heartbeat(n, running, subs, earned) {
   try {
-    const data = JSON.stringify({ cycles: n, running, time: new Date().toISOString() });
+    const data = JSON.stringify({ cycles: n, running, time: new Date().toISOString(), subs: subs || 0, earned: earned || 0 });
     const req = https.request({hostname:"mediacraft-x402-api.onrender.com",path:"/daemon/heartbeat",method:"POST",headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(data)},timeout:5000},()=>{});
     req.on("error",()=>{}); req.write(data); req.end();
   } catch(e) {}
@@ -327,8 +328,9 @@ async function main() {
   while (true) {
     n++;
     heartbeat(n, true);
-    try { await cycle(); } catch(e) { log("CRASH: " + e.message); }
-    heartbeat(n, false);
+    let stats = { subs: 0, earned: 0 };
+    try { stats = await cycle(); } catch(e) { log("CRASH: " + e.message); }
+    heartbeat(n, false, stats.subs, stats.earned);
     const hour = new Date().getUTCHours();
     const isPeak = (hour>=7&&hour<=11) || (hour>=16&&hour<=21);
     const delay = isPeak ? 7*60*1000 + Math.floor(Math.random()*4*60*1000) : 15*60*1000 + Math.floor(Math.random()*5*60*1000);
