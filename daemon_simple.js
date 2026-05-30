@@ -27,6 +27,9 @@ function log(msg) { const line = "[" + new Date().toISOString().substring(11,19)
 // ====== HTTP ======
 function get(p) { return new Promise(r => { https.get({hostname:"agenthansa.com",path:p,headers:{Authorization:"Bearer "+KEY}}, res => { let d=""; res.on("data",c=>d+=c); res.on("end",()=>{ try { r(JSON.parse(d)); } catch(e) { r(null); } }); }).on("error",()=>r(null)); }); }
 function post(p,b) { return new Promise(r => { const d=b!==undefined?JSON.stringify(b):"{}"; const req=https.request({hostname:"agenthansa.com",path:p,method:"POST",headers:{Authorization:"Bearer "+KEY,"Content-Type":"application/json","Content-Length":d.length}}, res => { let o=""; res.on("data",c=>o+=c); res.on("end",()=>{ try { r(JSON.parse(o)); } catch(e) { r(null); } }); }); req.on("error",()=>r(null)); req.write(d); req.end(); }); }
+
+// 调用自己的 API（不带 AgentHansa auth）
+function callOwnAPI(path, body) { return new Promise(r => { const d=body?JSON.stringify(body):"{}"; const req=https.request({hostname:"mediacraft-x402-api.onrender.com",path:path,method:body?"POST":"GET",headers:{"Content-Type":"application/json","Content-Length":d.length}}, res => { let o=""; res.on("data",c=>o+=c); res.on("end",()=>{ try { r(JSON.parse(o)); } catch(e) { r(null); } }); }); req.on("error",()=>r(null)); req.write(d); req.end(); }); }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // 通用数学题解析器 — 支持多种格式
@@ -292,11 +295,41 @@ async function cycle() {
       const pa = priority.findIndex(p => ta.includes(p)); const pb = priority.findIndex(p => tb.includes(p));
       return (pa===-1?99:pa) - (pb===-1?99:pb);
     });
+    // 先处理已答队列 — 提交 AI 写好的高质量内容
+    try {
+      const ready = await callOwnAPI("/daemon/quest-queue/ready", null);
+      if (Array.isArray(ready)) {
+        for (const rq of ready) {
+          if (daily.subs >= daily.max) break;
+          try {
+            const submitRes = await post("/api/alliance-war/quests/"+rq.questId+"/submit", { content: rq.answer, proof_url: rq.proofUrl || getProofUrl() });
+            if (submitRes) {
+              log("QUEUE-SUBMIT: $" + rq.reward + " — " + (rq.title||"").substring(0,40));
+              daily.subs++;
+              await callOwnAPI("/daemon/quest-queue/"+rq.questId+"/submitted", {});
+            }
+          } catch(e) { log("QUEUE-SUBMIT-ERR: " + e.message?.substring(0,40)); }
+          await sleep(3000);
+        }
+      }
+    } catch(e) {}
+
     let bid = 0;
     for (const q of sorted.slice(0, 3)) {
       if (daily.subs >= daily.max) break;
       const isPersonalTask = (q.title||"").toLowerCase().includes("personal");
       const cat = detectCat(q.title);
+      const reward = parseFloat(q.reward_usd||0);
+
+      // 高价值任务 ($30+) → 转发到本地队列，不用模板
+      if (reward >= 30) {
+        try {
+          await callOwnAPI("/daemon/quest-queue", { questId: q.id, title: q.title, reward: reward, category: cat });
+          log("QUEUED: $" + reward + " — " + (q.title||"").substring(0,50));
+        } catch(e) {}
+        continue; // 不投模板，等人工写答案
+      }
+
       if (isPersonalTask) log("PERSONAL TASK DETECTED — using premium template");
       const proof = getProofUrl();
 

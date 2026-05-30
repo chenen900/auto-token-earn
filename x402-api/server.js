@@ -1027,6 +1027,60 @@ app.post("/daemon/heartbeat", (req, res) => {
   res.json({ ok: true });
 });
 
+// ============ Quest 队列 — 高价值任务转发本地处理 ============
+const QUEST_QUEUE_FILE = require("path").join(__dirname, "..", "data", "quest_queue.json");
+function loadQuestQueue() { try { return JSON.parse(require("fs").readFileSync(QUEST_QUEUE_FILE, "utf-8")); } catch(e) { return []; } }
+function saveQuestQueue(q) { require("fs").writeFileSync(QUEST_QUEUE_FILE, JSON.stringify(q, null, 2)); }
+
+// Daemon 转发高价值任务
+app.post("/daemon/quest-queue", (req, res) => {
+  const { questId, title, reward, category, url } = req.body || {};
+  if (!questId) return res.status(400).json({ error: "missing questId" });
+  const queue = loadQuestQueue();
+  if (queue.find(q => q.questId === questId)) return res.json({ ok: true, status: "already_queued" });
+  queue.push({ questId, title, reward, category, url, status: "pending", queuedAt: new Date().toISOString(), answer: null });
+  saveQuestQueue(queue);
+  console.log("[QUEST-QUEUE] New: $" + reward + " — " + (title||"").substring(0,60));
+  res.json({ ok: true, status: "queued" });
+});
+
+// 查看队列（人工/AI 读取）
+app.get("/daemon/quest-queue", (_, res) => {
+  res.json(loadQuestQueue().filter(q => q.status === "pending"));
+});
+
+// 提交答案（人工/AI 写完后提交，daemon 下一轮投递）
+app.post("/daemon/quest-queue/:questId/answer", (req, res) => {
+  const { answer, proofUrl } = req.body || {};
+  if (!answer) return res.status(400).json({ error: "missing answer" });
+  const queue = loadQuestQueue();
+  const q = queue.find(q => q.questId === req.params.questId);
+  if (!q) return res.status(404).json({ error: "quest not found" });
+  q.answer = answer;
+  q.proofUrl = proofUrl || "";
+  q.status = "answered";
+  q.answeredAt = new Date().toISOString();
+  saveQuestQueue(queue);
+  res.json({ ok: true, status: "answered" });
+});
+
+// Daemon 拉取已答任务并投递
+app.get("/daemon/quest-queue/ready", (_, res) => {
+  const ready = loadQuestQueue().filter(q => q.status === "answered");
+  res.json(ready);
+});
+
+// Daemon 标记已投递
+app.post("/daemon/quest-queue/:questId/submitted", (req, res) => {
+  const queue = loadQuestQueue();
+  const q = queue.find(q => q.questId === req.params.questId);
+  if (!q) return res.status(404).json({ error: "not found" });
+  q.status = "submitted";
+  q.submittedAt = new Date().toISOString();
+  saveQuestQueue(queue);
+  res.json({ ok: true });
+});
+
 // 监控面板（人类可读）
 app.get("/daemon/monitor", (_, res) => {
   const historyHtml = daemonStatus.cycleHistory.map(c =>
