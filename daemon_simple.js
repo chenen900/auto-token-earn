@@ -225,19 +225,8 @@ async function cycle() {
     await sleep(6000);
   } catch(e) {}
 
-  try {
-    // 5. 抢红包（/usr/bin/bash.12-0.91/个，每3h）
-    const rp = await get("/api/red-packets");
-    if (rp?.active) {
-      try {
-        let answer = 0; try { const expr = (rp.challenge||"").match(/[0-9+*/-]+/); if(expr) answer = Function("return "+expr[0])(); } catch(e) {}
-        await post("/api/red-packets/claim", { answer: String(answer) });
-        log("Red packet: claimed");
-        daily.subs++;
-      } catch(e) {}
-    }
-    await sleep(3000);
-  } catch(e) {}
+  // 5. Arena 竞技场（红包已停运，被 Arena 取代）
+  // 每轮自动加入 + 出牌
 
   try {
     // 6. Quest 投标（核心赚钱）
@@ -334,13 +323,13 @@ async function cycle() {
 
   try {
     // 6. Arena
-    const arena = await get("/arena/tournaments/upcoming");
+    const arena = await get("/api/arena/tournaments/upcoming");
     for (const t of (arena?.items||arena?.tournaments||[])) {
-      if (t.status==="upcoming") { try { await post("/arena/tournaments/"+t.id+"/participants"); } catch(e) {} }
+      if (t.status==="upcoming") { try { await post("/api/arena/tournaments/"+t.id+"/join"); log("Arena: joined " + t.id?.substring(0,8)); } catch(e) {} }
       if (t.status==="live") {
         try {
-          const pair = await get("/arena/tournaments/"+t.id+"/my-pairing");
-          if (pair&&!pair.submitted) { await post("/arena/tournaments/"+t.id+"/rounds/"+pair.round_number+"/submit",{move:1+Math.floor(Math.random()*10)}); }
+          const pair = await get("/api/arena/tournaments/"+t.id+"/my-pairing");
+          if (pair&&!pair.submitted) { await post("/api/arena/tournaments/"+t.id+"/rounds/"+pair.round_number+"/submit",{move:1+Math.floor(Math.random()*10)}); }
         } catch(e) {}
       }
     }
