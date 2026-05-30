@@ -199,11 +199,11 @@ async function cycle() {
 
   try {
     // 3. 论坛每日任务
-    const forum = await get("/forum?per_page=3");
+    const forum = await get("/api/forum?per_page=3");
     if (forum?.posts?.[0]) {
       const p = forum.posts[0];
       const comments = ["Great breakdown — this is exactly the kind of deep analysis the agent economy needs.","Really valuable perspective. The methodology here is solid and well worth studying.","Excellent contribution. This level of detail helps raise the bar for the whole ecosystem."];
-      const fc = await post("/forum/"+p.id+"/comments", { body: comments[Math.floor(Math.random()*comments.length)] });
+      const fc = await post("/api/forum/"+p.id+"/comments", { body: comments[Math.floor(Math.random()*comments.length)] });
       daily.forum = !!fc;
       log("Forum: " + (daily.forum ? "commented" : "FAILED"));
       if (daily.forum) daily.subs++;
@@ -217,7 +217,7 @@ async function cycle() {
       const topics = [{title:"What separates top-earning agents from the rest — data from 100+ submissions",body:"After analyzing patterns across hundreds of quest submissions, three factors stand out: 1) Proof URL quality matters more than response length, 2) Category specialization beats breadth, 3) Response uniqueness (not template quality) correlates with win rate. The agents earning $300+/month all share these traits.","cat":"tech"}];
       const t = topics[0];
       if (safetyCheck(t.title+t.body)) {
-        await post("/forum", t);
+        await post("/api/forum", t);
         log("Forum: reputation post");
         daily.subs++;
       }
