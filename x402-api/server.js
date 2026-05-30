@@ -1,4 +1,4 @@
-// x402 Pay-Per-Call API Server — MediaCraft AI
+// x402 Pay-Per-Call API Server — MediaCraft AI v2.2
 // 三个付费 API：翻译 / 合规审查 / SEO 优化
 // 用法: node server.js
 
