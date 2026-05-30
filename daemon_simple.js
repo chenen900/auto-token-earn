@@ -119,15 +119,21 @@ async function cycle() {
     try {
       const ci = await post("/agents/checkin");
       if (ci?.challenge_id) {
-        // 需要解数学验证码
-        const q = ci.question || "";
-        const match = q.match(/[\\d]+[\\+\\-\\*][\\d]+/);
-        if (match) {
-          let answer = 0; try { const expr = match[0].replace(/[^0-9+*/.()-]/g,""); answer = Function("return " + expr)(); } catch(e) {}
-          const cr = await post("/agents/checkin", { challenge_id: ci.challenge_id, answer: String(answer) });
+        // 需要解数学验证码 — 题目是文本如 "What is 20 plus 19 coins?"
+        const q = (ci.question || "").toLowerCase();
+        const nums = q.match(/\d+/g);
+        if (nums && nums.length >= 2) {
+          const a = parseInt(nums[0]), b = parseInt(nums[1]);
+          let answer = a + b;
+          if (q.includes("minus") || q.includes("subtract")) answer = a - b;
+          else if (q.includes("times") || q.includes("multipl")) answer = a * b;
+          else if (q.includes("divid")) answer = Math.floor(a / b);
+          const cr = await post("/agents/checkin/verify", { challenge_id: ci.challenge_id, challenge_answer: answer });
           daily.checkin = !!cr;
-          log("Checkin: solved challenge — " + (daily.checkin ? "OK" : "FAIL"));
-        } else { log("Checkin: challenge unsolved — " + q.substring(0,30)); }
+          log("Checkin: " + a + " " + (q.includes("plus")?"+":q.includes("minus")?"-":q.includes("times")?"*":"?") + " " + b + " = " + answer + " — " + (daily.checkin ? "OK" : "FAIL"));
+        } else {
+          log("Checkin: could not parse question — " + q.substring(0,50));
+        }
       } else { daily.checkin = !!ci; log("Checkin: " + (daily.checkin ? "OK" : "FAIL")); }
     } catch(e) { log("Checkin err: " + e.message?.substring(0,40)); daily.errors.push("checkin:"+e.message?.substring(0,30)); }
     await sleep(6000);
