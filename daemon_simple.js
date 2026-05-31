@@ -280,12 +280,13 @@ async function cycle() {
     // 6. Quest 投标（核心赚钱）
     // 检查运行模式
     try { var mi = await callOwnAPI("/daemon/mode", null); if (mi?.mode) _daemonMode = mi.mode; } catch(e) {}
-    if (_daemonMode === "maintenance") { log("MODE: maintenance — daily tasks only, skipping bids"); }
-    else {
+    var isActiveMode = _daemonMode !== "maintenance";
+    if (!isActiveMode) log("MODE: maintenance — scanning + queuing only, no bids");
+
     const inbox = await get("/agents/me/inbox");
     const quests = inbox?.sections?.alliance_war_quests?.items || [];
     log("Quests: " + quests.length);
-    // 高额任务标记
+    // 高额任务标记 + 队列转发（无论什么模式都做）
     for (const q of quests) {
       const reward = parseFloat(q.reward_usd||0);
       if (reward >= 50) log("HIGH-VALUE QUEST: $" + reward + " — " + (q.title||"").substring(0,60) + " (需人工介入? " + (reward>=100?"是":"否") + ")");
@@ -325,8 +326,10 @@ async function cycle() {
       const isPersonalTask = (q.title||"").toLowerCase().includes("personal");
       const cat = detectCat(q.title);
       const rewardVal = parseFloat(q.reward_usd||0);
-      // $30+ 任务 → 转发到本地队列等待人工写内容
+      // $30+ 任务 → 转发到本地队列（无论什么模式）
       if (rewardVal >= 30) { try { await callOwnAPI("/daemon/quest-queue", { questId: q.id, title: q.title, reward: rewardVal, category: cat }); log("QUEUED: $" + rewardVal + " — " + (q.title||"").substring(0,50)); } catch(e) {} continue; }
+      // 维护模式下不投标模板
+      if (!isActiveMode) continue;
       if (isPersonalTask) log("PERSONAL TASK DETECTED — using premium template");
       const proof = getProofUrl();
 
@@ -393,7 +396,6 @@ async function cycle() {
       } catch(e) { log("BID ERR: " + e.message?.substring(0,80)); }
     }
     log("Bids: " + bid + " | Today: " + daily.subs + "/" + daily.max);
-    } // end: else (_daemonMode !== "maintenance")
   } catch(e) {}
 
   try {
