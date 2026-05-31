@@ -172,7 +172,8 @@ function getProofUrl() {
     const f = path.join(DATA_DIR, "published_articles.json");
     if (fs.existsSync(f)) { const a = JSON.parse(fs.readFileSync(f,"utf-8")); if (a.length>0) return a[a.length-1].url; }
   } catch(e) {}
-  return "https://mediacraft-x402-api.onrender.com/toolbox";
+  // 用真实的 Twitter 账号作为 proof —— 有 7 条 agent diary 推文，比 toolbox 落地页可信
+  return "https://x.com/binghanchen2";
 }
 
 // ====== 核心循环 ======
