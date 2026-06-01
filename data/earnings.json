@@ -1,0 +1,180 @@
+{
+  "generatedAt": "2026-06-01T07:07:32.843Z",
+  "date": "2026-06-01",
+  "summary": {
+    "totalChannels": 10,
+    "activeChannels": 4,
+    "totalEarned": 0,
+    "totalEarnedDisplay": "$0.00"
+  },
+  "channels": [
+    {
+      "id": "agenthansa",
+      "name": "AgentHansa",
+      "category": "quest",
+      "dailyEstimate": "$0.05-0.20",
+      "status": "idle",
+      "metrics": {
+        "balance": 0,
+        "tasks_completed": 2,
+        "earned_total": null,
+        "earned_today": 0,
+        "reputation": 53,
+        "cycles": 1,
+        "running": false,
+        "rank": 14855,
+        "total_agents": 94512,
+        "status": "idle"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "error": null
+    },
+    {
+      "id": "pinchwork",
+      "name": "Pinchwork",
+      "category": "agent_marketplace",
+      "dailyEstimate": "$0-20",
+      "status": "unregistered",
+      "metrics": {
+        "balance": 0,
+        "tasks_completed": 0,
+        "earned_total": 0,
+        "reputation": 0,
+        "status": "unregistered"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "error": null
+    },
+    {
+      "id": "clawhunt",
+      "name": "ClawHunt",
+      "category": "bounty_board",
+      "dailyEstimate": "$0-50",
+      "status": "unregistered",
+      "metrics": {
+        "bounties_submitted": 0,
+        "earned_total": 0,
+        "status": "unregistered"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "error": null
+    },
+    {
+      "id": "taskmarket",
+      "name": "TaskMarket",
+      "category": "bounty_board",
+      "dailyEstimate": "$0-25",
+      "status": "unregistered",
+      "metrics": {
+        "tasks_submitted": 0,
+        "earned_total": 0,
+        "status": "unregistered"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "error": null
+    },
+    {
+      "id": "dealwork",
+      "name": "dealwork.ai",
+      "category": "freelance",
+      "dailyEstimate": "$0-5",
+      "status": "idle",
+      "metrics": {
+        "balance": 0,
+        "bids": 4,
+        "contracts": 0,
+        "status": "idle"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "error": null
+    },
+    {
+      "id": "devto",
+      "name": "Dev.to",
+      "category": "content",
+      "dailyEstimate": "品牌",
+      "status": "active",
+      "metrics": {
+        "articles": 6,
+        "status": "active"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "error": null
+    },
+    {
+      "id": "x402",
+      "name": "x402 API",
+      "category": "api",
+      "dailyEstimate": "$0-50",
+      "status": "idle",
+      "metrics": {
+        "calls": 0,
+        "earnings": 0,
+        "status": "idle"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "error": null
+    },
+    {
+      "id": "superteam",
+      "name": "Superteam Earn",
+      "category": "bounty",
+      "dailyEstimate": "$0-10",
+      "status": "pending",
+      "metrics": {
+        "status": "pending",
+        "note": "API key needed"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "error": null
+    },
+    {
+      "id": "toku",
+      "name": "Toku Agency",
+      "category": "service_market",
+      "dailyEstimate": "$0-5",
+      "status": "pending",
+      "metrics": {
+        "status": "pending",
+        "note": "API key needed"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "error": null
+    },
+    {
+      "id": "hashnode",
+      "name": "Hashnode",
+      "category": "content",
+      "dailyEstimate": "$0-2",
+      "status": "pending",
+      "metrics": {
+        "status": "pending",
+        "note": "API key needed"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "error": null
+    }
+  ],
+  "previousCheck": null,
+  "earningsDelta": 0
+}

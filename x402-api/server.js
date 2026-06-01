@@ -1010,6 +1010,38 @@ app.get("/daemon/status", (_, res) => {
 });
 
 app.get("/daemon/health", (_, res) => res.json({ ok: true, time: new Date().toISOString() }));
+
+// ============ 统一收益报告 ============
+app.get("/earnings", (_, res) => {
+  try {
+    const reportPath = require("path").join(__dirname, "..", "data", "earnings.json");
+    if (require("fs").existsSync(reportPath)) {
+      const report = JSON.parse(require("fs").readFileSync(reportPath, "utf-8"));
+      res.json(report);
+    } else {
+      res.json({ generatedAt: new Date().toISOString(), summary: { totalChannels: 0, activeChannels: 0, totalEarned: 0, totalEarnedDisplay: "$0.00" }, channels: [], note: "Run earnings_monitor.js first" });
+    }
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// 收益摘要（轻量版，供 dashboard 快速轮询）
+app.get("/earnings/summary", (_, res) => {
+  try {
+    const reportPath = require("path").join(__dirname, "..", "data", "earnings.json");
+    if (require("fs").existsSync(reportPath)) {
+      const report = JSON.parse(require("fs").readFileSync(reportPath, "utf-8"));
+      res.json({
+        total: report.summary.totalEarnedDisplay,
+        active: report.summary.activeChannels + "/" + report.summary.totalChannels,
+        delta: report.earningsDelta,
+        updated: report.generatedAt,
+        channels: report.channels.map(c => ({ id: c.id, name: c.name, status: c.status, earned: c.earned_total })),
+      });
+    } else {
+      res.json({ total: "$0.00", active: "0/0", delta: 0, updated: null, channels: [] });
+    }
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
 app.post("/daemon/heartbeat", (req, res) => {
   const { cycles, running, time, subs, earned, checkin, cognitive, forum, errors } = req.body || {};
   if (cycles !== undefined) daemonStatus.cycles = cycles;

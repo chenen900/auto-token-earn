@@ -63,6 +63,10 @@ jobs:
         continue-on-error: true
         run: node defi_simulator.js run
 
+      - name: Run Earnings Monitor (collect all channels)
+        continue-on-error: true
+        run: node earnings_monitor.js --ci
+
       - name: Commit learning data
         continue-on-error: true
         run: |
