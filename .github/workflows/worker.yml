@@ -35,6 +35,14 @@ jobs:
           HASHNODE_API_KEY: ${{ secrets.HASHNODE_API_KEY }}
         run: node hashnode_worker.js
 
+      - name: Run Pinchwork Worker (agent-to-agent marketplace)
+        continue-on-error: true
+        run: node pinchwork_worker.js
+
+      - name: Run ClawHunt Worker (bounty board)
+        continue-on-error: true
+        run: node clawhunt_worker.js
+
       - name: Run TaskMarket Worker
         continue-on-error: true
         run: node taskmarket_worker.js
