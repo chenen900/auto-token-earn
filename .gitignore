@@ -4,3 +4,4 @@ logs/
 tmp_*.json
 node_modules/
 data/platform_credentials.json
+data/*credentials*.json

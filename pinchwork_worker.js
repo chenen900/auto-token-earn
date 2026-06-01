@@ -6,10 +6,18 @@
 const fs = require("fs");
 const path = require("path");
 
+// 简单 .env 加载（无需 dotenv 依赖）
+try {
+  const envFile = fs.readFileSync(path.join(__dirname, ".env"), "utf-8");
+  envFile.split("\n").forEach(line => {
+    const m = line.match(/^\s*(\w[\w_]*)\s*=\s*(.+)/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+  });
+} catch(e) {}
+
 const API = "https://pinchwork.dev/v1";
 const ROOT = __dirname;
 const LOG_DIR = path.join(ROOT, "logs");
-const CRED_FILE = path.join(ROOT, "data", "pinchwork_credentials.json");
 
 // ========== 内容安全审查 ==========
 const BLOCKED_KW = ["xi jinping", "tiananmen", "tibet", "xinjiang", "taiwan independence",
@@ -28,8 +36,31 @@ function markDone(tag) { fs.writeFileSync(path.join(LOG_DIR, `.pw_marker_${tag}_
 function loadCreds() { try { return JSON.parse(fs.readFileSync(CRED_FILE,"utf-8")); } catch(e) { return null; } }
 function saveCreds(c) { const dir = path.dirname(CRED_FILE); if (!fs.existsSync(dir)) fs.mkdirSync(dir,{recursive:true}); fs.writeFileSync(CRED_FILE, JSON.stringify(c,null,2)); }
 
-let API_KEY = null;
-function authHeaders() { return { "Authorization": `Bearer ${API_KEY}`, "Content-Type": "application/json" }; }
+let API_KEY = process.env.PINCHWORK_API_KEY || null;
+function authHeaders() { return { "Authorization": `Bearer ${API_KEY}`, "Content-Type": "application/json", "Accept": "application/json" }; }
+
+// Pinchwork API 返回 Markdown+YAML frontmatter，不是 JSON
+function parseYamlFrontmatter(text) {
+  if (!text) return null;
+  // 尝试 JSON 解析（向后兼容）
+  if (text.trim().startsWith("{")) { try { return JSON.parse(text); } catch(e) {} }
+  // 解析 YAML frontmatter: ---\nkey: value\n---\nbody
+  const m = text.match(/^---\s*\n([\s\S]*?)\n---/);
+  if (!m) return null;
+  const result = {};
+  for (const line of m[1].split("\n")) {
+    const kv = line.match(/^(\w[\w_]*):\s*(.+)/);
+    if (kv) {
+      let val = kv[2].trim();
+      if (val === "null") val = null;
+      else if (val === "true") val = true;
+      else if (val === "false") val = false;
+      else if (/^\d+$/.test(val)) val = parseInt(val);
+      result[kv[1]] = val;
+    }
+  }
+  return result;
+}
 
 async function api(method, endpoint, body, retries=2) {
   const opts = { method, headers: authHeaders() };
@@ -37,25 +68,24 @@ async function api(method, endpoint, body, retries=2) {
   try {
     const res = await fetch(`${API}${endpoint}`, opts);
     if (res.status === 429 && retries > 0) { log(`RATE: 429, cooling 15s...`); await sleep(15000); return api(method, endpoint, body, retries-1); }
-    const data = await res.json();
-    if (!res.ok) throw new Error(`${res.status} ${JSON.stringify(data).substring(0,200)}`);
-    return data;
+    const text = await res.text();
+    const data = parseYamlFrontmatter(text) || (() => { try { return JSON.parse(text); } catch(e) { return null; } })();
+    if (!res.ok) throw new Error(`${res.status} ${text.substring(0,200)}`);
+    return data || { raw: text };
   } catch(e) { if (retries > 0 && e.message.includes("fetch")) { await sleep(5000); return api(method, endpoint, body, retries-1); } throw e; }
 }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ========== 注册/认证 ==========
 async function ensureRegistered() {
-  const creds = loadCreds();
-  if (creds?.api_key) { API_KEY = creds.api_key; log(`AUTH: Using saved key, agent_id=${creds.agent_id}`); return creds; }
+  if (API_KEY) { log(`AUTH: Using env PINCHWORK_API_KEY`); return { api_key: API_KEY }; }
 
   log("AUTH: Registering new agent...");
   const res = await api("POST", "/register", { name: "MediaCraft_AI" });
-  const c = { agent_id: res.agent_id, api_key: res.api_key, credits: res.credits, referral_code: res.referral_code, registeredAt: now() };
-  saveCreds(c);
-  API_KEY = c.api_key;
-  log(`AUTH: Registered! agent_id=${c.agent_id} credits=${c.credits} referral=${c.referral_code}`);
-  return c;
+  if (!res?.api_key) { log(`AUTH: Registration failed — unexpected response format`); return null; }
+  API_KEY = res.api_key;
+  log(`AUTH: Registered! agent_id=${res.agent_id} credits=${res.credits} referral=${res.referral_code}`);
+  return { api_key: res.api_key, agent_id: res.agent_id, credits: res.credits, referral_code: res.referral_code };
 }
 
 // ========== 技能匹配 ==========
@@ -121,16 +151,18 @@ async function main() {
   const creds = await ensureRegistered();
   if (!API_KEY) { log("FATAL: No API key"); return; }
 
-  // 2. 查看账户状态
+  // 2. 查看账户状态（Pinchwork 无 /me 端点，用 /tasks/mine 代替）
+  let profile = {};
   try {
-    const me = await api("GET", "/v1/me");
-    log(`PROFILE: ${me.name} | credits=${me.credits} | rep=${me.reputation} | completed=${me.tasks_completed} | posted=${me.tasks_posted}`);
-  } catch(e) { log(`PROFILE: fetch failed — ${e.message}`); }
+    const res = await api("GET", "/tasks/mine?limit=1");
+    profile = { tasks_total: res?.total || 0 };
+    log(`PROFILE: tasks tracked=${profile.tasks_total}`);
+  } catch(e) { log(`PROFILE: ${e.message.substring(0,60)} (OK — /me not available)`); }
 
   // 3. 浏览可用任务
   let tasks = [];
   try {
-    const res = await api("GET", "/v1/tasks/available?limit=20");
+    const res = await api("GET", "/tasks/available?limit=20");
     tasks = res.tasks || [];
     log(`TASKS: ${tasks.length} available`);
   } catch(e) { log(`TASKS: browse failed — ${e.message}`); return; }
@@ -159,15 +191,15 @@ async function main() {
 
       // 接单
       log(`PICKUP: "${(task.need||"").substring(0,60)}" (score=${score}, max_credits=${task.max_credits})`);
-      const claimed = await api("POST", `/v1/tasks/${task.task_id}/pickup`);
+      const claimed = await api("POST", `/tasks/${task.task_id}/pickup`);
       if (!claimed?.task_id) { log(`PICKUP: failed or already claimed`); continue; }
 
       // 生成交付内容
       const result = genResponse(task);
-      if (!safetyCheck(result)) { log(`SKIP: generated content failed safety check`); await api("POST", `/v1/tasks/${task.task_id}/abandon`).catch(()=>{}); continue; }
+      if (!safetyCheck(result)) { log(`SKIP: generated content failed safety check`); await api("POST", `/tasks/${task.task_id}/abandon`).catch(()=>{}); continue; }
 
       // 交付
-      await api("POST", `/v1/tasks/${task.task_id}/deliver`, { result });
+      await api("POST", `/tasks/${task.task_id}/deliver`, { result });
       log(`DELIVER: "${(task.need||"").substring(0,60)}" — delivered, max_credits=${task.max_credits}`);
       markDone(tKey);
       completed++;
@@ -180,7 +212,7 @@ async function main() {
 
   // 6. 查看积分
   try {
-    const credits = await api("GET", "/v1/me/credits");
+    const credits = await api("GET", "/me/credits");
     log(`CREDITS: balance=${credits.balance} | escrowed=${credits.escrowed} | ledger_entries=${credits.total}`);
   } catch(e) {}
 
