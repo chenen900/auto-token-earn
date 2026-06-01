@@ -210,6 +210,30 @@ const CHANNELS = [
       return { status: "pending", note: "API key needed" };
     }
   },
+  {
+    id: "agentictrade", name: "AgenticTrade 🆕", category: "api_marketplace",
+    dailyEstimate: "$0-30",
+    check: async () => {
+      let data = { services: 5, earnings: 0 };
+      try {
+        const cf = path.join(DATA_DIR, "agentictrade_credentials.json");
+        if (fs.existsSync(cf)) {
+          const creds = JSON.parse(fs.readFileSync(cf, "utf-8"));
+          const registered = creds.filter(c => c.ok).length;
+          data.services = registered;
+        }
+        // AgenticTrade 暂无公开 earnings API，用注册数推算
+      } catch(e) {}
+      return { ...data, status: data.services > 0 ? "active" : "new" };
+    }
+  },
+  {
+    id: "swarms", name: "Swarms Marketplace", category: "agent_marketplace",
+    dailyEstimate: "$0-50",
+    check: async () => {
+      return { status: "pending", note: "待接入MCP" };
+    }
+  },
 ];
 
 // ========== 主采集逻辑 ==========
