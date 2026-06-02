@@ -1,6 +1,7 @@
 {
-  "version": "3.0.0",
-  "lastUpdated": "2026-05-28",
+  "version": "4.0.0",
+  "lastUpdated": "2026-06-02",
+  "newCoverage": "EU AI Act + US FTC + Japan 景品表示法/薬機法 added",
   "description": "MediaCraft AI 平台规则数据库 — 护城河核心资产。包含真实处罚案例、罚款金额、违法条款。",
 
   "advertisingLaw": {
@@ -22,6 +23,40 @@
       {"id": "cb_epa", "rule": "EPA禁止未经认证的环保声明", "severity": "high", "pattern": "eco-friendly|biodegradable|non-toxic|all natural", "penalty": "Listing被移除", "suggestion": "必须有第三方认证（如Green Seal）才能使用"},
       {"id": "cb_ftc", "rule": "FTC要求代言/推荐必须披露利益关系", "severity": "high", "keywords": ["#ad","#sponsored","paid partnership"], "penalty": "每次违规最高$50,120罚款"},
       {"id": "cb_ce", "rule": "欧盟CE标志：电子产品/玩具必须有CE认证才能销售", "severity": "critical", "suggestion": "Listing中如提到'CE certified'需确保产品已取得CE认证"}
+    ]
+  },
+
+  "euAiAct": {
+    "name": "EU AI Act（2027年2月2日全面生效）",
+    "effective": "2027-02-02",
+    "articles": [
+      {"id": "eu_risk", "rule": "AI系统按风险等级分类：不可接受风险（禁止）、高风险（严格监管）、有限风险（透明度要求）、最小风险", "severity": "critical", "note": "通用AI模型需遵守透明度+版权披露要求"},
+      {"id": "eu_transparency", "rule": "AI生成的文本/图片/视频必须明确标注为AI创作", "severity": "critical", "keywords": ["AIgenerated","generated content","synthetic media"], "penalty": "全球年营收1.5%-7%或750万-3500万欧元", "effective": "2025-02-02"},
+      {"id": "eu_highrisk", "rule": "高风险AI系统（医疗/招聘/信贷/执法）需通过合规评估+人类监督+风险管理", "severity": "critical", "penalty": "最高3500万欧元或全球年营收7%", "effective": "2027-02-02"},
+      {"id": "eu_copyright", "rule": "通用AI必须公开训练数据摘要并遵守EU版权法", "severity": "high", "penalty": "版权侵权按EU数字单一市场指令处罚", "effective": "2025-08-02"},
+      {"id": "eu_gdpr_ai", "rule": "AI处理个人数据须遵守GDPR：合法基础+数据最小化+可解释性+删除权", "severity": "high", "penalty": "最高2000万欧元或全球年营收4%"}
+    ]
+  },
+
+  "usFtc": {
+    "name": "美国 FTC AI Agent 相关规则",
+    "articles": [
+      {"id": "ftc_endorsement", "rule": "FTC Endorsement Guides: AI推荐的任何产品/服务必须披露AI身份和利益关系", "severity": "critical", "penalty": "每次违规最高$51,744", "note": "2024年10月FTC明确：AI生成的评价/推荐同样适用本规则"},
+      {"id": "ftc_deceptive", "rule": "FTC Act Section 5: AI不得进行欺骗性或不公平的行为", "severity": "critical", "penalty": "停止令+民事罚款+消费者赔偿", "note": "AI声称'人类撰写'但实际为AI生成=欺骗性行为"},
+      {"id": "ftc_impersonation", "rule": "FTC Impersonation Rule: AI不得冒充政府机构、企业或个人", "severity": "critical", "penalty": "每次违规民事罚款+刑事移送可能", "effective": "2024-04"},
+      {"id": "ftc_health", "rule": "AI健康/医疗建议必须有'这不是医疗建议'的明确免责声明", "severity": "high", "penalty": "虚假健康声明可被FDA+FTC联合执法"},
+      {"id": "ftc_children", "rule": "COPPA: 面向13岁以下儿童的AI服务须经家长同意", "severity": "critical", "penalty": "每次违规最高$51,744"}
+    ]
+  },
+
+  "japanAct": {
+    "name": "日本景品表示法・薬機法（跨境电商日本市场）",
+    "articles": [
+      {"id": "jp_premium", "rule": "景品表示法: 禁止'优良误认'——不得在没有证据的情况下宣称产品比同类更优", "severity": "critical", "keywords": ["日本一","No.1","最高","最強","第一位","業界初"], "penalty": "課徴金（销售额3%）+ 措置命令"},
+      {"id": "jp_medical", "rule": "薬機法第68条: 非药品/非医药部外品不得宣称医疗功效", "severity": "critical", "keywords": ["治療","治る","改善","効く","効能","効果","医療","医薬"], "penalty": "2年以下有期徒刑或200万円以下罚金"},
+      {"id": "jp_beauty", "rule": "化妆品等表示公正竞争规约: 化妆品可用的56种功效词之外禁止", "severity": "high", "penalty": "行政指导→改善命令→公示", "suggestion": "只使用: 保湿/整肌/肌荒れ防止/UVカット/美白"},
+      {"id": "jp_supplement", "rule": "健康食品不得暗示药品功效——'身体の調子を整える'可用，'〇〇を治す'不可", "severity": "high", "keywords": ["治す","治療","予防","改善","効く"], "penalty": "景品表示法违反（课徴金3%）"},
+      {"id": "jp_specific", "rule": "特定商取引法: 网络销售必须标明贩卖者信息+退换货条件", "severity": "high", "penalty": "业务停止命令+刑事罚则", "note": "販売業者名、代表者名、住所、電話番号を明記必須"}
     ]
   },
 
