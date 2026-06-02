@@ -3,11 +3,21 @@
 // API: https://api.hashnode.com
 // 用法: node hashnode_worker.js
 
-const HASHNODE_KEY = process.env.HASHNODE_API_KEY || "";
-const HASHNODE_API = "https://gql.hashnode.com";
 const path = require("path");
 const fs = require("fs");
 const ROOT = __dirname;
+
+// 简单 .env 加载
+try {
+  const envFile = fs.readFileSync(path.join(__dirname, ".env"), "utf-8");
+  envFile.split("\n").forEach(line => {
+    const m = line.match(/^\s*(\w[\w_]*)\s*=\s*(.+)/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+  });
+} catch(e) {}
+
+const HASHNODE_KEY = process.env.HASHNODE_API_KEY || "";
+const HASHNODE_API = "https://gql.hashnode.com";
 const LOG_DIR = path.join(ROOT, "logs");
 const DATA_DIR = path.join(ROOT, "data");
 

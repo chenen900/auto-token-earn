@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-06-01T07:07:32.843Z",
-  "date": "2026-06-01",
+  "generatedAt": "2026-06-02T01:32:42.505Z",
+  "date": "2026-06-02",
   "summary": {
-    "totalChannels": 10,
-    "activeChannels": 4,
+    "totalChannels": 12,
+    "activeChannels": 5,
     "totalEarned": 0,
     "totalEarnedDisplay": "$0.00"
   },
@@ -16,19 +16,19 @@
       "status": "idle",
       "metrics": {
         "balance": 0,
-        "tasks_completed": 2,
+        "tasks_completed": 0,
         "earned_total": null,
         "earned_today": 0,
         "reputation": 53,
-        "cycles": 1,
+        "cycles": 0,
         "running": false,
-        "rank": 14855,
-        "total_agents": 94512,
+        "rank": 14889,
+        "total_agents": 95605,
         "status": "idle"
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "lastCheck": "2026-06-02T01:32:42.505Z",
       "error": null
     },
     {
@@ -46,7 +46,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "lastCheck": "2026-06-02T01:32:42.505Z",
       "error": null
     },
     {
@@ -62,7 +62,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "lastCheck": "2026-06-02T01:32:42.505Z",
       "error": null
     },
     {
@@ -78,7 +78,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "lastCheck": "2026-06-02T01:32:42.505Z",
       "error": null
     },
     {
@@ -95,7 +95,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "lastCheck": "2026-06-02T01:32:42.505Z",
       "error": null
     },
     {
@@ -110,7 +110,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "lastCheck": "2026-06-02T01:32:42.505Z",
       "error": null
     },
     {
@@ -126,7 +126,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "lastCheck": "2026-06-02T01:32:42.505Z",
       "error": null
     },
     {
@@ -141,7 +141,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "lastCheck": "2026-06-02T01:32:42.505Z",
       "error": null
     },
     {
@@ -156,7 +156,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "lastCheck": "2026-06-02T01:32:42.505Z",
       "error": null
     },
     {
@@ -171,10 +171,41 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-01T07:07:32.843Z",
+      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "error": null
+    },
+    {
+      "id": "agentictrade",
+      "name": "AgenticTrade 🆕",
+      "category": "api_marketplace",
+      "dailyEstimate": "$0-30",
+      "status": "active",
+      "metrics": {
+        "services": 5,
+        "earnings": 0,
+        "status": "active"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "error": null
+    },
+    {
+      "id": "swarms",
+      "name": "Swarms Marketplace",
+      "category": "agent_marketplace",
+      "dailyEstimate": "$0-50",
+      "status": "pending",
+      "metrics": {
+        "status": "pending",
+        "note": "待接入MCP"
+      },
+      "earned_total": 0,
+      "earned_delta": 0,
+      "lastCheck": "2026-06-02T01:32:42.505Z",
       "error": null
     }
   ],
-  "previousCheck": null,
+  "previousCheck": "2026-06-01T10:34:19.987Z",
   "earningsDelta": 0
 }
