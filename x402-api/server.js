@@ -626,6 +626,72 @@ function seoOptimize(title, description, keywords, platform) {
   };
 }
 
+// 4. Format Checker API — 检查内容是否符合目标平台格式要求
+app.post("/api/v1/format-check", async (req, res) => {
+  const { title, description, platform, type } = req.body || {};
+  if (!title && !description) return res.status(400).json({ error: "需要 title 或 description" });
+
+  const RULES = (()=>{ try { return JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "platform-rules.json"), "utf-8")); } catch(e) { return null; } })();
+  const pRules = RULES?.platforms?.[platform || "amazon"] || RULES?.platforms?.amazon;
+
+  const issues = [];
+  const warnings = [];
+  const suggestions = [];
+
+  // 标题长度
+  if (title && pRules.maxTitleLength && title.length > pRules.maxTitleLength) {
+    issues.push({ field: "title", type: "length", severity: "error", message: `标题过长(${title.length}/${pRules.maxTitleLength})`, fix: `缩减至${pRules.maxTitleLength}字符以内` });
+  }
+  if (title && title.length < 20) {
+    suggestions.push({ field: "title", type: "length", severity: "info", message: "标题过短，建议≥20字符以提高SEO" });
+  }
+
+  // 禁用词检查
+  if (pRules.bannedKeywords && title) {
+    const found = pRules.bannedKeywords.filter(kw => title.toLowerCase().includes(kw.toLowerCase()));
+    found.forEach(kw => issues.push({ field: "title", type: "banned_keyword", severity: "error", keyword: kw, message: `标题包含禁用词"${kw}"`, fix: `移除或替换"${kw}"` }));
+  }
+
+  // 特殊规则检查
+  if (pRules.specialRules) {
+    for (const rule of pRules.specialRules) {
+      if (rule.pattern) {
+        const regex = new RegExp(rule.pattern, "i");
+        if (title && regex.test(title)) {
+          (rule.severity === "critical" || rule.severity === "high" ? issues : warnings).push({ field: "title", type: "special_rule", severity: rule.severity, rule: rule.rule, message: `违反规则: ${rule.rule}` });
+        }
+        if (description && regex.test(description)) {
+          (rule.severity === "critical" || rule.severity === "high" ? issues : warnings).push({ field: "description", type: "special_rule", severity: rule.severity, rule: rule.rule, message: `描述违反规则: ${rule.rule}` });
+        }
+      }
+    }
+  }
+
+  // 描述检查
+  if (description) {
+    if (description.length < 50) warnings.push({ field: "description", type: "length", severity: "warn", message: "描述过短，建议≥50字符", fix: "添加更多产品细节和卖点" });
+    if (description.length > 2000) warnings.push({ field: "description", type: "length", severity: "warn", message: "描述过长", fix: "缩减至2000字符以内" });
+  }
+
+  const passed = issues.length === 0;
+  const score = Math.max(100 - issues.length * 20 - warnings.length * 5, 10);
+
+  if (!req._internal) trackFromRequest(req, "/api/v1/format-check", "$0.01");
+  res.json({
+    platform: platform || "amazon",
+    platformName: pRules.name,
+    region: pRules.region,
+    passed,
+    score,
+    verdict: passed ? "通过" : issues.length > 0 ? "需要修改" : "建议优化",
+    issues,
+    warnings,
+    suggestions,
+    pricing: "$0.01/call — 薄利多销",
+    meta: { titleLength: title?.length || 0, maxTitleLength: pRules.maxTitleLength, rulesChecked: (pRules.specialRules?.length || 0) + 2, enforcementCases: (RULES?.advertisingLaw?.articles || []).filter(a => a.case).slice(0, 3).map(a => ({ rule: a.rule, case: a.case })) }
+  });
+});
+
 // ============ 会员系统（持久化到 data/ 目录，Render 不丢失） ============
 const membership = (() => {
   const fs = require("fs");
