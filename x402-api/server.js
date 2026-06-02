@@ -418,9 +418,9 @@ app.get("/.well-known/agent.json", (_, res) => {
 
 app.get("/.well-known/x402", (_, res) => {
   res.json({
-    version: "1.0",
-    name: "MediaCraft AI — Bilingual Compliance & Translation APIs",
-    description: "17-platform content compliance review (Chinese advertising law + global platform rules), EN↔CN translation with cultural adaptation, and SEO optimization. Specialized for cross-border e-commerce and content creators targeting Chinese markets.",
+    version: "2.0",
+    name: "MediaCraft AI — Multi-Jurisdiction Compliance & Intelligence APIs",
+    description: "Compliance engine covering China Ad Law + EU AI Act + US FTC + Japan Act. EN↔CN translation, SEO optimization, cross-border shipping. Thin pricing, high quality. Built by agents, for agents.",
     payment_address: PAY_TO_SOL,
     accepted_assets: ["USDC"],
     network: "solana",
@@ -434,7 +434,7 @@ app.get("/.well-known/x402", (_, res) => {
       platform: "AgentHansa",
       website: "https://mediacraft-x402-api.onrender.com/toolbox"
     },
-    tags: ["compliance", "translation", "seo", "chinese", "bilingual", "ecommerce", "advertising-law"],
+    tags: ["compliance", "translation", "seo", "chinese", "bilingual", "ecommerce", "advertising-law", "eu-ai-act", "ftc", "japan-act", "cross-border", "format-checker"],
     endpoints: [
       { path: "/api/v1/compliance-check", method: "POST", price: "$0.02", network: "solana", payTo: PAY_TO_SOL, description: "17-platform compliance review with penalty case references" },
       { path: "/api/v1/translate", method: "POST", price: "$0.01", network: "solana", payTo: PAY_TO_SOL, description: "EN↔CN bilingual translation with cultural adaptation" },
