@@ -5,7 +5,17 @@
 const express = require("express");
 const cors = require("cors");
 const { paygate } = require("@zoebuildsai/paygate");
-const { reviewContent, reviewBatch, generateReport } = require("./compliance-engine");
+// 动态加载，绕过 Node.js require 缓存
+function getComplianceEngine() {
+  delete require.cache[require.resolve("./compliance-engine")];
+  return require("./compliance-engine");
+}
+const { reviewContent: _rc, reviewBatch, generateReport } = (() => {
+  try { return getComplianceEngine(); } catch(e) { return require("./compliance-engine"); }
+})();
+function reviewContent(opts) {
+  try { return getComplianceEngine().reviewContent(opts); } catch(e) { return _rc(opts); }
+}
 const { trackFromRequest, getStats } = require("./usage-tracker");
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -296,9 +306,9 @@ app.post("/api/v1/compliance-check", async (req, res) => {
     console.log("COMPLIANCE-INPUT:", JSON.stringify({ text: reviewText.substring(0,50), type, platform }));
     if (!reviewText) return res.status(400).json({ error: "Missing 'content' or 'text' field" });
 
-    const { AD_LAW_CHECKS } = require("./compliance-engine");
+    const engine = getComplianceEngine();
     // 直接测关键词
-    const testKw = AD_LAW_CHECKS[1]?.keywords?.[0] || "N/A";
+    const testKw = engine.loadRules().adLawChecks[0]?.keywords?.[0] || "N/A";
     const directMatch = reviewText.includes(testKw);
 
     const result = reviewContent({
