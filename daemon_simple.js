@@ -5,6 +5,11 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 
+// ====== A线改造 v4: 追踪 + 管线 + 质量门禁 ======
+const { logBid, logResult, logEarning, logQualityCheck, analyze } = require("./lib/bid_tracker");
+const { saveQuest, getReadyResponse, getReadyResponses, markSubmitted: markPipelineSubmitted } = require("./lib/quest_pipeline");
+const { assess } = require("./lib/quality_gate");
+
 const API = "https://agenthansa.com/api";
 const KEY = process.env.AGENTHANSA_API_KEY || "tabb_RbsUoEipzInRhm2-D2QoH5WHjyYrKJeb9Ff5TUCmx8E";
 const DATA_DIR = path.join(__dirname, "data");
@@ -345,9 +350,33 @@ async function cycle() {
     if (!isActiveMode) log("MODE: maintenance — scanning + queuing only, no bids");
 
     const inbox = await get("/agents/me/inbox");
-    const quests = inbox?.sections?.alliance_war_quests?.items || [];
-    log("Quests: " + quests.length);
-    // 高额任务标记 + 队列转发（无论什么模式都做）
+    // v4: 合并所有 quest 类型（不只是 alliance_war）
+    const awQuests = inbox?.sections?.alliance_war_quests?.items || [];
+    const sideQuests = inbox?.sections?.side_quests?.items || [];
+    const engQuests = inbox?.sections?.engagement?.items || [];
+    const personalQuests = inbox?.sections?.personal?.items || [];
+    const quests = [...awQuests, ...sideQuests, ...engQuests, ...personalQuests];
+    // 标记 quest 来源类型
+    for (const q of awQuests) q._section = "alliance_war";
+    for (const q of sideQuests) q._section = "side_quests";
+    for (const q of engQuests) q._section = "engagement";
+    for (const q of personalQuests) q._section = "personal";
+    log("Quests: " + quests.length + " (aw:" + awQuests.length + " side:" + sideQuests.length + " eng:" + engQuests.length + " personal:" + personalQuests.length + ")");
+
+    // v4: 所有 quest 存入本地管线收件箱（供 AI 异步处理）
+    for (const q of quests) {
+      try { saveQuest(q); } catch(e) {}
+    }
+
+    // v4: 检查 outbox 中是否有就绪的 AI 响应（之前轮次处理好的）
+    const readyResponses = getReadyResponses();
+    const aiResponseMap = {};
+    for (const r of readyResponses) {
+      aiResponseMap[r.questId] = r.response;
+    }
+    if (readyResponses.length > 0) log("AI-READY: " + readyResponses.length + " responses from pipeline");
+
+    // 高额任务标记（无论什么模式都做）
     for (const q of quests) {
       const reward = parseFloat(q.reward_usd||0);
       if (reward >= 50) log("HIGH-VALUE QUEST: $" + reward + " — " + (q.title||"").substring(0,60) + " (需人工介入? " + (reward>=100?"是":"否") + ")");
@@ -381,6 +410,74 @@ async function cycle() {
       }
     } catch(e) {}
 
+    // v4: 处理 side_quests + engagement（简单直接提交，不走 help request 流程）
+    const simpleQuests = quests.filter(q => q._section === "side_quests" || q._section === "engagement");
+    for (const q of simpleQuests) {
+      if (daily.subs >= daily.max) break;
+      const rewardVal = parseFloat(q.reward_usd||0);
+      const cat = q._section || "side_quest";
+
+      // 检查 outbox 是否有 AI 回复
+      let response = null;
+      let responseType = "template";
+      const aiResp = aiResponseMap[q.id];
+      if (aiResp && aiResp.content) {
+        response = aiResp.content;
+        responseType = "ai_generated";
+        log("AI-RESP: pipeline response for " + q.id?.substring(0,12));
+      }
+
+      // 无 AI 回复 → 简单跳过（side_quest 不值得用模板）
+      if (!response) {
+        log("SIDE-QUEST: no AI response for " + q.id + " — skipping");
+        continue;
+      }
+
+      if (!safetyCheck(response)) continue;
+
+      // 质量门禁
+      const qaResult = assess(q.title || "", q.description || "", response, cat);
+      logQualityCheck({ questId: q.id, score: qaResult.score, passed: qaResult.passed, reasons: qaResult.warnings });
+      if (!qaResult.passed) {
+        log("QUALITY-GATE: side quest skipped (score:" + qaResult.score + ")");
+        continue;
+      }
+
+      response = humanize(response);
+
+      try {
+        // 尝试不同的提交端点
+        let submitRes = null;
+        const endpoints = [
+          "/api/side-quests/" + q.id + "/submit",
+          "/api/quests/" + q.id + "/submit",
+          "/api/engagement/" + q.id + "/submit"
+        ];
+        for (const ep of endpoints) {
+          try {
+            const res = await post(ep, { content: response });
+            if (res && !res.error) {
+              submitRes = res;
+              log("SIDE-SUBMIT: " + ep + " — OK");
+              break;
+            }
+          } catch(e) {}
+        }
+
+        if (submitRes) {
+          recordSub(cat); daily.subs++;
+          logBid({ questId: q.id, questTitle: q.title, questDescription: q.description, category: cat, reward: rewardVal, responseType: responseType, responseSummary: response.substring(0,200), proofUrl: getProofUrl() });
+          try { markPipelineSubmitted(q.id); } catch(e) {}
+          log("SIDE-BID: " + cat + " $" + rewardVal + " [" + responseType + "] — " + (q.title||"").substring(0,40));
+        } else {
+          log("SIDE-SUBMIT: all endpoints failed for " + q.id);
+        }
+      } catch(e) {
+        log("SIDE-ERR: " + (e.message||"").substring(0,60));
+      }
+      await sleep(4000);
+    }
+
     let bid = 0;
     for (const q of sorted.slice(0, 3)) {
       if (daily.subs >= daily.max) break;
@@ -406,16 +503,39 @@ async function cycle() {
       } catch(e) {}
 
       try {
-        // 生成响应
-        let response = isPersonalTask
-        ? (cat.includes("tech")||cat.includes("code") ? RESPONSES.personal_task_tech[0]
-          : cat.includes("writ")||cat.includes("content") ? RESPONSES.personal_task_content[0]
-          : cat.includes("translat") ? RESPONSES.personal_task_translation[0]
-          : cat.includes("data")||cat.includes("research") ? RESPONSES.personal_task_data[0]
-          : RESPONSES.personal_task_content[0])
-        : genResponse(cat, q.title);
+        // v4: 优先检查 AI 管线是否有针对此 quest 的定制回复
+        let response = null;
+        let responseType = "template";
+        const aiResp = aiResponseMap[q.id];
+        if (aiResp && aiResp.content) {
+          response = aiResp.content;
+          responseType = "ai_generated";
+          log("AI-RESP: using pipeline response for " + q.id?.substring(0,8));
+        }
+
+        // 无 AI 回复 → fallback 模板
+        if (!response) {
+          response = isPersonalTask
+          ? (cat.includes("tech")||cat.includes("code") ? RESPONSES.personal_task_tech[0]
+            : cat.includes("writ")||cat.includes("content") ? RESPONSES.personal_task_content[0]
+            : cat.includes("translat") ? RESPONSES.personal_task_translation[0]
+            : cat.includes("data")||cat.includes("research") ? RESPONSES.personal_task_data[0]
+            : RESPONSES.personal_task_content[0])
+          : genResponse(cat, q.title);
+        }
         response = humanize(response);
         if (!safetyCheck(response)) continue;
+
+        // v4: 质量门禁 — 投前自评
+        const qaResult = assess(q.title || "", q.description || "", response, cat);
+        logQualityCheck({ questId: q.id, score: qaResult.score, passed: qaResult.passed, reasons: qaResult.warnings });
+        if (!qaResult.passed && rewardVal < 15) {
+          log("QUALITY-GATE: skipped (score:" + qaResult.score + ") — " + (q.title||"").substring(0,40));
+          continue;  // 低分 + 低赏金 = 跳过
+        }
+        if (!qaResult.passed) {
+          log("QUALITY-GATE: low score(" + qaResult.score + ") but high reward($" + rewardVal + ") — submitting anyway");
+        }
         response += "\n\n---\n*MediaCraft AI — bilingual compliance review included. Proof: " + proof + "*";
 
         // 创建 help request（如果账号满5天）
@@ -428,7 +548,9 @@ async function cycle() {
               await post("/alliance-war/quests/"+q.id+"/submit", { content: hRes.id, proof_url: proof });
               recordSub(cat); daily.subs++; bid++;
                 addAtom("quest_bidding", { source:"daemon-cycle", pattern:"提交了"+cat+"类别Quest", tags:[cat,"submitted"] });
-              log("BID: " + cat + " (create) $" + q.reward_usd);
+              logBid({ questId: q.id, questTitle: q.title, questDescription: q.description, category: cat, reward: rewardVal, responseType: responseType, responseSummary: (response||"").substring(0,200), proofUrl: proof });
+              try { markPipelineSubmitted(q.id); } catch(e) {}
+              log("BID: " + cat + " (create) $" + q.reward_usd + " [" + responseType + "]");
             }
           }
         } else {
@@ -441,7 +563,9 @@ async function cycle() {
             if (resp?.id) {
               await post("/alliance-war/quests/"+q.id+"/submit", { content: resp.id, proof_url: proof });
               recordSub(cat); daily.subs++; bid++;
-              log("BID: " + cat + " (respond) $" + q.reward_usd);
+              logBid({ questId: q.id, questTitle: q.title, questDescription: q.description, category: cat, reward: rewardVal, responseType: responseType, responseSummary: (response||"").substring(0,200), proofUrl: proof });
+              try { markPipelineSubmitted(q.id); } catch(e) {}
+              log("BID: " + cat + " (respond) $" + q.reward_usd + " [" + responseType + "]");
             }
           } else {
             // 无 Help Request 可回应 → 直接提交（部分 Quest 支持）
@@ -449,7 +573,9 @@ async function cycle() {
               await post("/alliance-war/quests/"+q.id+"/submit", { content: response, proof_url: proof });
               recordSub(cat); daily.subs++; bid++;
               addAtom("quest_bidding", { source:"daemon-cycle", pattern:"直投了"+cat+"类别Quest(无help request可回应)", tags:[cat,"direct-submit"] });
-              log("BID: " + cat + " (direct) $" + q.reward_usd);
+              logBid({ questId: q.id, questTitle: q.title, questDescription: q.description, category: cat, reward: rewardVal, responseType: responseType, responseSummary: (response||"").substring(0,200), proofUrl: proof });
+              try { markPipelineSubmitted(q.id); } catch(e) {}
+              log("BID: " + cat + " (direct) $" + q.reward_usd + " [" + responseType + "]");
             } catch(e2) { log("BID FAIL: " + e2.message?.substring(0,60)); }
           }
         }
@@ -482,7 +608,12 @@ async function cycle() {
       const lastCat = memory.history[memory.history.length-1]?.cat || "unknown";
       recordWin(lastCat, won);
       addAtom("category_winrate", { source:"daemon-auto", pattern:lastCat+"类别产生了$"+won+"收益", tags:[lastCat,"win"], detail:"本次提交胜出，赏金$"+won });
+      // v4: 记录胜出
+      logEarning("agenthansa_quest", won);
       log("WIN! +$" + won + " (" + lastCat + ")");
+    } else if (daily.subs > 0 && curEarn === memory.earned) {
+      // v4: 投了但没赢 — 记录（用于分析模式）
+      log("RESULT: submitted " + daily.subs + " bids this cycle, no wins yet");
     }
     memory.history.push({ time: new Date().toISOString(), subs: daily.subs, earned: curEarn });
     if (memory.history.length > 100) memory.history = memory.history.slice(-100);
@@ -500,6 +631,217 @@ function heartbeat(n, running, subs, earned, checkin, cognitive, forum, errors) 
   } catch(e) {}
 }
 
+// v5: 快速 quest 扫描循环（跳过签到/论坛/arena，只扫 quest + 提交）
+async function fastQuestCycle() {
+  loadMem();
+  const daily = { subs: 0, max: 8, errors: [] };
+  loadDailyState();
+
+  try {
+    const inbox = await get("/agents/me/inbox");
+    const awQuests = inbox?.sections?.alliance_war_quests?.items || [];
+    const sideQuests = inbox?.sections?.side_quests?.items || [];
+    const engQuests = inbox?.sections?.engagement?.items || [];
+    const personalQuests = inbox?.sections?.personal?.items || [];
+    const quests = [...awQuests, ...sideQuests, ...engQuests, ...personalQuests];
+    for (const q of awQuests) q._section = "alliance_war";
+    for (const q of sideQuests) q._section = "side_quests";
+    for (const q of engQuests) q._section = "engagement";
+    for (const q of personalQuests) q._section = "personal";
+
+    if (quests.length > 0) {
+      log("FAST: " + quests.length + " quests (aw:" + awQuests.length + " side:" + sideQuests.length + " eng:" + engQuests.length + " personal:" + personalQuests.length + ")");
+
+      // 存入管线 inbox
+      for (const q of quests) {
+        try { saveQuest(q); } catch(e) {}
+      }
+
+      // 检查 outbox 中的 AI 回复
+      const readyResponses = getReadyResponses();
+      const aiResponseMap = {};
+      for (const r of readyResponses) {
+        aiResponseMap[r.questId] = r.response;
+      }
+      if (readyResponses.length > 0) log("FAST: " + readyResponses.length + " AI responses ready");
+
+      // 高额任务标记
+      for (const q of quests) {
+        const reward = parseFloat(q.reward_usd||0);
+        if (reward >= 30) log("FAST-HIGH: $" + reward + " — " + (q.title||"").substring(0,60));
+      }
+
+      // 处理 side_quests + engagement（直接提交）
+      const simpleQuests = quests.filter(q => q._section === "side_quests" || q._section === "engagement");
+      for (const q of simpleQuests) {
+        if (daily.subs >= daily.max) break;
+        const aiResp = aiResponseMap[q.id];
+        if (!aiResp || !aiResp.content) continue;
+
+        const response = humanize(aiResp.content);
+        if (!safetyCheck(response)) continue;
+
+        // 质量门禁
+        const qaResult = assess(q.title || "", q.description || "", response, q._section);
+        if (!qaResult.passed) continue;
+
+        try {
+          let submitRes = null;
+          const endpoints = ["/api/side-quests/submit", "/api/quests/" + q.id + "/submit"];
+          for (const ep of endpoints) {
+            try {
+              const body = ep.includes("side-quests")
+                ? { quest_id: q.id, responses: extractFieldsFromResponse(q.id, response) }
+                : { content: response };
+              const res = await post(ep, body);
+              if (res && !res.error && !res.detail && !res.message && typeof res !== "string") {
+                submitRes = res; break;
+              }
+            } catch(e) {}
+          }
+          if (submitRes) {
+            daily.subs++;
+            logBid({ questId: q.id, questTitle: q.title, category: q._section, reward: parseFloat(q.reward_usd||0), responseType: "ai_generated", responseSummary: response.substring(0,200), proofUrl: getProofUrl() });
+            try { markPipelineSubmitted(q.id); } catch(e) {}
+            log("FAST-SUBMIT: " + q._section + " $" + (q.reward_usd||0) + " — " + (q.title||"").substring(0,40));
+          }
+        } catch(e) { daily.errors.push("fast-submit:"+e.message?.substring(0,30)); }
+        await sleep(2000);
+      }
+
+      // 处理 alliance_war quests（仅当有 AI 回复时提交）
+      const awOnly = quests.filter(q => q._section === "alliance_war");
+      for (const q of awOnly) {
+        if (daily.subs >= daily.max) break;
+        const rewardVal = parseFloat(q.reward_usd||0);
+        if (rewardVal < 5) continue; // $5 以下不值得用 AI 配额
+
+        const aiResp = aiResponseMap[q.id];
+        if (!aiResp || !aiResp.content) continue;
+
+        const cat = detectCat(q.title);
+        const response = humanize(aiResp.content);
+        if (!safetyCheck(response)) continue;
+
+        const qaResult = assess(q.title || "", q.description || "", response, cat);
+        if (!qaResult.passed) continue;
+
+        try {
+          const proof = getProofUrl();
+          const feed = await get("/help/agent-feed?per_page=5");
+          const reqs = feed?.requests || [];
+          const target = reqs.find(r => (r.evaluation_category||"").toLowerCase() === cat) || reqs[0];
+
+          if (target) {
+            const resp = await post("/help/requests/"+target.id+"/respond", { content: response });
+            if (resp?.id) {
+              await post("/alliance-war/quests/"+q.id+"/submit", { content: resp.id, proof_url: proof });
+              daily.subs++;
+              logBid({ questId: q.id, questTitle: q.title, category: cat, reward: rewardVal, responseType: "ai_generated", responseSummary: response.substring(0,200), proofUrl: proof });
+              try { markPipelineSubmitted(q.id); } catch(e) {}
+              log("FAST-AW: " + cat + " $" + rewardVal + " — " + (q.title||"").substring(0,40));
+            }
+          }
+        } catch(e) { daily.errors.push("fast-aw:"+e.message?.substring(0,30)); }
+        await sleep(2000);
+      }
+    }
+
+    // 检查是否赢了
+    try {
+      const me2 = await get("/agents/me");
+      const curEarn = parseFloat(me2?.earnings?.total||0);
+      if (curEarn > memory.earned) {
+        const won = Math.round((curEarn - memory.earned)*100)/100;
+        logEarning("agenthansa", won);
+        log("FAST-WIN! +$" + won);
+      }
+      memory.history.push({ time: new Date().toISOString(), subs: daily.subs, earned: curEarn });
+      if (memory.history.length > 100) memory.history = memory.history.slice(-100);
+      saveMem();
+    } catch(e) {}
+  } catch(e) {
+    daily.errors.push("fastQuestCycle:"+e.message?.substring(0,40));
+  }
+
+  return { subs: daily.subs, earned: memory.earned, checkin: false, cognitive: false, forum: false, errors: daily.errors };
+}
+
+// v5: 辅助函数 — 从回复中提取 side quest 字段
+function extractFieldsFromResponse(questId, response) {
+  // 根据 quest ID 返回对应的字段结构
+  const fieldMaps = {
+    "identify-infrastructure": ["agent_type", "model", "skills", "platform", "country", "notes"],
+    "first-impression": ["what_you_like", "what_to_improve", "how_you_found_us"],
+    "share-your-stack": ["hosting", "language", "framework", "integrations", "social_media"],
+  };
+  const keys = fieldMaps[questId] || ["content"];
+  const result = {};
+  // 将整个回复分配给第一个字段（side quest 的简单处理）
+  if (keys.length > 0) result[keys[0]] = response;
+  return result;
+}
+
+// v6: 每日自动更新总控台（dashboard.html + 总控制台.md）
+function updateDashboard(analytics) {
+  const s = analytics.summary;
+  const now = new Date();
+  const dateStr = now.toISOString().substring(0, 10);
+  const timeStr = now.toTimeString().substring(0, 5);
+
+  // 1. 更新 dashboard.html（父目录）
+  const dashPath = path.join(ROOT, "..", "dashboard.html");
+  if (fs.existsSync(dashPath)) {
+    let html = fs.readFileSync(dashPath, "utf-8");
+
+    // 更新收入数字
+    html = html.replace(
+      /<div class="money">\$[\d.]+<\/div>/,
+      '<div class="money">$' + s.allTimeEarned.toFixed(2) + '</div>'
+    );
+
+    // 更新状态行
+    html = html.replace(
+      /<div style="margin-top:3px;color:#3fb950">[^<]*<\/div>/,
+      '<div style="margin-top:3px;color:#3fb950">Daemon v6 · ' + s.totalBids + ' bids today · $' + s.totalEarnedToday.toFixed(2) + ' earned · auto-updated</div>'
+    );
+
+    // 更新页脚
+    html = html.replace(
+      /更新: [^·]+ · [^<]*/,
+      '更新: ' + dateStr + ' ' + timeStr + ' · Daemon v6 · ' + s.totalBids + ' bids · wr:' + s.winRate + '% · 累计$' + s.allTimeEarned.toFixed(2)
+    );
+
+    fs.writeFileSync(dashPath, html);
+    log("DASHBOARD: dashboard.html updated (earned:$" + s.allTimeEarned.toFixed(2) + ")");
+  }
+
+  // 2. 更新 总控制台.md（本目录）
+  const mdPath = path.join(ROOT, "总控制台.md");
+  if (fs.existsSync(mdPath)) {
+    let md = fs.readFileSync(mdPath, "utf-8");
+
+    // 更新头行
+    md = md.replace(
+      /> 总收入：\$[\d.]+ \|/,
+      '> 总收入：$' + s.allTimeEarned.toFixed(2) + ' |'
+    );
+    md = md.replace(
+      /> 同步自 dashboard.html · 最后更新：[^·]+ ·/,
+      '> 同步自 dashboard.html · 最后更新：' + dateStr + ' ' + timeStr + ' (自动) ·'
+    );
+
+    // 更新合计行
+    md = md.replace(
+      /\| \*\*合计\*\* \| \*\*\$\d+\.\d+\*\* \|/,
+      '| **合计** | **$' + s.allTimeEarned.toFixed(2) + '** |'
+    );
+
+    fs.writeFileSync(mdPath, md);
+    log("DASHBOARD: 总控制台.md updated");
+  }
+}
+
 async function main() {
   // 进程锁：防止多实例并发
   if (!acquireLock()) {
@@ -507,21 +849,50 @@ async function main() {
     process.exit(0);
   }
   if (!fs.existsSync(path.join(__dirname,"logs"))) fs.mkdirSync(path.join(__dirname,"logs"));
-  log("=== Daemon v3.1 === PID " + process.pid + " | singleton lock acquired | daily caps enforced ===");
-  log("First cycle in 60s...");
-  await sleep(60000);
+  log("=== Daemon v5 === PID " + process.pid + " | fast-poll mode | singleton lock | daily caps ===");
 
+  // v5: 两速循环 — fast(quest-only, 2-4min) + full(all, 30min)
+  // 高峰: UTC 13-02 (US business + Asia evening) | 低谷: 其他
+  const FAST_FULL_INTERVAL = 10; // 每 10 个 fast 循环做 1 次 full
   let n = 0;
   while (true) {
     n++;
     heartbeat(n, true);
     let stats = { subs: 0, earned: 0, checkin: false, cognitive: false, forum: false, errors: [] };
-    try { stats = await cycle() || stats; } catch(e) { log("CRASH: " + e.message); stats.errors.push("cycle:"+e.message?.substring(0,40)); }
+
+    if (n % FAST_FULL_INTERVAL === 1 || n === 1) {
+      // FULL 循环：签到 + 论坛 + arena + quest
+      try { stats = await cycle() || stats; } catch(e) { log("FULL-CRASH: " + e.message); stats.errors.push("full:"+e.message?.substring(0,40)); }
+    } else {
+      // FAST 循环：仅 quest 扫描 + 提交
+      try { stats = await fastQuestCycle() || stats; } catch(e) { log("FAST-CRASH: " + e.message); stats.errors.push("fast:"+e.message?.substring(0,40)); }
+    }
     heartbeat(n, false, stats.subs, stats.earned, stats.checkin, stats.cognitive, stats.forum, stats.errors);
+
+    // v5: 每日战报 + 总控台更新（UTC 14:00 = 北京时间 22:00）
+    try {
+      const now = new Date();
+      if (now.getUTCHours() === 14 && now.getUTCMinutes() < 15) {
+        const reportPath = path.join(DATA_DIR, "reports", "report_" + now.toISOString().substring(0,10) + ".json");
+        if (!fs.existsSync(reportPath)) {
+          const analytics = analyze(true);
+          if (!fs.existsSync(path.dirname(reportPath))) fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+          fs.writeFileSync(reportPath, JSON.stringify({ generated: now.toISOString(), analytics }, null, 2));
+          log("REPORT: bids:" + analytics.summary.totalBids + " wr:" + analytics.summary.winRate + "% earned:$" + analytics.summary.totalEarnedToday);
+
+          // v6: 自动更新总控台
+          try { updateDashboard(analytics); } catch(e) { log("DASHBOARD-UPDATE-ERR: " + e.message?.substring(0,40)); }
+        }
+      }
+    } catch(e) {}
+
+    // v5 timing: 高峰 2-4min, 低谷 5-8min
     const hour = new Date().getUTCHours();
-    const isPeak = (hour>=7&&hour<=11) || (hour>=16&&hour<=21);
-    const delay = isPeak ? 7*60*1000 + Math.floor(Math.random()*4*60*1000) : 15*60*1000 + Math.floor(Math.random()*5*60*1000);
-    log("Sleeping " + Math.floor(delay/60000) + "min...");
+    const isPeak = (hour >= 13 && hour <= 23) || (hour >= 0 && hour <= 2); // UTC 13-02 = US business + CN evening
+    const delay = isPeak
+      ? 2*60*1000 + Math.floor(Math.random() * 2*60*1000)   // 2-4 min
+      : 5*60*1000 + Math.floor(Math.random() * 3*60*1000);  // 5-8 min
+    log("#" + n + " " + (n % FAST_FULL_INTERVAL === 1 ? "[FULL]" : "[fast]") + " sleeping " + Math.floor(delay/60000) + "min (peak:" + isPeak + ")...");
     await sleep(delay);
   }
 }

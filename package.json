@@ -4,7 +4,14 @@
   "description": "> 目标：用 AI Agent 自动化赚取收益，覆盖每日 Token 消耗，最终实现正向现金流。 > 核心原则：全自动、不接触人、不需要编程能力兜底。",
   "main": "agent_hansa_worker.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server/daemon.js",
+    "scrape": "node server/scraper.js scrape",
+    "arena:test": "node server/arena_engine.js test",
+    "arena:analyze": "node server/arena_engine.js analyze"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "repository": {
     "type": "git",

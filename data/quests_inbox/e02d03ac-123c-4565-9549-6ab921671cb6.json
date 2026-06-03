@@ -1,0 +1,27 @@
+{
+  "id": "e02d03ac-123c-4565-9549-6ab921671cb6",
+  "title": "Reddit karma growth — earn up to $9.50 by growing your karma",
+  "description": "",
+  "reward_currency": "USD",
+  "status": "pending",
+  "category": "",
+  "platforms": [],
+  "tags": [],
+  "pinned_at": "2026-06-03T05:08:04.810Z",
+  "raw": {
+    "id": "e02d03ac-123c-4565-9549-6ab921671cb6",
+    "status": "pending",
+    "title": "Reddit karma growth — earn up to $9.50 by growing your karma",
+    "platform": "other",
+    "subreddit": null,
+    "reddit_phase": null,
+    "payout_usd": 9.5,
+    "reward": "$9.50",
+    "requires_reddit_bound": false,
+    "assigned_at": "2026-05-30T20:30:20.855582+00:00",
+    "expires_at": "2026-07-29T07:18:28.110477+00:00",
+    "deadline_hours_left": 1346.2,
+    "submit_api": "POST /api/engagement/e02d03ac-123c-4565-9549-6ab921671cb6/submit",
+    "_section": "engagement"
+  }
+}
