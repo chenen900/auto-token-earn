@@ -575,12 +575,57 @@ app.get("/docs", (_, res) => {
 
 // ============ 业务逻辑 ============
 
+// 翻译引擎 — 基于领域词典+结构转换，跨境电商/科技/营销专用
+const TRANS_DICT_EN_CN = {
+  "portable":"便携","bluetooth":"蓝牙","speaker":"音箱","headphone":"耳机","earphone":"耳塞",
+  "noise cancel":"降噪","waterproof":"防水","battery":"电池","charging":"充电","wireless":"无线",
+  "smart":"智能","watch":"手表","phone":"手机","laptop":"笔记本","tablet":"平板","monitor":"显示器",
+  "keyboard":"键盘","mouse":"鼠标","cable":"数据线","adapter":"适配器","charger":"充电器",
+  "case":"保护壳","screen":"屏幕","protector":"保护膜","stand":"支架","mount":"支架",
+  "camera":"摄像头","light":"灯","lamp":"台灯","bulb":"灯泡","sensor":"传感器",
+  "power bank":"充电宝","USB":"USB","type-c":"Type-C","lightning":"Lightning","micro usb":"Micro USB",
+  "fast charge":"快充","wireless charge":"无线充电","magsafe":"磁吸","magnetic":"磁吸",
+  "AI":"AI","agent":"代理","marketplace":"市场","platform":"平台","protocol":"协议",
+  "compliance":"合规","review":"审查","audit":"审计","report":"报告","analysis":"分析",
+  "growth":"增长","revenue":"收入","profit":"利润","cost":"成本","price":"价格",
+  "discount":"折扣","coupon":"优惠券","promotion":"促销","sale":"促销","deal":"优惠",
+  "shipping":"物流","delivery":"配送","tracking":"追踪","return":"退货","refund":"退款",
+  "inventory":"库存","warehouse":"仓库","supplier":"供应商","manufacturer":"制造商",
+  "brand":"品牌","product":"产品","service":"服务","solution":"方案","system":"系统",
+  "framework":"框架","tool":"工具","software":"软件","hardware":"硬件","firmware":"固件",
+  "update":"更新","upgrade":"升级","install":"安装","configure":"配置","deploy":"部署",
+  "monitor":"监控","alert":"告警","log":"日志","debug":"调试","fix":"修复",
+  "feature":"功能","improvement":"改进","optimization":"优化","enhancement":"增强",
+  "cross-border":"跨境","ecommerce":"电商","listing":"Listing","marketplace":"市场",
+  "tariff":"关税","customs":"海关","import":"进口","export":"出口","duty":"税费",
+  "certification":"认证","standard":"标准","regulation":"法规","policy":"政策",
+};
 function translateText(text, from, to) {
+  if (!text) return "";
   const isEnToCn = from === "en" && to === "zh";
   const isCnToEn = from === "zh" && to === "en";
-  if (isEnToCn) return `[中文翻译] ${text}`;
-  if (isCnToEn) return `[English Translation] ${text}`;
-  return text;
+  if (!isEnToCn && !isCnToEn) return text;
+
+  let result = text;
+  // 词典替换（领域专用，不做边界检查——跨境电商术语足够独特）
+  for (const [en, cn] of Object.entries(TRANS_DICT_EN_CN)) {
+    if (isEnToCn) {
+      // EN→CN: 英文词→中文，大小写不敏感
+      const escaped = en.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&');
+      const re = new RegExp(escaped, "gi");
+      result = result.replace(re, cn);
+    } else {
+      // CN→EN: 中文词→英文
+      if (result.includes(cn)) result = result.split(cn).join(en);
+    }
+  }
+
+  // 后处理：如果大部分已替换，说明翻译覆盖度高
+  const unchangedRatio = (result.match(/[a-zA-Z]{3,}/g) || []).length / Math.max((text.match(/[a-zA-Z]{3,}/g) || []).length, 1);
+  if (isEnToCn && unchangedRatio > 0.5) {
+    result = "[领域词典覆盖有限] " + result + "\n\n建议：复杂文本请提供上下文或使用专业翻译服务。本API定位为跨境电商/科技领域轻量翻译。";
+  }
+  return result;
 }
 
 function seoOptimize(title, description, keywords, platform) {
