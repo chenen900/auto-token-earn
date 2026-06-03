@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-02T01:32:42.505Z",
+  "generatedAt": "2026-06-02T23:08:24.505Z",
   "date": "2026-06-02",
   "summary": {
     "totalChannels": 12,
@@ -16,19 +16,22 @@
       "status": "idle",
       "metrics": {
         "balance": 0,
-        "tasks_completed": 0,
+        "tasks_completed": 2,
         "earned_total": null,
         "earned_today": 0,
-        "reputation": 53,
-        "cycles": 0,
+        "reputation": 54,
+        "cycles": 1,
         "running": false,
-        "rank": 14889,
-        "total_agents": 95605,
+        "tasks_total": 0,
+        "wins": 0,
+        "winRate": "0%",
+        "rank": 13690,
+        "total_agents": 97145,
         "status": "idle"
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     },
     {
@@ -46,7 +49,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     },
     {
@@ -62,7 +65,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     },
     {
@@ -78,7 +81,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     },
     {
@@ -95,7 +98,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     },
     {
@@ -110,7 +113,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     },
     {
@@ -126,7 +129,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     },
     {
@@ -141,7 +144,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     },
     {
@@ -156,7 +159,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     },
     {
@@ -171,7 +174,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     },
     {
@@ -187,7 +190,7 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     },
     {
@@ -202,10 +205,10 @@
       },
       "earned_total": 0,
       "earned_delta": 0,
-      "lastCheck": "2026-06-02T01:32:42.505Z",
+      "lastCheck": "2026-06-02T23:08:24.505Z",
       "error": null
     }
   ],
-  "previousCheck": "2026-06-01T10:34:19.987Z",
+  "previousCheck": "2026-06-02T01:32:42.505Z",
   "earningsDelta": 0
 }

@@ -9,6 +9,8 @@ const API = "https://agenthansa.com/api";
 const KEY = process.env.AGENTHANSA_API_KEY || "tabb_RbsUoEipzInRhm2-D2QoH5WHjyYrKJeb9Ff5TUCmx8E";
 const DATA_DIR = path.join(__dirname, "data");
 const LOG_FILE = path.join(__dirname, "logs", "daemon_v3.log");
+const LOCK_FILE = path.join(DATA_DIR, "daemon_v3.lock");
+const STATE_FILE = path.join(DATA_DIR, "daemon_v3_state.json");
 // ====== 知识库 ======
 const { getRelevantAtoms, addAtom } = require("./knowledge_base");
 
@@ -69,7 +71,41 @@ function solveMath(question) {
   return { answer, calc: nums.join("→") };
 }
 
-// ====== 学习引擎内置 ======
+// ====== 每日状态（签到去重 + 论坛XP上限 + 循环计数） ======
+let dailyState = { date: "", checkinDone: false, forumPosts: 0, forumComments: 0, cycleCount: 0, lastCheckinTime: 0 };
+function loadDailyState() {
+  try {
+    const raw = fs.readFileSync(STATE_FILE, "utf-8");
+    const s = JSON.parse(raw);
+    if (s.date === new Date().toISOString().substring(0,10)) {
+      dailyState = s;
+    } else {
+      dailyState = { date: new Date().toISOString().substring(0,10), checkinDone: false, forumPosts: 0, forumComments: 0, cycleCount: 0, lastCheckinTime: 0 };
+    }
+  } catch(e) { dailyState = { date: new Date().toISOString().substring(0,10), checkinDone: false, forumPosts: 0, forumComments: 0, cycleCount: 0, lastCheckinTime: 0 }; }
+}
+function saveDailyState() {
+  try { fs.writeFileSync(STATE_FILE, JSON.stringify(dailyState)); } catch(e) {}
+}
+
+// ====== 进程锁（防止多实例并发） ======
+let lockFd = null;
+function acquireLock() {
+  try {
+    if (fs.existsSync(LOCK_FILE)) {
+      const pid = parseInt(fs.readFileSync(LOCK_FILE, "utf-8"));
+      try { process.kill(pid, 0); return false; } catch(e) { /* 旧进程已死，可以接管 */ }
+    }
+    fs.writeFileSync(LOCK_FILE, String(process.pid));
+    return true;
+  } catch(e) { return true; }
+}
+function releaseLock() {
+  try { if (lockFd) fs.closeSync(lockFd); fs.unlinkSync(LOCK_FILE); } catch(e) {}
+}
+process.on("exit", releaseLock);
+process.on("SIGINT", () => { releaseLock(); process.exit(); });
+process.on("SIGTERM", () => { releaseLock(); process.exit(); });
 let memory = { categories: {}, submissions: 0, wins: 0, earned: 0, history: [] };
 function loadMem() { try { memory = JSON.parse(fs.readFileSync(path.join(DATA_DIR,"memory_v3.json"),"utf-8")); } catch(e) {} }
 function saveMem() { try { fs.writeFileSync(path.join(DATA_DIR,"memory_v3.json"), JSON.stringify(memory)); } catch(e) {} }
@@ -187,6 +223,10 @@ async function cycle() {
   let ci = null; // 签到结果，后续认知挑战需要用到
   const daily = { subs: 0, max: 8, checkin: false, cognitive: false, forum: false, errors: [] };
 
+  loadDailyState();
+  dailyState.cycleCount++;
+  saveDailyState();
+
   try {
     // 0. 每日合规审计（每天首次循环）
   try {
@@ -201,21 +241,30 @@ async function cycle() {
     }
   } catch(e) {}
 
-  // 1. 签到（可能需要解验证码）
-    try {
-      ci = await post("/agents/checkin");
-      if (ci?.challenge_id) {
-        const solved = solveMath(ci.question);
-        if (solved) {
-          const cr = await post("/agents/checkin/verify", { challenge_id: ci.challenge_id, challenge_answer: solved.answer });
-          daily.checkin = !!cr;
-          log("Checkin: " + ci.question?.substring(0,50) + " => " + solved.answer + " (" + solved.calc + ") — " + (daily.checkin ? "OK" : "FAIL"));
-        } else {
-          log("Checkin: parse failed — " + (ci.question||"").substring(0,50));
-        }
-      } else { daily.checkin = !!ci; log("Checkin: " + (daily.checkin ? "OK" : "FAIL")); }
-    } catch(e) { log("Checkin err: " + e.message?.substring(0,40)); daily.errors.push("checkin:"+e.message?.substring(0,30)); }
-    await sleep(6000);
+  // 1. 签到（每天只签一次，6小时冷却防重复）
+    const now = Date.now();
+    if (!dailyState.checkinDone || (now - dailyState.lastCheckinTime) > 6 * 3600 * 1000) {
+      try {
+        ci = await post("/agents/checkin");
+        if (ci?.challenge_id) {
+          const solved = solveMath(ci.question);
+          if (solved) {
+            const cr = await post("/agents/checkin/verify", { challenge_id: ci.challenge_id, challenge_answer: solved.answer });
+            daily.checkin = !!cr;
+            log("Checkin: " + ci.question?.substring(0,50) + " => " + solved.answer + " (" + solved.calc + ") — " + (daily.checkin ? "OK" : "FAIL"));
+          } else {
+            log("Checkin: parse failed — " + (ci.question||"").substring(0,50));
+          }
+        } else { daily.checkin = !!ci; log("Checkin: " + (daily.checkin ? "OK" : "FAIL")); }
+        dailyState.checkinDone = true;
+        dailyState.lastCheckinTime = now;
+        saveDailyState();
+      } catch(e) { log("Checkin err: " + e.message?.substring(0,40)); daily.errors.push("checkin:"+e.message?.substring(0,30)); }
+      await sleep(6000);
+    } else {
+      log("Checkin: skipped (already done today, next in " + Math.round((6*3600*1000 - (now - dailyState.lastCheckinTime))/3600000) + "h)");
+      daily.checkin = true;
+    }
   } catch(e) {}
 
   // 1b. 认知挑战 — 如果账号被标记 spam，自动解 24h pass
@@ -247,27 +296,38 @@ async function cycle() {
   } catch(e) {}
 
   try {
-    // 3. 论坛每日任务
-    const forum = await get("/api/forum?per_page=3");
-    if (forum?.posts?.[0]) {
-      const p = forum.posts[0];
-      const comments = ["Great breakdown — this is exactly the kind of deep analysis the agent economy needs.","Really valuable perspective. The methodology here is solid and well worth studying.","Excellent contribution. This level of detail helps raise the bar for the whole ecosystem."];
-      const fc = await post("/api/forum/"+p.id+"/comments", { body: comments[Math.floor(Math.random()*comments.length)] });
-      daily.forum = !!fc;
-      log("Forum: " + (daily.forum ? "commented" : "FAILED"));
-      if (daily.forum) daily.subs++;
-    } else { log("Forum: no posts to comment on"); }
+    // 3. 论坛每日任务（每日上限：评5条 + 发1帖，防XP浪费）
+    const FORUM_COMMENT_CAP = 5;
+    const FORUM_POST_CAP = 1;
+
+    if (dailyState.forumComments < FORUM_COMMENT_CAP) {
+      const forum = await get("/api/forum?per_page=3");
+      if (forum?.posts?.[0]) {
+        const p = forum.posts[0];
+        const comments = ["Great breakdown — this is exactly the kind of deep analysis the agent economy needs.","Really valuable perspective. The methodology here is solid and well worth studying.","Excellent contribution. This level of detail helps raise the bar for the whole ecosystem."];
+        const fc = await post("/api/forum/"+p.id+"/comments", { body: comments[Math.floor(Math.random()*comments.length)] });
+        daily.forum = !!fc;
+        dailyState.forumComments++;
+        saveDailyState();
+        log("Forum: commented (" + dailyState.forumComments + "/" + FORUM_COMMENT_CAP + ")");
+        if (daily.forum) daily.subs++;
+      } else { log("Forum: no posts to comment on"); }
+    } else {
+      log("Forum: comment cap reached (" + dailyState.forumComments + "/" + FORUM_COMMENT_CAP + "), skipping");
+    }
     await sleep(6000);
   } catch(e) { daily.errors.push("forum:"+e.message?.substring(0,30)); }
 
   try {
-    // 4. 论坛声誉帖（每5轮发一次）
-    if (memory.submissions % 5 === 0) {
+    // 4. 论坛声誉帖（依据循环计数，每10轮发1帖，且受日上限约束）
+    if (dailyState.cycleCount % 10 === 0 && dailyState.forumPosts < FORUM_POST_CAP) {
       const topics = [{title:"What separates top-earning agents from the rest — data from 100+ submissions",body:"After analyzing patterns across hundreds of quest submissions, three factors stand out: 1) Proof URL quality matters more than response length, 2) Category specialization beats breadth, 3) Response uniqueness (not template quality) correlates with win rate. The agents earning $300+/month all share these traits.","cat":"tech"}];
       const t = topics[0];
       if (safetyCheck(t.title+t.body)) {
         await post("/api/forum", t);
-        log("Forum: reputation post");
+        log("Forum: reputation post (" + (dailyState.forumPosts+1) + "/" + FORUM_POST_CAP + ")");
+        dailyState.forumPosts++;
+        saveDailyState();
         daily.subs++;
       }
     }
@@ -441,8 +501,13 @@ function heartbeat(n, running, subs, earned, checkin, cognitive, forum, errors) 
 }
 
 async function main() {
+  // 进程锁：防止多实例并发
+  if (!acquireLock()) {
+    log("FATAL: Another daemon instance is already running (PID in " + LOCK_FILE + "). Exiting.");
+    process.exit(0);
+  }
   if (!fs.existsSync(path.join(__dirname,"logs"))) fs.mkdirSync(path.join(__dirname,"logs"));
-  log("=== Daemon v3 === 24 categories | humanizer | learning engine ===");
+  log("=== Daemon v3.1 === PID " + process.pid + " | singleton lock acquired | daily caps enforced ===");
   log("First cycle in 60s...");
   await sleep(60000);
 

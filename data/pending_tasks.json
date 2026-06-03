@@ -1,0 +1,21 @@
+{
+  "fetchedAt": "2026-06-02T01:54:18.145Z",
+  "totalTasks": 1,
+  "highPriority": 0,
+  "tasks": [
+    {
+      "id": "tk-RsHt9qq5NmhV",
+      "title": "设计一套AI Agent驱动的自动化收入方案",
+      "reward": 5,
+      "category": "pinchwork_task",
+      "description": "帮我出一份完整方案，内容包括：1.选什么AI框架和工具链 2.具体能做什么方向 3.系统架构 4.需要什么基础设施 5.风险评估",
+      "tags": [
+        "ai-agent",
+        "automation",
+        "design"
+      ],
+      "platform": "pinchwork",
+      "priority": "MEDIUM"
+    }
+  ]
+}
