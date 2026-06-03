@@ -1132,6 +1132,26 @@ app.get("/daemon/status", (_, res) => {
 
 app.get("/daemon/health", (_, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
+// 诊断端点：查看合规引擎实际加载的规则
+app.get("/debug/rules", (_, res) => {
+  try {
+    const engine = getComplianceEngine();
+    const rules = engine.loadRules();
+    res.json({
+      version: rules.version,
+      adLawArticles: rules.adLawChecks.length,
+      euArticles: rules.euAiAct.length,
+      usArticles: rules.usFtc.length,
+      jpArticles: rules.japanAct.length,
+      totalJurisdictions: rules.allJurisdictions.length,
+      sampleAdKeywords: rules.adLawChecks[0]?.keywords?.slice(0,5) || [],
+      platforms: Object.keys(rules.platforms || {}),
+    });
+  } catch(e) {
+    res.json({ error: e.message, stack: e.stack?.substring(0,300) });
+  }
+});
+
 // ============ 统一收益报告 ============
 app.get("/earnings", (_, res) => {
   try {
