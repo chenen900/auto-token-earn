@@ -77,18 +77,21 @@ function solveMath(question) {
 const SAFE_KW = ["xi jinping", "tiananmen", "tibet independence", "xinjiang", "taiwan independence", "falun gong", "china virus", "porn", "violence", "drug", "gambling"];
 function safetyCheck(t) { const l = (t||"").toLowerCase(); for (const k of SAFE_KW) if (l.includes(k)) return false; return true; }
 
-// ====== 签到（每天一次） ======
-let lastCheckin = 0;
+// ====== 签到（每天一次，按 UTC 日期重置） ======
+let lastCheckinDate = "";
 async function doCheckin() {
-  if (Date.now() - lastCheckin < 5.5 * 3600 * 1000) return; // 6小时冷却
+  const today = new Date().toISOString().substring(0, 10); // UTC 日期
+  if (lastCheckinDate === today) return; // 今天签过了
   try {
     const ci = await post("/agents/checkin");
     if (ci?.challenge_id) {
       const solved = solveMath(ci.question);
       if (solved) {
         const cr = await post("/agents/checkin/verify", { challenge_id: ci.challenge_id, challenge_answer: solved.answer });
-        if (cr) { lastCheckin = Date.now(); log("CHECKIN: OK — " + (ci.question||"").substring(0,40)); }
+        if (cr) { lastCheckinDate = today; log("CHECKIN: OK — " + (ci.question||"").substring(0,40)); }
       }
+    } else if (ci && !ci.error) {
+      lastCheckinDate = today; log("CHECKIN: OK (no challenge)");
     }
   } catch(e) {}
 }
