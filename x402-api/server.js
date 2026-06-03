@@ -1130,26 +1130,26 @@ app.get("/debug/rules", (_, res) => {
     const testText = "国家级产品";
     res.json({
       version: rules.version,
-      adLawArticles: rules.adLawChecks.length,
-      euArticles: rules.euAiAct.length,
-      usArticles: rules.usFtc.length,
-      jpArticles: rules.japanAct.length,
       totalJurisdictions: rules.allJurisdictions.length,
       sampleAdKeywords: kw.slice(0,5),
-      platforms: Object.keys(rules.platforms || {}),
-      // Unicode 诊断
-      test: {
-        text: testText,
-        textLength: testText.length,
-        textHex: Buffer.from(testText).toString("hex").substring(0,40),
-        kw0Hex: Buffer.from(kw[0]||"").toString("hex").substring(0,20),
-        includes0: testText.includes(kw[0]||""),
-        includesNormalized: testText.normalize("NFC").includes((kw[0]||"").normalize("NFC")),
-      }
+      test: { text: testText, textHex: Buffer.from(testText).toString("hex").substring(0,40), kw0: kw[0], match: testText.indexOf(kw[0]) !== -1 }
     });
-  } catch(e) {
-    res.json({ error: e.message, stack: e.stack?.substring(0,300) });
-  }
+  } catch(e) { res.json({ error: e.message }); }
+});
+
+// 回显端点：看 Render 实际收到的 POST body 是什么
+app.post("/debug/echo", (req, res) => {
+  const text = (req.body?.content || req.body?.text || "");
+  const kw = "国家级";
+  res.json({
+    received: text,
+    length: text.length,
+    hex: Buffer.from(text).toString("hex").substring(0, 60),
+    keyword: kw,
+    kwHex: Buffer.from(kw).toString("hex"),
+    indexOf: text.indexOf(kw),
+    includes: text.includes(kw),
+  });
 });
 
 // ============ 统一收益报告 ============
