@@ -1137,6 +1137,8 @@ app.get("/debug/rules", (_, res) => {
   try {
     const engine = getComplianceEngine();
     const rules = engine.loadRules();
+    const kw = rules.adLawChecks[0]?.keywords || [];
+    const testText = "国家级产品";
     res.json({
       version: rules.version,
       adLawArticles: rules.adLawChecks.length,
@@ -1144,8 +1146,17 @@ app.get("/debug/rules", (_, res) => {
       usArticles: rules.usFtc.length,
       jpArticles: rules.japanAct.length,
       totalJurisdictions: rules.allJurisdictions.length,
-      sampleAdKeywords: rules.adLawChecks[0]?.keywords?.slice(0,5) || [],
+      sampleAdKeywords: kw.slice(0,5),
       platforms: Object.keys(rules.platforms || {}),
+      // Unicode 诊断
+      test: {
+        text: testText,
+        textLength: testText.length,
+        textHex: Buffer.from(testText).toString("hex").substring(0,40),
+        kw0Hex: Buffer.from(kw[0]||"").toString("hex").substring(0,20),
+        includes0: testText.includes(kw[0]||""),
+        includesNormalized: testText.normalize("NFC").includes((kw[0]||"").normalize("NFC")),
+      }
     });
   } catch(e) {
     res.json({ error: e.message, stack: e.stack?.substring(0,300) });
