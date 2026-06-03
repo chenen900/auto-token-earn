@@ -126,8 +126,11 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
       found = !!match;
     }
     if (!found && check.keywords) {
+      // 字节级匹配——用 Buffer 对比，绕过 Unicode 编码差异
+      const textBuf = Buffer.from(normalizedText);
       for (const kw of check.keywords) {
-        if (normalizedText.includes(kw.normalize("NFC"))) {
+        const kwBuf = Buffer.from(kw);
+        if (textBuf.includes(kwBuf)) {
           found = true;
           match = [kw];
           break;
@@ -165,8 +168,9 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
 
     // 禁词检查
     if (pt.bannedKeywords) {
+      const textBuf = Buffer.from(normalizedText.toLowerCase());
       for (const kw of pt.bannedKeywords) {
-        if (normalizedText.toLowerCase().includes(kw.toLowerCase())) {
+        if (textBuf.includes(Buffer.from(kw.toLowerCase()))) {
           results.checks.push({
             id: "platform_banned_word",
             rule: `${pt.name}平台禁用词: ${kw}`,
@@ -193,8 +197,9 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
           results.summary.medium++;
         }
         if (rule.keywords && rule.appliesTo === type) {
+          const txtBuf = Buffer.from(normalizedText);
           for (const kw of rule.keywords) {
-            if (normalizedText.includes(kw)) {
+            if (txtBuf.includes(Buffer.from(kw))) {
               results.checks.push({
                 id: "platform_content_review",
                 rule: rule.rule,
@@ -242,8 +247,9 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
   if (type === "voiceover") {
     for (const check of SHORT_VIDEO_CHECKS.voiceover) {
       if (check.keywords) {
+        const vBuf = Buffer.from(normalizedText);
         for (const kw of check.keywords) {
-          if (normalizedText.includes(kw)) {
+          if (vBuf.includes(Buffer.from(kw))) {
             results.checks.push({ ...check, found: kw });
             results.summary[check.severity]++;
             results.passed = false;
