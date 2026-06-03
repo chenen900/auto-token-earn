@@ -10,26 +10,53 @@
 // 广告法规则从 platform-rules.json 的 advertisingLaw.articles 加载
 // 平台规则从 platform-rules.json 的 platforms 加载
 
-// ============ 统一规则数据库加载 ============
+// ============ 统一规则数据库加载（动态加载，60秒缓存） ============
 const path = require("path");
 const fs = require("fs");
-const RULES_DB = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "platform-rules.json"), "utf-8")
-);
-const PLATFORM_RULES = RULES_DB.platforms;
-const AD_LAW_CHECKS = RULES_DB.advertisingLaw.articles;
 
-// 将 JSON 中字符串 pattern 转为 RegExp
-for (const key of Object.keys(PLATFORM_RULES)) {
-  const pt = PLATFORM_RULES[key];
-  if (pt.specialRules) {
-    pt.specialRules.forEach((r) => {
-      if (typeof r.pattern === "string" && r.pattern) r.pattern = new RegExp(r.pattern, "i");
-    });
+let _rulesCache = null;
+let _rulesCacheTime = 0;
+const RULES_CACHE_TTL = 60000; // 60秒
+
+function loadRules() {
+  const now = Date.now();
+  if (_rulesCache && (now - _rulesCacheTime) < RULES_CACHE_TTL) return _rulesCache;
+
+  const raw = JSON.parse(fs.readFileSync(path.join(__dirname, "platform-rules.json"), "utf-8"));
+  const rules = {
+    platforms: raw.platforms,
+    adLawChecks: raw.advertisingLaw.articles,
+    euAiAct: raw.euAiAct?.articles || [],
+    usFtc: raw.usFtc?.articles || [],
+    japanAct: raw.japanAct?.articles || [],
+    version: raw.version,
+    allJurisdictions: []
+  };
+
+  // 构建全局规则检查列表（中国广告法 + 平台规则 + EU + US + Japan）
+  rules.allJurisdictions = [
+    ...rules.adLawChecks,
+    ...rules.euAiAct,
+    ...rules.usFtc,
+    ...rules.japanAct
+  ];
+
+  // 将字符串 pattern 转为 RegExp
+  for (const key of Object.keys(rules.platforms)) {
+    const pt = rules.platforms[key];
+    if (pt.specialRules) {
+      pt.specialRules.forEach((r) => {
+        if (typeof r.pattern === "string" && r.pattern) r.pattern = new RegExp(r.pattern, "i");
+      });
+    }
   }
-}
-for (const check of AD_LAW_CHECKS) {
-  if (typeof check.pattern === "string" && check.pattern) check.pattern = new RegExp(check.pattern, "i");
+  for (const check of rules.allJurisdictions) {
+    if (typeof check.pattern === "string" && check.pattern) check.pattern = new RegExp(check.pattern, "i");
+  }
+
+  _rulesCache = rules;
+  _rulesCacheTime = now;
+  return rules;
 }
 
 // ============ 通用内容安全检查 ============
@@ -90,7 +117,7 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
   }
 
   // 2. 广告法审查
-  for (const check of AD_LAW_CHECKS) {
+  for (const check of loadRules().allJurisdictions) {
     let found = false;
     let match = null;
 
@@ -122,7 +149,7 @@ function reviewContent({ type = "script", text = "", platform = "douyin", option
   }
 
   // 3. 平台特定审查
-  const pt = PLATFORM_RULES[platform];
+  const pt = loadRules().platforms[platform];
   if (pt) {
     // 长度检查
     if (type === "title" && pt.maxTitleLength && normalizedText.length > pt.maxTitleLength) {
@@ -283,4 +310,4 @@ function generateReport(reviewResult) {
   return report;
 }
 
-module.exports = { reviewContent, reviewBatch, generateReport, PLATFORM_RULES, AD_LAW_CHECKS };
+module.exports = { reviewContent, reviewBatch, generateReport, loadRules };
