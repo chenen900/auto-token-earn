@@ -24,7 +24,13 @@ const PRICING = {
 };
 
 app.use(cors());
-app.use(express.json({ type: ["application/json", "application/json; charset=utf-8", "application/json;charset=utf-8"], limit: "1mb" }));
+app.use(express.raw({ type: "application/json", limit: "1mb" }), (req, res, next) => {
+  if (Buffer.isBuffer(req.body)) {
+    try { req.body = JSON.parse(req.body.toString("utf8")); } catch(e) { req.body = {}; }
+  }
+  next();
+});
+app.use(express.json({ type: ["application/x-www-form-urlencoded", "multipart/form-data"], limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // ============ 请求队列（并发控制 + 过载保护）============
