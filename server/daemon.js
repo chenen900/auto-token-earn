@@ -250,7 +250,7 @@ function buildSideQuestFields(questId, content) {
   return maps[questId] || { content };
 }
 
-// ====== 健康检查 HTTP（Render 需要绑定端口） ======
+// ====== HTTP 服务（健康检查 + 总控台） ======
 function startHealthServer() {
   const PORT = process.env.PORT || 8080;
   try {
@@ -258,12 +258,50 @@ function startHealthServer() {
       if (req.url === "/health") {
         res.writeHead(200, {"Content-Type":"application/json"});
         res.end(JSON.stringify({ status:"ok", pid:process.pid, uptime:process.uptime() }));
+      } else if (req.url === "/" || req.url === "/dashboard") {
+        // 服务总控台页面
+        const dashPath = path.join(__dirname, "dashboard.html");
+        if (fs.existsSync(dashPath)) {
+          res.writeHead(200, {"Content-Type":"text/html; charset=utf-8"});
+          res.end(fs.readFileSync(dashPath, "utf-8"));
+        } else {
+          res.writeHead(200, {"Content-Type":"text/plain"});
+          res.end("MediaCraft AI Server — dashboard.html not found");
+        }
       } else {
         res.writeHead(200, {"Content-Type":"text/plain"});
-        res.end("MediaCraft AI Server Daemon — running");
+        res.end("MediaCraft AI Server — running");
       }
-    }).listen(PORT, () => log("HEALTH: listening on :" + PORT));
-  } catch(e) { log("HEALTH: HTTP server failed (worker mode, ignoring)"); }
+    }).listen(PORT, () => log("HTTP: listening on :" + PORT + " (dashboard at /)"));
+  } catch(e) { log("HTTP: server failed (worker mode, ignoring)"); }
+}
+
+// ====== 每日自动更新总控台（UTC 14:00 = 北京时间 22:00） ======
+function updateDashboard() {
+  try {
+    const dashPath = path.join(__dirname, "dashboard.html");
+    if (!fs.existsSync(dashPath)) return;
+    let html = fs.readFileSync(dashPath, "utf-8");
+    const now = new Date();
+    const dateStr = now.toISOString().substring(0, 10);
+    const timeStr = now.toTimeString().substring(0, 5);
+
+    // 从状态文件读取最新数据
+    let earnings = "$0.40";
+    try {
+      const statusFile = path.join(DATA_DIR, "server_status.json");
+      if (fs.existsSync(statusFile)) {
+        const status = JSON.parse(fs.readFileSync(statusFile, "utf-8"));
+        if (status.earnings) earnings = status.earnings;
+      }
+    } catch(e) {}
+
+    html = html.replace(/<div class="money">\$[\d.]+<\/div>/, '<div class="money">' + earnings + '</div>');
+    html = html.replace(/<div style="margin-top:3px;color:#3fb950">[^<]*<\/div>/, '<div style="margin-top:3px;color:#3fb950">24/7 Server · auto-updated daily</div>');
+    html = html.replace(/更新: [^·]+ · [^<]*/, '更新: ' + dateStr + ' ' + timeStr + ' · 24/7 Server · 累计' + earnings);
+    fs.writeFileSync(dashPath, html);
+    log("DASHBOARD: auto-updated (" + earnings + ")");
+  } catch(e) { log("DASHBOARD-ERR: " + e.message?.substring(0,40)); }
 }
 
 // ====== 主循环 ======
@@ -308,6 +346,12 @@ async function main() {
           outbox_files: fs.existsSync(OUTBOX) ? fs.readdirSync(OUTBOX).filter(f=>f.endsWith(".json")).length : 0,
         }, null, 2));
       } catch(e) {}
+
+      // 每日更新总控台（UTC 14:00-14:30 之间）
+      const now = new Date();
+      if (now.getUTCHours() === 14 && now.getUTCMinutes() < 30) {
+        try { updateDashboard(); } catch(e) {}
+      }
     }
 
     // 6. 主循环间隔：30-60s（pin 速度）

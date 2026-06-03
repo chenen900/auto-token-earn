@@ -1,0 +1,10 @@
+services:
+  - type: worker
+    name: mediacraft-daemon
+    env: node
+    buildCommand: ""
+    startCommand: npm start
+    envVars:
+      - key: AGENTHANSA_API_KEY
+        sync: false
+    autoDeploy: yes

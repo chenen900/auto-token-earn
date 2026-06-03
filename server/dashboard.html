@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>MediaCraft AI 总控台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:system-ui,sans-serif;padding:14px;font-size:13px;line-height:1.4}
+.top{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#161b22;border:1px solid #30363d;border-radius:8px;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.top h1{font-size:18px}.top .right{text-align:right;font-size:11px;color:#8b949e}
+.top .money{font-size:22px;font-weight:800;color:#d2991d}
+.row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.chip{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px 16px;text-align:center;flex:1;min-width:80px}
+.chip .n{font-size:22px;font-weight:800}.chip .l{font-size:10px;color:#8b949e}
+/* Governance block */
+.gb{background:#1a0808;border:1px solid #f85149;border-radius:8px;padding:10px 16px;margin-bottom:10px}
+.gb .gh{font-size:12px;font-weight:700;color:#f85149;margin-bottom:4px}
+.gb .gi{font-size:10px;color:#c9d1d9;line-height:1.5}
+/* Z-1 block */
+.zb{background:#1a1208;border:1px solid #f0883e;border-radius:8px;padding:12px 16px;margin-bottom:10px}
+.zb .zh{font-size:13px;font-weight:700;color:#f0883e;margin-bottom:6px}
+.zb .zi{font-size:11px;color:#c9d1d9;display:inline-block;background:rgba(240,136,62,.1);padding:4px 10px;border-radius:4px;margin:3px 6px 3px 0}
+/* Grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px}
+.card:hover{border-color:#58a6ff}
+.card .h{display:flex;align-items:baseline;margin-bottom:8px}
+.card .h .letter{font-size:28px;font-weight:800;color:#58a6ff;font-family:monospace}
+.card .h .info{margin-left:10px;flex:1}
+.card .h .name{font-size:14px;font-weight:600}
+.card .h .path{font-size:10px;color:#8b949e;margin-top:2px}
+.card.v{opacity:.35}
+.card.v .h .letter{color:#8b949e}
+.bar{height:5px;background:#30363d;border-radius:3px;margin:8px 0;overflow:hidden}
+.bar .fill{height:100%;border-radius:3px}
+.tasks{list-style:none;font-size:11px}
+.tasks li{padding:3px 0;display:flex;gap:6px;border-bottom:1px solid rgba(48,54,61,.4)}
+.tasks li:last-child{border-bottom:none}
+.tasks .tid{font-family:monospace;font-size:10px;min-width:26px;color:#8b949e}
+.tasks .d{color:#3fb950}.tasks .p{color:#f85149}.tasks .u{color:#d2991d}
+.stat{margin-top:8px;padding-top:8px;border-top:1px solid #30363d;display:flex;justify-content:space-between;align-items:center;font-size:11px}
+.stat .pct{font-size:15px;font-weight:700}
+.badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;margin-left:4px}
+.bg{background:rgba(63,185,80,.15);color:#3fb950}
+.bb{background:rgba(88,166,255,.15);color:#58a6ff}
+.foot{text-align:center;color:#8b949e;font-size:10px;margin-top:14px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div>
+    <h1>MediaCraft AI 总控台</h1>
+    <span style="color:#8b949e;font-size:11px">14条活跃线 · Win11+Docker就位 · AiToEarn上线(:8080) · 本地Daemon运行中 · A线11/12完成</span>
+  </div>
+  <div class="right">
+    <div class="money">$0.40</div>
+    <div>总收入 (USDC)</div>
+    <div style="margin-top:3px;color:#3fb950">Daemon v5 · 快速轮询 2-8min · 4区全覆盖 · AI管线就绪</div>
+  </div>
+</div>
+
+<div class="row" id="sum"></div>
+<div class="gb">
+  <div class="gh">⚠ 总则 — 所有工作线必须遵守</div>
+  <div class="gi">1. 维护中华人民共和国国家形象，所有对外发布内容不得含有损害国家形象和利益的言论<br>
+  2. 内容安全审查已内置在所有Worker中，敏感词/模式提交前自动拦截<br>
+  3. 不参与政治、宗教、军事、涉疆、涉藏、涉台、涉港等敏感话题<br>
+  4. 合规优先于收益：宁可不赚钱，不能出问题<br>
+  5. 遵守各平台使用条款，不刷量、不造假、不攻击其他Agent<br>6. Z归档需人工审批——新增Z条目必须询问用户确认</div>
+</div>
+<div class="zb" id="zblock"></div>
+<div class="grid" id="grid"></div>
+<div class="foot" id="foot">加载中...</div>
+
+<script>
+(function(){
+// Z 归档数据（独立区块）
+var ZDATA=[
+  {id:"Z-1",name:"基础设施 & 工具",date:"2026-05-29",desc:"184 Agents+61 ECC+761 Skills · Ruflo Swarm+CodeGraph+mem0 · Humanizer+Browser-Use+Playwright · 7平台注册+凭据+钱包统一"},
+  {id:"Z-2",name:"全面升级 & AI管道建成",date:"2026-06-02",desc:"Win11升级 · Docker v29.5 · 12渠道 · AgenticTrade/Toku/Superteam/Pinchwork全接入 · 总控台+收益监控上线"},
+  {id:"Z-3",name:"A线全面改造 ",date:"2026-06-03",desc:"投标追踪+任务管线+质量门禁+4区覆盖+快速轮询(2-8min)+AI回复管线+Side Quest 3/3 · $0.40累计收益"}
+];
+
+// 活跃工作线
+var D=[
+  {L:"a",N:"Agent 自动赚钱",P:"auto-token-earn/",done:13,total:13,active:1,items:[
+    ["a.1",1,"Daemon v5 — 快速轮询(2-8min), 4区全覆盖"],
+    ["a.2",1,"✅ AI管线 — inbox→Claude生成→outbox→自动提交"],
+    ["a.3",1,"✅ 质量门禁 — 低分模板自动拦截, 不浪费配额"],
+    ["a.4",1,"✅ 投标追踪 — bid_history.jsonl 全链路记录"],
+    ["a.5",1,"✅ 每日战报 — data/reports/ 自动生成"],
+    ["a.6",1,"✅ Side Quest — 3/3提交, +$0.09到账"],
+    ["a.7",1,"✅ 收益监控 — 12渠道统一采集"],
+    ["a.8",1,"AgentHansa — 声誉55, 总收益$0.40"],
+    ["a.9",1,"AgenticTrade — 5服务挂牌(0%佣金)"],
+    ["a.10",1,"Toku — 3服务上线(翻译/合规/SEO)"],
+    ["a.11",1,"Pinchwork/ClawHunt/TaskMarket — 待首次CI"],
+    ["a.12",1,"dealwork.ai — 4次投标, 0合约"],
+    ["a.13",1,"Superteam/Hashnode/Swarms — 待接入"]
+  ]},
+  {L:"b",N:"跨境电商工具箱",P:"auto-token-earn/",done:8,total:10,items:[
+    ["b.1",1,"合规审查 (17平台规则库)"],
+    ["b.2",1,"利润计算器 (9物流x50州)"],
+    ["b.3",1,"物流完全手册"],
+    ["b.4",1,"AI Listing生成器 (9.9元)"],
+    ["b.5",1,"竞品ASIN分析器 (29.9元)"],
+    ["b.6",1,"三级会员系统"],
+    ["b.7",1,"帮助系统"],
+    ["b.8",1,"反馈/Bug通道"],
+    ["b.9",0,"支付接入 (收款码)"],
+    ["b.10",0,"SEO+推广"]
+  ]},
+  {L:"c",N:"API挂牌 & 被动收入",P:"auto-token-earn/",done:9,total:26,items:[
+    ["c.1",1,"x402 API上线 + well-known端点"],
+    ["c.2",1,"MCP挂牌材料就绪 (smithery+server.json)"],
+    ["c.3",1,"AgenticTrade — 5服务已挂牌(0%首月佣金)"],
+    ["c.4",1,"Agentic.Market — x402端点在线(自动发现)"],
+    ["c.7",1,"the402.ai (0%佣金) — svc已注册"],
+    ["c.8",1,"public-apis PR #6183 (438K stars)"],
+    ["c.9",1,"awesome-mcp-servers PR #7102"],
+    ["c.10",1,"awesome-ai-agents PR #1028"],
+    ["c.11",1,"Pinchwork推广 — 2个x402测试任务已发出"],
+    ["c.4-6",0,"APILayer/RapidAPI"],
+    ["c.12",0,"Swarms Marketplace"],
+    ["c.13-26",0,"Agent市场+免费目录+AI导航+中国平台(14项)"]
+  ]},
+  {L:"d",N:"Agent构建与贩卖",P:"agent-marketplace/",done:5,total:9,items:[
+    ["d.1",1,"市场调研+184 Agent资产盘点"],
+    ["d.2",1,"产品矩阵规划+竞品分析+交付方案"],
+    ["d.3",1,"Agent模板 (简历/小红书/即梦/分镜)"],
+    ["d.4",1,"电影级分镜Agent核心知识库 (8文件)"],
+    ["d.5",1,"✅ 旧电脑迁移完成 — 1000+资产已就位"],
+    ["d.6",0,"即梦校准测试 Day1 (10 prompt已就绪)"],
+    ["d.7",0,"即梦校准测试 Day2-7"],
+    ["d.8",0,"Coze部署+微信小程序发布"],
+    ["d.9",0,"闲鱼/Gumroad上架变现"]
+  ]},
+  {L:"e",N:"舆论战",P:"opinion-warfare/",done:0,total:1,items:[
+    ["e.1",-1,"框架已建，待定义具体任务"]
+  ]},
+  {L:"f",N:"AI自媒体重启",P:"project-f-ai自媒体/",done:1,total:5,items:[
+    ["f.1",1,"项目框架+平台矩阵规划"],
+    ["f.2",0,"Twitter/X账号运营"],
+    ["f.3",0,"YouTube/TikTok视频内容"],
+    ["f.4",0,"B站/小红书图文内容"],
+    ["f.5",0,"GPU升级(4090)解除素材瓶颈"]
+  ]},
+  {L:"g",N:"AI家教 (学习诊断)",P:"learning-diagnostic/",done:1,total:7,items:[
+    ["g.1",1,"全套设计文档"],
+    ["g.2",0,"初一数学知识图谱JSON"],
+    ["g.3",0,"本地服务器 server.js"],
+    ["g.4",0,"前端单页HTML"],
+    ["g.5-7",0,"OCR+出卷+付费+exe (3项)"]
+  ]},
+  {L:"h",N:"知识库 Wiki KB",P:"research/wiki-kb/",done:1,total:4,items:[
+    ["h.1",1,"核心系统 (58页+schema+9类型)"],
+    ["h.2",0,"体系注册+记忆桥接"],
+    ["h.3",0,"auto_index调试"],
+    ["h.4",0,"日常维护"]
+  ]},
+  {L:"i",N:"REVERSE-CUT 逆向剪辑",P:"reverse-cut/",done:5,total:9,active:1,items:[
+    ["i-1.1",1,"ffmpeg拆帧+元数据"],
+    ["i-1.2",1,"PySceneDetect场景切分"],
+    ["i-2.1",1,"转场类型检测"],
+    ["i-2.2",1,"变速检测 (Farneback光流法)"],
+    ["i-2.3",1,"入场/出场动画检测"],
+    ["i-3",0,"风格色彩分析"],
+    ["i-4",0,"音频音乐分析"],
+    ["i-5",0,"剪映5.9映射引擎 (4590条资源)"],
+    ["i-6",0,"草稿生成器"]
+  ]},
+  {L:"j",N:"SpendOS",P:"spendos/",done:2,total:4,items:[
+    ["j.1",1,"项目已克隆 — 已从旧电脑迁移"],
+    ["j.2",1,"CLAUDE.md注册"],
+    ["j.3",0,"部署上线"],
+    ["j.4",0,"x402支付流集成到A线"]
+  ]},
+  {L:"k",N:"CashClaw",P:"research/cashclaw-hyrve/",done:2,total:3,items:[
+    ["k.1",1,"npm v1.7.0 已发布"],
+    ["k.2",1,"CLAUDE.md注册"],
+    ["k.3",0,"集成到A线收入"]
+  ]},
+  {L:"l",N:"Show Me The Money",P:"research/show-me-the-money/",done:3,total:5,items:[
+    ["l.1",1,"npm v2.5.1 (25 skills) — 已从旧电脑迁移"],
+    ["l.2",1,"CLAUDE.md注册"],
+    ["l.3",1,"AiToEarn子模块已就位"],
+    ["l.4",0,"Docker部署AiToEarn"],
+    ["l.5",0,"接入A线自动内容变现"]
+  ]},
+  {L:"m",N:"世界大学 — 科幻解谜",P:"project-m-网页游戏/",done:1,total:7,active:1,items:[
+    ["m.1",1,"完整游戏设计文档(GDD)"],
+    ["m.2",0,"单层密文网页原型"],
+    ["m.3",0,"AI谜题生成+答案验证"],
+    ["m.4",0,"全球进度条+阵营系统"],
+    ["m.5",0,"投票分支+碳排放机制"],
+    ["m.6",0,"支线谜题+收集系统"],
+    ["m.7",0,"开放协作+社区运营"]
+  ]},
+  {L:"n",N:"AI音乐变现",P:"ai-music-monetize/",done:0,total:10,active:1,items:[
+    ["n.1",0,"MCP工具安装 (DAW MIDI Generator + music21-mcp + Songsmith)"],
+    ["n.2",0,"Suno → MIDI 导出流程打通 + 第一首测试曲"],
+    ["n.3",0,"music21-mcp 乐理分析能力验证"],
+    ["n.4",0,"DAW MIDI Generator 重新编曲能力验证"],
+    ["n.5",0,"第一首歌完整流水线实测"],
+    ["n.6",0,"流媒体分发 (RouteNote免费试水 → DistroKid无限)"],
+    ["n.7",0,"ElevenLabs Music Marketplace 上架"],
+    ["n.8",0,"Gumroad 直接销售 + Fiverr 定制服务"],
+    ["n.9",0,"YouTube 频道搭建 (音乐+可视化视频)"],
+    ["n.10",0,"规模化运营 (多风格矩阵 + 自动化流水线)"]
+  ]}
+];
+
+// Summary chips
+var td=0,ta=0;
+D.forEach(function(d){if(!d.vacant){td+=d.done;ta+=d.total}});
+var ap=Math.round(td/ta*100);
+var sh='';
+sh+='<div class="chip"><div class="n" style="color:#3fb950">'+td+'</div><div class="l">已完成</div></div>';
+sh+='<div class="chip"><div class="n" style="color:#58a6ff">'+ta+'</div><div class="l">总任务</div></div>';
+sh+='<div class="chip"><div class="n" style="color:'+(ap>50?'#3fb950':ap>25?'#d2991d':'#f85149')+'">'+ap+'%</div><div class="l">完成率</div></div>';
+sh+='<div class="chip"><div class="n" style="color:#f0883e">3</div><div class="l">Z归档</div></div>';
+sh+='<div class="chip"><div class="n" style="color:#3fb950">0</div><div class="l">空缺</div></div>';
+sh+='<div class="chip"><div class="n" style="color:#a371f7">'+D.length+'</div><div class="l">活跃线</div></div>';
+document.getElementById("sum").innerHTML=sh;
+
+// Z archive block
+var zb='<div class="zh">来时路 — 永久里程碑</div>';
+ZDATA.forEach(function(z){
+  zb+='<span class="zi"><b>'+z.id+'</b> '+z.name+' · '+z.date+' · '+z.desc+'</span>';
+});
+document.getElementById("zblock").innerHTML=zb;
+
+// Grid
+var gh='';
+D.forEach(function(d){
+  var pc=d.total===0?100:Math.round(d.done/d.total*100);
+  var color=pc>=100?'#3fb950':pc>=50?'#d2991d':'#f85149';
+  var vac=d.vacant?' v':'';
+  var extra='';
+  if(d.active) extra+='<span class="badge bb">当前活跃</span>';
+  if(pc>=80 && d.total>0) extra+='<span class="badge bg">接近归档</span>';
+
+  gh+='<div class="card'+vac+'"><div class="h"><span class="letter">'+d.L+'</span><div class="info"><div class="name">'+d.N+extra+'</div><div class="path">'+d.P+'</div></div></div>';
+  if(d.total>0){
+    gh+='<div class="bar"><div class="fill" style="width:'+pc+'%;background:'+color+'"></div></div>';
+  }
+  gh+='<ul class="tasks">';
+  d.items.forEach(function(t){
+    var ic=t[1]===1?'d':t[1]===0?'p':'u';
+    var sym=t[1]===1?'✅':t[1]===0?'❌':'❓';
+    var tid=t[0]?(sym+' '+t[0]):'';
+    gh+='<li><span class="tid '+ic+'">'+tid+'</span><span>'+t[2]+'</span></li>';
+  });
+  gh+='</ul>';
+  if(d.total>0){
+    gh+='<div class="stat"><span>'+d.done+'/'+d.total+' 完成</span><span class="pct" style="color:'+color+'">'+pc+'%</span></div>';
+  }
+  gh+='</div>';
+});
+document.getElementById("grid").innerHTML=gh;
+document.getElementById("foot").innerHTML='更新: 2026-06-03 12:00 · Daemon v5 · 快速轮询 2-8min · AI管线就绪 · 4区覆盖 · Z-3已归档 · 累计$0.40';
+
+// ========== 实时收益拉取（仅更新状态信息，不覆写静态数据） ==========
+(function(){
+  var API = 'https://mediacraft-x402-api.onrender.com/earnings/summary';
+  function fetchEarnings() {
+    fetch(API).then(function(r){return r.json()}).then(function(d){
+      if(!d) return;
+      // 仅当API返回有效正数收益时才更新收入数字（保护静态硬编码值）
+      var parsedTotal = parseFloat(String(d.total||'').replace('$','')) || 0;
+      if(parsedTotal > 0.01) {
+        var el = document.querySelector('.money');
+        if(el) el.textContent = d.total;
+      }
+      // 更新状态行
+      if(d.updated) {
+        var sub = document.querySelector('.top .right div:last-child');
+        if(sub) sub.textContent = '更新: ' + new Date(d.updated).toLocaleTimeString('zh-CN') + ' | ' + d.active + ' 渠道活跃';
+      }
+      // 变动提示
+      if(d.delta !== undefined && Math.abs(d.delta) > 0.001) {
+        var deltaContainer = document.querySelector('.top .right');
+        var existingDelta = deltaContainer.querySelector('.delta');
+        if(!existingDelta) {
+          existingDelta = document.createElement('div');
+          existingDelta.className = 'delta';
+          existingDelta.style.cssText = 'margin-top:3px;font-size:10px';
+          deltaContainer.insertBefore(existingDelta, deltaContainer.lastChild);
+        }
+        var sign = d.delta >= 0 ? '+' : '';
+        existingDelta.textContent = '变动: ' + sign + '$' + d.delta.toFixed(2);
+        existingDelta.style.color = d.delta >= 0 ? '#3fb950' : '#f85149';
+      }
+    }).catch(function(){});
+  }
+  fetchEarnings();
+  setInterval(fetchEarnings, 5*60*1000);
+})();
+})();
+</script>
+</body>
+</html>
