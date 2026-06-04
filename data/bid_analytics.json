@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-06-04T05:07:20.761Z",
+  "date": "2026-06-04",
+  "period": "today",
+  "summary": {
+    "totalBids": 0,
+    "resolvedResults": 0,
+    "won": 0,
+    "lost": 0,
+    "pending": 0,
+    "winRate": 0,
+    "totalEarnedToday": 0,
+    "allTimeEarned": 0,
+    "avgRewardPerBid": 0
+  },
+  "byCategory": {},
+  "byResponseType": {},
+  "qualityGating": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "avgScore": 0
+  },
+  "recentBids": []
+}

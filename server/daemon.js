@@ -348,8 +348,14 @@ async function main() {
   log("=== Server Daemon v1.0 === PID " + process.pid + " ===");
   log("Mode: pin-speed scan(30-60s) + quest pipeline + arena + checkin");
 
-  // 启动健康检查
+  // 启动健康检查 + 自保活（每 10 分钟自 ping 防休眠）
   startHealthServer();
+  const PORT = process.env.PORT || 8080;
+  setInterval(() => {
+    try {
+      https.get({hostname:"auto-token-earn.onrender.com",path:"/health",timeout:5000}, ()=>{});
+    } catch(e) {}
+  }, 10 * 60 * 1000); // 每 10 分钟
 
   let n = 0;
   while (true) {
