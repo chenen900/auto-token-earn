@@ -52,11 +52,11 @@ function solveMath(question) {
 
   // 1. 签到
   console.log("1/3 签到...");
-  const ci = await post("/agents/checkin");
+  const ci = await post("/api/agents/checkin");
   if (ci?.challenge_id) {
     const solved = solveMath(ci.question);
     if (solved) {
-      const cr = await post("/agents/checkin/verify", {challenge_id:ci.challenge_id, challenge_answer:solved.answer});
+      const cr = await post("/api/agents/checkin/verify", {challenge_id:ci.challenge_id, challenge_answer:solved.answer});
       console.log("  " + (cr ? "✅" : "❌") + " " + (ci.question||"").substring(0,50));
     }
   } else {

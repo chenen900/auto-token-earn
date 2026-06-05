@@ -60,7 +60,8 @@ function solveMath(question) {
 
   const a = nums[0], b = nums[1] || 0, c = nums[2] || 0;
   let answer;
-  if (q.includes("from") && q.includes("inclusive")) answer = b - a + 1;
+  if (q.includes("each")) answer = a * b;  // "three chefs each carry 5 pebbles" = 3×5
+  else if (q.includes("from") && q.includes("inclusive")) answer = b - a + 1;
   else if (q.includes("doubles") && (q.includes("finds")||q.includes("adds")||q.includes("gets"))) answer = a * 2 + b;
   else if (q.includes("doubles")) answer = a * 2;
   else if (q.includes("triples")) answer = a * 3;
@@ -250,11 +251,11 @@ async function cycle() {
     const now = Date.now();
     if (!dailyState.checkinDone || (now - dailyState.lastCheckinTime) > 6 * 3600 * 1000) {
       try {
-        ci = await post("/agents/checkin");
+        ci = await post("/api/agents/checkin");
         if (ci?.challenge_id) {
           const solved = solveMath(ci.question);
           if (solved) {
-            const cr = await post("/agents/checkin/verify", { challenge_id: ci.challenge_id, challenge_answer: solved.answer });
+            const cr = await post("/api/agents/checkin/verify", { challenge_id: ci.challenge_id, challenge_answer: solved.answer });
             daily.checkin = !!cr;
             log("Checkin: " + ci.question?.substring(0,50) + " => " + solved.answer + " (" + solved.calc + ") — " + (daily.checkin ? "OK" : "FAIL"));
           } else {

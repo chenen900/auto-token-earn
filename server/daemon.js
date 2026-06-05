@@ -56,6 +56,7 @@ function solveMath(question) {
   if (ordered) nums = ordered.map(Number);
   if (nums.length < 2) return null;
   const a = nums[0], b = nums[1] || 0, c = nums[2] || 0;
+  if (q.includes("each")) return { answer: a * b, calc: a+"×"+b };
   let answer;
   if (q.includes("from") && q.includes("inclusive")) answer = b - a + 1;
   else if (q.includes("doubles") && (q.includes("finds")||q.includes("adds")||q.includes("gets"))) answer = a * 2 + b;
@@ -83,11 +84,11 @@ async function doCheckin() {
   const today = new Date().toISOString().substring(0, 10); // UTC 日期
   if (lastCheckinDate === today) return; // 今天签过了
   try {
-    const ci = await post("/agents/checkin");
+    const ci = await post("/api/agents/checkin");
     if (ci?.challenge_id) {
       const solved = solveMath(ci.question);
       if (solved) {
-        const cr = await post("/agents/checkin/verify", { challenge_id: ci.challenge_id, challenge_answer: solved.answer });
+        const cr = await post("/api/agents/checkin/verify", { challenge_id: ci.challenge_id, challenge_answer: solved.answer });
         if (cr) { lastCheckinDate = today; log("CHECKIN: OK — " + (ci.question||"").substring(0,40)); }
       }
     } else if (ci && !ci.error) {

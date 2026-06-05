@@ -1,7 +1,7 @@
 # MediaCraft AI 总控制台
 
 > 同步自 dashboard.html · 最后更新：2026-06-04 18:00
-> 总收入：$0.84 | 14条活跃线 | i线逆向剪辑完工 | 新MG参考库+6 | 桥接模块5/10完成
+> 总收入：$0.63 | 14条活跃线 | i线逆向剪辑完工 | 新MG参考库+6 | 桥接模块5/10完成
 
 ---
 
@@ -22,52 +22,9 @@
 13. **找到一个根因 ≠ 找到所有根因** — 来自 [GOVERNANCE](GOVERNANCE.md)。当系统长期静默失败时，每个与外部交互的模块都是独立故障点。修好第一个bug后必须追问：同一时期内还有哪些模块也依赖外部API？那些API是否也变了？
 14. **每次外部API更新都是潜在断裂点** — 第三方API随时可能改格式。代码不是"写对一次就永远对"。每次排查故障时，假设API可能已经变了，用curl重新确认返回格式
 
-### 📋 操作检查清单（来自 GOVERNANCE + POSTMORTEM + DEBUGGING_LOG）
-
-**代码修改后本地验证：**
-- daemon 改动 → 本地跑一轮 cycle（签到→认知→论坛→投标），看完整日志再 push
-- API/服务改动 → 本地跑全部测试用例（至少 5 个端点），确认语法不报错
-- 任何代码 → `node -e "require('./xxx')"` 做基础语法检查
-
-**错误处理铁律（来自 DEBUGGING_LOG）：**
-- try-catch 内必须打印完整堆栈 `e.stack`，不能只 print `e.message`
-- 所有工具函数必须防御 null/undefined 输入（`if (!input) return default`）
-- 关键路径的每个 catch 都应该让人能定位到具体行号
-
-**部署后 5 分钟验证（不可跳过）：**
-1. 等 Render 部署（30-60s）
-2. `curl /health` 确认 version 更新
-3. `curl /daemon/status` 确认 uptime < 120s（新进程）
-4. 等一轮周期（约 90s）→ 确认 lastCheckin/lastCognitive/submissionsToday 有变化
-5. `curl AgentHansa /api/agents/me` 确认信誉分是否真的在涨
-
-**禁止的操作：**
-- ✗ 不本地测试就 push daemon/API 改动
-- ✗ push 后不检查线上状态就去做别的事
-- ✗ 同时 push 多个工作线的改动（混在一起无法定位问题）
-- ✗ 相信 `errors: 0` 就是没问题
-
-**事故响应（来自 GOVERNANCE 第六章）：**
-当 `errors > 0` 或指标连续 12 小时不增长 →
-1. 暂停所有其他工作线 → 2. 本地复现 → 3. curl 所有相关 API 比对格式 → 4. 修复+本地验证+push+线上验证 → 5. 确认恢复后更新 POSTMORTEM.md
-
-**完整性自检（来自用户反馈 — 多次"搭好框架但细节不全"）：**
-- [ ] 这个功能覆盖了所有可能的情况吗？（不只是 happy path）
-- [ ] 有没有漏掉的类别/平台/场景？
-- [ ] 和已有系统接上了吗？（前端↔后端↔CI↔daemon）
-- [ ] 权限检查加了吗？CI env var 写了吗？
-- [ ] 用户能不能直接用？
-
-**发布前铁律（来自 feedback-resilience）：**
-- [ ] 手动跑过一次真实请求/测试
-- [ ] 依赖的文件/变量有 try/catch 保护
-- [ ] 已加入 health_check 或等效监控
-- [ ] 确认部署后端点/功能可访问
-- [ ] 语法检查通过
-
-> 完整检查清单见 [GOVERNANCE.md](auto-token-earn/GOVERNANCE.md)（6 章） + [POSTMORTEM.md](auto-token-earn/POSTMORTEM.md) + [反馈记录](C:/Users/Administrator/.claude/projects/d-------/memory/feedback_completeness.md)
-
 ---
+
+## 进度总览
 
 | 指标 | 值 |
 |------|-----|
