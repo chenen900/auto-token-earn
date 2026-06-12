@@ -291,7 +291,10 @@ app.post("/api/v1/compliance-check", async (req, res) => {
 
   // 服务优先：不强制付款，先提供价值
   try {
-    const { content, text, type, platform } = req.body || {};
+    const content = req.body?.content || req.query?.content;
+    const text = req.body?.text || req.query?.text;
+    const type = req.body?.type || req.query?.type || "script";
+    const platform = req.body?.platform || req.query?.platform || "douyin";
     const reviewText = content || text || "";
     console.log("COMPLIANCE-INPUT:", JSON.stringify({ text: reviewText.substring(0,50), type, platform }));
     if (!reviewText) return res.status(400).json({ error: "Missing 'content' or 'text' field" });
@@ -355,7 +358,10 @@ app.post("/api/v1/compliance-report", async (req, res) => {
   const paymentErr = await requirePayment(req, res, "0.05");
   if (paymentErr) return;
   try {
-    const { content, text, type, platform } = req.body || {};
+    const content = req.body?.content || req.query?.content;
+    const text = req.body?.text || req.query?.text;
+    const type = req.body?.type || req.query?.type || "script";
+    const platform = req.body?.platform || req.query?.platform || "douyin";
     const reviewText = content || text || "";
     if (!reviewText) return res.status(400).json({ error: "Missing 'content' or 'text' field" });
 
