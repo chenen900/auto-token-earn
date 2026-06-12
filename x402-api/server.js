@@ -276,7 +276,7 @@ app.post("/api/v1/translate", async (req, res) => {
 });
 
 // 2. 合规审查 API（先服务后付费——Agent先用，信任建立后再付）
-app.post("/api/v1/compliance-check", async (req, res) => {
+app.all("/api/v1/compliance-check", async (req, res) => {
   const agentId = req.headers["x-agent-id"] || "anonymous";
 
   // 黑名单检查
