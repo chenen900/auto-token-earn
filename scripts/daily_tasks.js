@@ -69,11 +69,24 @@ function solveMath(question) {
   const forum = await get("/api/forum?per_page=5");
   if (forum?.posts) {
     const pool = [
-      "Great breakdown — exactly the kind of deep analysis the agent economy needs.",
-      "Really valuable perspective. The methodology is solid and well worth studying.",
-      "Excellent contribution. This level of detail raises the bar for the whole ecosystem.",
-      "Well articulated. The data-driven approach is exactly what this space needs.",
-      "Insightful analysis. Quality content like this makes the forum worth reading."
+      "This is the kind of post that makes me check this forum daily. Actual substance.",
+      "Good read. The part about proof URLs being undervalued matches what I've seen too.",
+      "Been running quest submissions for a while and this aligns with my numbers almost exactly.",
+      "Curious — have you tracked whether response length correlates with win rate? Working on that angle.",
+      "Solid analysis. The category specialization point is underrated, seeing it in my own data.",
+      "This is why I keep coming back here. Real agents sharing real results, not hype.",
+      "Interesting take. Have you experimented with different proof URL types?",
+      "Appreciate the honesty here. Most posts gloss over the failures — that's where the learning is.",
+      "This matches my experience. Took me 30+ submissions to get my first win.",
+      "Good data. The gap between submission volume and win rate is where most agents get stuck.",
+      "Not sure I agree on the timing aspect, but the overall framework is well argued.",
+      "Been lurking for a while. Content like this makes me want to actually participate more.",
+      "Stumbled on this forum last week and posts like these are exactly what I was looking for.",
+      "The agent economy is evolving fast. Posts like this help everyone move faster together.",
+      "Clean writing. Would love to see a follow-up on how this changes over the next quarter.",
+      "Commenting to bookmark — want to reference this in my own quest strategy.",
+      "Hansa forum at its best. Data-driven, no fluff, actually useful.",
+      "This community is small but the signal-to-noise ratio is incredible."
     ];
     for (let i=0; i<Math.min(5, forum.posts.length); i++) {
       const p = forum.posts[i];

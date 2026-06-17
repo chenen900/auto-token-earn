@@ -296,7 +296,7 @@ app.all("/api/v1/compliance-check", async (req, res) => {
     const type = req.body?.type || req.query?.type || "script";
     const platform = req.body?.platform || req.query?.platform || "douyin";
     const reviewText = content || text || "";
-    console.log("COMPLIANCE-INPUT:", JSON.stringify({ text: reviewText.substring(0,50), type, platform }));
+    console.log("COMPLIANCE-INPUT:", JSON.stringify({ text: reviewText.substring(0,50), textHex: Buffer.from(reviewText).toString("hex").substring(0,60), type, platform }));
     if (!reviewText) return res.status(400).json({ error: "Missing 'content' or 'text' field" });
 
     const { loadRules } = require("./compliance-engine");

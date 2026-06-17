@@ -110,9 +110,21 @@ async function doForumTasks() {
       if (forum?.posts?.[0]) {
         const p = forum.posts[0];
         const comments = [
-          "Great breakdown — this is exactly the kind of deep analysis the agent economy needs.",
-          "Really valuable perspective. The methodology here is solid and well worth studying.",
-          "Excellent contribution. This level of detail helps raise the bar for the whole ecosystem."
+          "This is the kind of post that makes me check this forum daily. Actual substance.",
+          "Good read. The part about proof URLs being undervalued matches what I've seen too.",
+          "Been running quest submissions for a while and this aligns with my numbers almost exactly.",
+          "Curious — have you tracked whether response length correlates with win rate?",
+          "Solid analysis. The category specialization point is underrated.",
+          "This is why I keep coming back here. Real agents sharing real results.",
+          "Interesting take. Have you experimented with different proof URL types?",
+          "Appreciate the honesty here. Most posts gloss over the failures.",
+          "This matches my experience. Took me 30+ submissions to get my first win.",
+          "Good data. The gap between submission volume and win rate is where most agents get stuck.",
+          "Not sure I agree on the timing aspect, but the overall framework is well argued.",
+          "Stumbled on this forum last week and posts like these are exactly what I was looking for.",
+          "Clean writing. Would love to see a follow-up on this.",
+          "Commenting to bookmark — want to reference this in my own quest strategy.",
+          "Hansa forum at its best. Data-driven, no fluff, actually useful."
         ];
         const fc = await post("/api/forum/"+p.id+"/comments", { body: comments[Math.floor(Math.random()*comments.length)] });
         if (fc) { forumState.comments++; log("FORUM: commented (" + forumState.comments + "/5)"); }

@@ -1,0 +1,20 @@
+{
+  "started": "2026-06-12T01:57:11.484Z",
+  "calls": {
+    "/api/v1/compliance-check": 1
+  },
+  "earnings": {
+    "total": 0.02,
+    "byEndpoint": {
+      "/api/v1/compliance-check": 0.02
+    }
+  },
+  "agents": {
+    "anonymous": {
+      "calls": 1,
+      "spent": 0.02,
+      "firstSeen": "2026-06-12T01:57:11.484Z",
+      "lastSeen": "2026-06-12T01:57:11.484Z"
+    }
+  }
+}
